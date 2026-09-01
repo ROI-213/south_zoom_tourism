@@ -94,113 +94,122 @@ export function VehiclePricing({ detail }: { detail: VehicleDetail }) {
         </TabsList>
 
         {groups.map((group) => {
-          const currentIsAirport = group.group === "airport";
           const isLocalGroup = group.group === "local";
-
-          // For local tab: packages are "inclusive" lines, extra charges are "exclusive" lines
           const isPackageLine = (label: string) => label.toLowerCase().includes("package");
 
-          const filteredLines = group.lines.filter((line) => {
-            if (currentIsAirport) return true;
-            if (isLocalGroup) {
-              const isPkg = isPackageLine(line.label);
-              // Inclusive mode → show packages only; Exclusive mode → show extra charges only
-              if (effectiveRateType === "inclusive") return isPkg;
-              if (effectiveRateType === "exclusive") return !isPkg;
-            }
-            return true;
-          });
-
-          // Package lines (for inclusive mode card selection)
-          const packageLines = isLocalGroup && effectiveRateType === "inclusive"
-            ? filteredLines.filter((l) => isPackageLine(l.label))
-            : [];
-          const nonPackageLines = packageLines.length > 0
-            ? filteredLines.filter((l) => !isPackageLine(l.label))
-            : filteredLines;
+          const packageLines = isLocalGroup ? group.lines.filter((l) => isPackageLine(l.label)) : [];
+          const extraChargesLines = isLocalGroup ? group.lines.filter((l) => !isPackageLine(l.label)) : [];
+          const otherTabLines = !isLocalGroup ? group.lines : [];
 
           return (
-            <TabsContent key={group.group} value={group.group} className="mt-4">
-              {/* Package Select Options (only in Local tab, Inclusive mode) */}
-              {isLocalGroup && packageLines.length > 0 && (
-                <div className="mb-4 space-y-2">
-                  <p className="text-xs font-semibold text-foreground mb-2">Select Package:</p>
-                  <ul className="grid gap-2">
-                    {packageLines.map((line) => (
-                      <li key={line.id}>
-                        <label
-                          className={`flex items-center justify-between gap-3 rounded-lg border p-3 cursor-pointer transition-all shadow-xs ${
-                            selectedPackage === line.id
-                              ? "border-primary bg-primary/10"
-                              : "border-border bg-card hover:border-primary/50"
-                          }`}
-                          onClick={() =>
-                            setSelectedPackage(selectedPackage === line.id ? null : line.id)
-                          }
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <input
-                              type="checkbox"
-                              checked={selectedPackage === line.id}
-                              onChange={() =>
+            <TabsContent key={group.group} value={group.group} className="mt-4 space-y-3">
+              {/* Local Package Tab */}
+              {isLocalGroup && (
+                <div className="space-y-3">
+                  {/* In Inclusive Mode: Show Package Selection */}
+                  {effectiveRateType === "inclusive" && packageLines.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-foreground mb-1.5">Select Package:</p>
+                      <ul className="grid gap-2">
+                        {packageLines.map((line) => (
+                          <li key={line.id}>
+                            <label
+                              className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 cursor-pointer transition-all shadow-xs ${
+                                selectedPackage === line.id
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border bg-card hover:border-primary/50"
+                              }`}
+                              onClick={() =>
                                 setSelectedPackage(selectedPackage === line.id ? null : line.id)
                               }
-                              className="accent-primary h-4 w-4 shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-foreground">{line.label}</p>
-                              {line.note ? (
-                                <p className="mt-0.5 text-xs text-muted-foreground">{line.note}</p>
-                              ) : null}
-                            </div>
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedPackage === line.id}
+                                  onChange={() =>
+                                    setSelectedPackage(selectedPackage === line.id ? null : line.id)
+                                  }
+                                  className="accent-primary h-4 w-4 shrink-0"
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-foreground">{line.label}</p>
+                                  {line.note ? (
+                                    <p className="mt-0.5 text-xs text-muted-foreground">{line.note}</p>
+                                  ) : null}
+                                </div>
+                              </div>
+                              {line.visible && line.value ? (
+                                <p className="shrink-0 text-sm font-bold text-primary">{line.value}</p>
+                              ) : (
+                                <Badge variant="secondary" className="shrink-0">
+                                  {line.enquiryLabel}
+                                </Badge>
+                              )}
+                            </label>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Extra per hour, Extra per km, and Driver Allowance (Always visible in Local Package) */}
+                  {extraChargesLines.length > 0 && (
+                    <ul className="grid gap-2 pt-1">
+                      {extraChargesLines.map((line) => (
+                        <li
+                          key={line.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/80 bg-card p-3.5 shadow-xs hover:border-primary/40 transition-colors"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-foreground">{line.label}</p>
+                            {line.note ? (
+                              <p className="mt-0.5 text-xs text-muted-foreground">{line.note}</p>
+                            ) : null}
                           </div>
                           {line.visible && line.value ? (
-                            <p className="shrink-0 text-sm font-bold text-primary">{line.value}</p>
+                            <p className="shrink-0 text-sm sm:text-base font-extrabold text-amber-600 dark:text-amber-500">
+                              {line.value}
+                            </p>
                           ) : (
                             <Badge variant="secondary" className="shrink-0">
                               {line.enquiryLabel}
                             </Badge>
                           )}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
-              {/* Non-package lines or all lines for non-local tabs */}
-              {filteredLines.length === 0 && packageLines.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-4 text-center">
-                  No rates found for {effectiveRateType === "inclusive" ? "All Inclusive" : "All Exclusive"}.
-                </p>
-              ) : nonPackageLines.length > 0 ? (
+              {/* Other Tabs (Outstation, Airport transfer, Extras & allowances) */}
+              {!isLocalGroup && (
                 <ul className="grid gap-2">
-                  {nonPackageLines.map((line) => {
-                    return (
-                      <li
-                        key={line.id}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card p-3 shadow-xs"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-foreground">{line.label}</p>
-                          </div>
-                          {line.note ? (
-                            <p className="mt-0.5 text-xs text-muted-foreground">{line.note}</p>
-                          ) : null}
-                        </div>
-                        {line.visible && line.value ? (
-                          <p className="shrink-0 text-sm font-bold text-primary">{line.value}</p>
-                        ) : (
-                          <Badge variant="secondary" className="shrink-0">
-                            {line.enquiryLabel}
-                          </Badge>
-                        )}
-                      </li>
-                    );
-                  })}
+                  {otherTabLines.map((line) => (
+                    <li
+                      key={line.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/80 bg-card p-3.5 shadow-xs hover:border-primary/40 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-foreground">{line.label}</p>
+                        {line.note ? (
+                          <p className="mt-0.5 text-xs text-muted-foreground">{line.note}</p>
+                        ) : null}
+                      </div>
+                      {line.visible && line.value ? (
+                        <p className="shrink-0 text-sm sm:text-base font-extrabold text-amber-600 dark:text-amber-500">
+                          {line.value}
+                        </p>
+                      ) : (
+                        <Badge variant="secondary" className="shrink-0">
+                          {line.enquiryLabel}
+                        </Badge>
+                      )}
+                    </li>
+                  ))}
                 </ul>
-              ) : null}
+              )}
             </TabsContent>
           );
         })}
