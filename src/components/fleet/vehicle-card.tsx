@@ -17,17 +17,19 @@ export function VehicleCard({
 }) {
   const [showLightbox, setShowLightbox] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
-  const [fareConfig, setFareConfig] = useState<FleetFareConfig>(() => getFleetFareConfig(vehicle.id));
+  const [fareConfig, setFareConfig] = useState<FleetFareConfig>(() =>
+    getFleetFareConfig(vehicle.slug || vehicle.id, vehicle.name)
+  );
 
   useEffect(() => {
     const handleUpdate = () => {
-      setFareConfig(getFleetFareConfig(vehicle.id));
+      setFareConfig(getFleetFareConfig(vehicle.slug || vehicle.id, vehicle.name));
     };
     window.addEventListener("fleetFareSettingsUpdated", handleUpdate);
     return () => window.removeEventListener("fleetFareSettingsUpdated", handleUpdate);
-  }, [vehicle.id]);
+  }, [vehicle.id, vehicle.slug, vehicle.name]);
 
-  const displayRate = fareConfig?.oneWayRatePerKm ?? vehicle.pricePerKm;
+  const displayRate = vehicle.pricePerKm || fareConfig?.oneWayRatePerKm || 14;
 
   return (
     <>

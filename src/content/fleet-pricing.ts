@@ -280,12 +280,34 @@ export function getFleetFareSettings(): FleetFareConfig[] {
 /**
  * Get fare configuration for a specific fleet by fleetId or slug.
  */
-export function getFleetFareConfig(fleetIdOrSlug: string): FleetFareConfig {
+export function getFleetFareConfig(fleetIdOrSlug: string, fallbackSlugOrName?: string): FleetFareConfig {
   const all = getFleetFareSettings();
+  const lower = (fleetIdOrSlug || "").toLowerCase();
+  const lowerFallback = (fallbackSlugOrName || "").toLowerCase();
+
   const match = all.find(
-    (f) => f.fleetId === fleetIdOrSlug || f.vehicleSlug === fleetIdOrSlug || f.id === fleetIdOrSlug,
+    (f) =>
+      f.fleetId === fleetIdOrSlug ||
+      f.vehicleSlug === fleetIdOrSlug ||
+      f.id === fleetIdOrSlug ||
+      (lower && (f.vehicleSlug.toLowerCase() === lower || f.fleetId.toLowerCase() === lower)) ||
+      (lowerFallback && (f.vehicleSlug.toLowerCase() === lowerFallback || f.vehicleName.toLowerCase().includes(lowerFallback) || lowerFallback.includes(f.vehicleSlug.toLowerCase()))) ||
+      (lower && (f.vehicleName.toLowerCase().includes(lower) || lower.includes(f.vehicleSlug.toLowerCase())))
   );
-  return match ?? all[0];
+  if (match) return match;
+
+  // Find by keyword if not direct match
+  const searchStr = `${lower} ${lowerFallback}`;
+  if (searchStr.includes("hatchback") || searchStr.includes("wagonr")) return all.find((f) => f.id === "ffc-hatchback") || all[0];
+  if (searchStr.includes("dzire") || searchStr.includes("sedan")) return all.find((f) => f.id === "ffc-sedan") || all[1];
+  if (searchStr.includes("ertiga") || searchStr.includes("small-suv") || searchStr.includes("6-seater")) return all.find((f) => f.id === "ffc-small-suv") || all[2];
+  if (searchStr.includes("innova") || searchStr.includes("crysta") || searchStr.includes("big-suv") || searchStr.includes("7-seater")) return all.find((f) => f.id === "ffc-big-suv") || all[3];
+  if (searchStr.includes("urbania")) return all.find((f) => f.id === "ffc-urbania") || all[5];
+  if (searchStr.includes("tempo") || searchStr.includes("traveller") || searchStr.includes("12-seater") || searchStr.includes("17-seater")) return all.find((f) => f.id === "ffc-tempo") || all[4];
+  if (searchStr.includes("bus") || searchStr.includes("coach")) return all.find((f) => f.id === "ffc-bus") || all[6];
+  if (searchStr.includes("bmw") || searchStr.includes("mercedes") || searchStr.includes("premium")) return all.find((f) => f.id === "ffc-premium") || all[7];
+
+  return all[0];
 }
 
 import { getFleetVehicles, saveFleetVehicles } from "@/content/fleet";
