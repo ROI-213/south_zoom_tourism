@@ -288,6 +288,8 @@ export function getFleetFareConfig(fleetIdOrSlug: string): FleetFareConfig {
   return match ?? all[0];
 }
 
+import { getFleetVehicles, saveFleetVehicles } from "@/content/fleet";
+
 /**
  * Update fleet fare settings (Admin function).
  */
@@ -302,6 +304,26 @@ export function saveFleetFareSettings(settings: FleetFareConfig[]): void {
   try {
     window.localStorage.setItem(STORAGE_KEY_FLEET_PRICING, JSON.stringify(stamped));
     window.dispatchEvent(new CustomEvent("fleetFareSettingsUpdated", { detail: stamped }));
+
+    // Synchronize pricePerKm and priceFromLabel across all frontend fleet vehicles
+    const vehicles = getFleetVehicles();
+    let hasChanges = false;
+    const updatedVehicles = vehicles.map((v) => {
+      const match = stamped.find((s) => s.fleetId === v.id || s.vehicleSlug === v.slug);
+      if (match && match.oneWayRatePerKm) {
+        hasChanges = true;
+        return {
+          ...v,
+          pricePerKm: match.oneWayRatePerKm,
+          priceFromLabel: `₹${match.oneWayRatePerKm} / km`,
+        };
+      }
+      return v;
+    });
+
+    if (hasChanges) {
+      saveFleetVehicles(updatedVehicles);
+    }
   } catch (err) {
     console.error("Failed to save fleet fare settings:", err);
   }
@@ -317,6 +339,20 @@ export function resetFleetFareSettings(): FleetFareConfig[] {
     window.dispatchEvent(
       new CustomEvent("fleetFareSettingsUpdated", { detail: DEFAULT_FLEET_FARE_SETTINGS }),
     );
+
+    const vehicles = getFleetVehicles();
+    const updatedVehicles = vehicles.map((v) => {
+      const match = DEFAULT_FLEET_FARE_SETTINGS.find((s) => s.fleetId === v.id || s.vehicleSlug === v.slug);
+      if (match && match.oneWayRatePerKm) {
+        return {
+          ...v,
+          pricePerKm: match.oneWayRatePerKm,
+          priceFromLabel: `₹${match.oneWayRatePerKm} / km`,
+        };
+      }
+      return v;
+    });
+    saveFleetVehicles(updatedVehicles);
   }
   return DEFAULT_FLEET_FARE_SETTINGS;
 }
@@ -363,9 +399,9 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
     const baseFare = billableKm * rate;
     const driverAllowance = config.oneWayDriverAllowance;
 
-    // Toll calculation at ₹1.5 per KM (or vehicle tollRate)
+    // Toll calculation (included in fare & stored for admin)
     const tollAmount = Math.round(billableKm * tollRate);
-    const tollDisplay = `₹${tollAmount.toLocaleString("en-IN")} (₹${tollRate}/km)`;
+    const tollDisplay = "Included";
 
     // State tax & parking - paid directly by customer at actuals
     const stateTaxAmount: number | null = null;
@@ -417,9 +453,9 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
   const baseFare = billableDistanceKm * rate;
   const driverAllowance = dayCount * config.roundTripDriverAllowancePerDay;
 
-  // Toll calculation at ₹1.5 per KM (or vehicle tollRate) for round-trip billable distance
+  // Toll calculation (included in fare & stored for admin)
   const tollAmount = Math.round(billableDistanceKm * tollRate);
-  const tollDisplay = `₹${tollAmount.toLocaleString("en-IN")} (₹${tollRate}/km)`;
+  const tollDisplay = "Included";
 
   // State tax & parking - paid directly by customer at actuals
   const stateTaxAmount: number | null = null;
@@ -529,7 +565,7 @@ export function formatWhatsAppQuoteMessage(calc: FareCalculationResult): string 
     `• *Subtotal:* ₹${calc.subtotal.toLocaleString("en-IN")}`,
     `• *GST (${calc.gstPercentage}%):* ₹${calc.gstAmount.toLocaleString("en-IN")}`,
     `\n💰 *ESTIMATED TOTAL: ₹${calc.totalEstimatedFare.toLocaleString("en-IN")}*`,
-    `\n_Note: Fare shown is an estimated fare based on the selected route and vehicle. Toll, parking, permit, and interstate taxes are billed at actuals where applicable._`,
+    `\n_Note: Fare shown is an estimated fare based on the selected route and vehicle. Toll charges are included. Parking, permit, and interstate taxes are billed at actuals where applicable._`,
   ].filter(Boolean);
 
   return lines.join("\n");

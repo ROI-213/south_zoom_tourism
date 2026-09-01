@@ -52,7 +52,21 @@ import {
   DollarSign,
   Image as ImageIcon,
   ShieldAlert,
+  Save,
+  Coins,
+  CheckCircle2,
+  Calculator,
+  ArrowRight,
+  ArrowLeftRight,
+  Sliders,
+  Check,
 } from 'lucide-react';
+import {
+  getFleetFareSettings,
+  saveFleetFareSettings,
+  resetFleetFareSettings,
+  type FleetFareConfig,
+} from '@/content/fleet-pricing';
 import {
   getFleetVehicles,
   addFleetVehicle,
@@ -223,16 +237,90 @@ function FleetProductPage() {
   const [newGalleryKind, setNewGalleryKind] = useState<GalleryKind>('interior');
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
 
-  function loadFleet() {
+  // All-Fleet pricing state
+  const [fareSettings, setFareSettings] = useState<FleetFareConfig[]>(() => getFleetFareSettings());
+  const [activeMainTab, setActiveMainTab] = useState<'pricing' | 'vehicles'>('pricing');
+  const [isSavingPrices, setIsSavingPrices] = useState(false);
+  const [fareResetConfirm, setFareResetConfirm] = useState(false);
+  const [pricingSearch, setPricingSearch] = useState('');
+
+  function loadFleetAndPrices() {
     setFleetList(getFleetVehicles());
+    setFareSettings(getFleetFareSettings());
   }
 
   useEffect(() => {
-    loadFleet();
-    const handler = () => loadFleet();
-    window.addEventListener('fleetDataUpdated', handler);
-    return () => window.removeEventListener('fleetDataUpdated', handler);
+    loadFleetAndPrices();
+    const handleData = () => loadFleetAndPrices();
+    const handleFare = () => loadFleetAndPrices();
+    window.addEventListener('fleetDataUpdated', handleData);
+    window.addEventListener('fleetFareSettingsUpdated', handleFare);
+    return () => {
+      window.removeEventListener('fleetDataUpdated', handleData);
+      window.removeEventListener('fleetFareSettingsUpdated', handleFare);
+    };
   }, []);
+
+  function handleFareRateChange(fleetIdOrSlug: string, field: keyof FleetFareConfig, value: any) {
+    setFareSettings((prev) => {
+      const idx = prev.findIndex(
+        (f) => f.fleetId === fleetIdOrSlug || f.vehicleSlug === fleetIdOrSlug || f.id === fleetIdOrSlug
+      );
+      if (idx === -1) {
+        const v = fleetList.find((item) => item.id === fleetIdOrSlug || item.slug === fleetIdOrSlug);
+        if (!v) return prev;
+        const newEntry: FleetFareConfig = {
+          id: `ffc-${v.slug}`,
+          fleetId: v.id,
+          vehicleSlug: v.slug,
+          vehicleName: v.name,
+          category: v.categorySlug,
+          oneWayRatePerKm: field === 'oneWayRatePerKm' ? Number(value) : v.pricePerKm,
+          oneWayMinimumKm: 150,
+          oneWayDriverAllowance: 300,
+          roundTripRatePerKm: field === 'roundTripRatePerKm' ? Number(value) : Math.max(10, v.pricePerKm - 1),
+          roundTripMinimumKmPerDay: 300,
+          roundTripDriverAllowancePerDay: 300,
+          tollRatePerKm: 1.5,
+          gstPercentage: 5,
+          tollMode: 'calculated',
+          stateTaxMode: 'extra',
+          isActive: true,
+          displayOrder: v.order || 99,
+        };
+        return [...prev, newEntry];
+      }
+      const updated = [...prev];
+      updated[idx] = {
+        ...updated[idx],
+        [field]: typeof value === 'number' ? Number(value) : value,
+      };
+      return updated;
+    });
+  }
+
+  function handleSaveAllPrices() {
+    setIsSavingPrices(true);
+    try {
+      saveFleetFareSettings(fareSettings);
+      loadFleetAndPrices();
+      toast.success('All Fleet Prices Saved Successfully!', {
+        description: 'One-way and round-trip rates updated across frontend fleet cards & fare calculator.',
+      });
+    } catch (err) {
+      toast.error('Failed to save fleet prices');
+    } finally {
+      setIsSavingPrices(false);
+    }
+  }
+
+  function handleResetAllPrices() {
+    const defaults = resetFleetFareSettings();
+    setFareSettings(defaults);
+    loadFleetAndPrices();
+    setFareResetConfirm(false);
+    toast.success('Fleet prices reset to factory defaults.');
+  }
 
   const filtered = fleetList.filter(
     (v) =>
@@ -241,6 +329,16 @@ function FleetProductPage() {
       v.categorySlug?.toLowerCase().includes(search.toLowerCase()) ||
       v.brand?.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const filteredPricing = fareSettings.filter((f) => {
+    if (!pricingSearch) return true;
+    const q = pricingSearch.toLowerCase();
+    return (
+      f.vehicleName.toLowerCase().includes(q) ||
+      f.category.toLowerCase().includes(q) ||
+      f.vehicleSlug.toLowerCase().includes(q)
+    );
+  });
 
   function openAdd() {
     setForm({ ...emptyForm, image: fleetDzire });
@@ -651,171 +749,516 @@ function FleetProductPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold">Fleet Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Fleet & Pricing Management</h1>
           <p className="text-sm text-gray-500">
-            Add, edit, and fully customize vehicle cards and separate detail pages (/fleet/:slug).
+            Set and edit One-Way and Round-Trip rates for all fleet vehicles in one place, or manage listing content & detail pages.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setResetConfirm(true)}
-            className="gap-2 text-xs"
+      </div>
+
+      {/* Main Tab Switcher */}
+      <div className="flex items-center justify-between border-b border-gray-200 pb-3 flex-wrap gap-3">
+        <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('pricing')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              activeMainTab === 'pricing'
+                ? 'bg-white text-orange-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
           >
-            <RefreshCw size={13} /> Reset to Default
-          </Button>
-          <Button onClick={openAdd} className="bg-orange-500 hover:bg-orange-600 gap-2">
-            <Plus size={16} /> Add Vehicle
-          </Button>
+            <DollarSign size={15} />
+            <span>All Fleet Pricing (One-Way & Round-Trip)</span>
+            <Badge className="bg-orange-100 text-orange-700 text-[10px] px-1.5 py-0 border-none font-bold">
+              {fareSettings.length} Fleets
+            </Badge>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveMainTab('vehicles')}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              activeMainTab === 'vehicles'
+                ? 'bg-white text-orange-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Car size={15} />
+            <span>Vehicle Listings & Details</span>
+            <Badge className="bg-gray-200 text-gray-700 text-[10px] px-1.5 py-0 border-none font-bold">
+              {fleetList.length}
+            </Badge>
+          </button>
         </div>
+
+        {activeMainTab === 'pricing' ? (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFareResetConfirm(true)}
+              className="gap-1.5 text-xs text-red-600 hover:bg-red-50 hover:border-red-200"
+            >
+              <RefreshCw size={13} /> Reset Rates
+            </Button>
+            <Button
+              onClick={handleSaveAllPrices}
+              disabled={isSavingPrices}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold gap-2 text-xs sm:text-sm shadow-md"
+            >
+              <Save size={15} /> {isSavingPrices ? 'Saving Rates...' : 'Save All Fleet Prices'}
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setResetConfirm(true)}
+              className="gap-2 text-xs"
+            >
+              <RefreshCw size={13} /> Reset to Default
+            </Button>
+            <Button onClick={openAdd} className="bg-orange-500 hover:bg-orange-600 gap-2">
+              <Plus size={16} /> Add Vehicle
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <Input
-          placeholder="Search by name, brand, or category..."
-          className="pl-9"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* Fleet Table */}
-      <Card>
-        <CardContent className="p-0">
-          {filtered.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <Car className="mx-auto mb-2 opacity-30" size={32} />
-              <p>{search ? 'No vehicles match your search' : 'No vehicles yet — click "Add Vehicle" to start'}</p>
+      {/* ========================================================================= */}
+      {/* TAB 1: ALL FLEET PRICING & TARIFF MANAGER (ONE-WAY & ROUND-TRIP)         */}
+      {/* ========================================================================= */}
+      {activeMainTab === 'pricing' && (
+        <div className="space-y-4">
+          {/* Quick Stats Banner */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-3.5 bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-200/60 rounded-xl">
+              <span className="text-[11px] text-gray-500 font-medium block">Total Fleets Configured</span>
+              <span className="text-xl font-extrabold text-orange-600">{fareSettings.length} Vehicles</span>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-gray-50 text-xs text-gray-500">
-                    <th className="text-left px-4 py-3">Vehicle</th>
-                    <th className="text-left px-4 py-3 hidden sm:table-cell">Category</th>
-                    <th className="text-left px-4 py-3 hidden md:table-cell">Capacity</th>
-                    <th className="text-left px-4 py-3">Rate</th>
-                    <th className="text-left px-4 py-3 hidden sm:table-cell">Status</th>
-                    <th className="text-right px-4 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filtered.map((v) => (
-                    <tr key={v.id} className="hover:bg-gray-50">
-                      {/* Vehicle name + image thumbnail */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-14 rounded overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
-                            {v.image ? (
-                              <img
-                                src={typeof v.image === 'string' ? v.image : undefined}
-                                alt={v.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center">
-                                <Car size={16} className="text-gray-300" />
+            <div className="p-3.5 bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-200/60 rounded-xl">
+              <span className="text-[11px] text-gray-500 font-medium block">One-Way Rate Range</span>
+              <span className="text-xl font-extrabold text-blue-700">
+                ₹{Math.min(...fareSettings.map((f) => f.oneWayRatePerKm || 12))}/km – ₹
+                {Math.max(...fareSettings.map((f) => f.oneWayRatePerKm || 45))}/km
+              </span>
+            </div>
+            <div className="p-3.5 bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-200/60 rounded-xl">
+              <span className="text-[11px] text-gray-500 font-medium block">Round-Trip Rate Range</span>
+              <span className="text-xl font-extrabold text-emerald-700">
+                ₹{Math.min(...fareSettings.map((f) => f.roundTripRatePerKm || 11))}/km – ₹
+                {Math.max(...fareSettings.map((f) => f.roundTripRatePerKm || 42))}/km
+              </span>
+            </div>
+            <div className="p-3.5 bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-200/60 rounded-xl flex flex-col justify-center">
+              <div className="flex items-center gap-1.5 text-purple-700 font-bold text-xs">
+                <CheckCircle2 size={14} className="text-purple-600" />
+                <span>Live Frontend Sync</span>
+              </div>
+              <span className="text-[10px] text-gray-500 mt-0.5">Rates immediately reflect on all cards & calculator</span>
+            </div>
+          </div>
+
+          {/* Search bar */}
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Filter pricing by vehicle name, category or model..."
+              className="pl-9"
+              value={pricingSearch}
+              onChange={(e) => setPricingSearch(e.target.value)}
+            />
+          </div>
+
+          {/* All Fleets Pricing Table */}
+          <Card className="overflow-hidden border-border shadow-sm">
+            <CardContent className="p-0">
+              {filteredPricing.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <Coins className="mx-auto mb-2 opacity-30" size={32} />
+                  <p>No fleet fare configs match your search</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50 text-xs text-gray-600 uppercase font-semibold">
+                        <th className="text-left px-4 py-3.5">Vehicle</th>
+                        <th className="text-left px-3 py-3.5 min-w-[120px]">One Way (₹/km)</th>
+                        <th className="text-left px-3 py-3.5 min-w-[120px]">Round Trip (₹/km)</th>
+                        <th className="text-left px-3 py-3.5 min-w-[110px]">One Way Min KM</th>
+                        <th className="text-left px-3 py-3.5 min-w-[120px]">Round Min KM/Day</th>
+                        <th className="text-left px-3 py-3.5 min-w-[120px]">Driver Bata (₹/Day)</th>
+                        <th className="text-center px-3 py-3.5 min-w-[90px]">Active</th>
+                        <th className="text-left px-4 py-3.5 hidden xl:table-cell">Minimum Estimated Tariff</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredPricing.map((fleet) => {
+                        const v = fleetList.find(
+                          (item) => item.id === fleet.fleetId || item.slug === fleet.vehicleSlug || item.slug === fleet.id
+                        );
+                        const img = v?.image || fleetDzire;
+                        const oneWayMinCost = fleet.oneWayMinimumKm * fleet.oneWayRatePerKm + (fleet.oneWayDriverAllowance || 300);
+                        const roundTripMinCost =
+                          fleet.roundTripMinimumKmPerDay * fleet.roundTripRatePerKm + (fleet.roundTripDriverAllowancePerDay || 300);
+
+                        return (
+                          <tr key={fleet.id || fleet.fleetId} className="hover:bg-orange-50/30 transition-colors">
+                            {/* Vehicle info */}
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <div className="h-11 w-16 rounded-lg overflow-hidden bg-white shrink-0 border border-gray-200 p-0.5 shadow-xs">
+                                  <img
+                                    src={typeof img === 'string' ? img : undefined}
+                                    alt={fleet.vehicleName}
+                                    className="h-full w-full object-contain"
+                                  />
+                                </div>
+                                <div>
+                                  <p className="font-bold text-gray-900 leading-tight">{fleet.vehicleName}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[11px] font-medium text-gray-500">{fleet.category}</span>
+                                    {v && (
+                                      <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.2 rounded font-medium">
+                                        {v.seats}s · {v.luggage}b
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <p className="font-semibold text-gray-900 leading-tight">{v.name}</p>
-                              <a
-                                href={`/fleet/${v.slug}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                title="View public detail page"
-                                className="text-gray-400 hover:text-primary transition-colors inline-flex items-center"
-                              >
-                                <ExternalLink size={12} />
-                              </a>
-                            </div>
-                            <p className="text-xs text-gray-400">{v.brand} {v.model} · <span className="font-mono text-[11px] text-gray-400">/fleet/{v.slug}</span></p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-xs hidden sm:table-cell">
-                        <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded capitalize">
-                          {vehicleCategories.find((c) => c.slug === v.categorySlug)?.label ?? v.categorySlug}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-600 hidden md:table-cell">
-                        {v.seats} Seats · {v.luggage} Bags · {v.ac ? 'AC' : 'Non-AC'}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-green-700">₹{v.pricePerKm}/km</td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        <div className="flex flex-col gap-1">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium w-fit ${
-                              v.published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                            }`}
-                          >
-                            {v.published ? 'Published' : 'Hidden'}
-                          </span>
-                          {v.featured && (
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium w-fit bg-amber-100 text-amber-700">
-                              Featured
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Edit Public Page Details Button */}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openDetailEditor(v)}
-                            className="h-8 px-2.5 text-xs font-semibold border-primary/50 text-primary hover:bg-primary/10 gap-1"
-                            title="Edit all content on the separate vehicle page"
-                          >
-                            <FileText size={13} />
-                            <span>Edit Page Details</span>
-                          </Button>
+                            </td>
 
-                          <button
-                            title={v.published ? 'Hide from public' : 'Publish'}
-                            className="p-1.5 rounded hover:bg-gray-100 text-gray-600"
-                            onClick={() => handleTogglePublish(v)}
-                          >
-                            {v.published ? <Eye size={13} /> : <EyeOff size={13} className="text-gray-400" />}
-                          </button>
-                          <button
-                            title={v.featured ? 'Remove from featured' : 'Mark as featured'}
-                            className={`p-1.5 rounded hover:bg-amber-50 ${v.featured ? 'text-amber-500' : 'text-gray-300'}`}
-                            onClick={() => handleToggleFeatured(v)}
-                          >
-                            <Star size={13} />
-                          </button>
-                          <button
-                            title="Edit Basic Listing"
-                            className="p-1.5 rounded hover:bg-gray-100 text-gray-600"
-                            onClick={() => openEdit(v)}
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                          <button
-                            title="Delete"
-                            className="p-1.5 rounded hover:bg-red-50 text-red-500"
-                            onClick={() => setDeleteId(v.id)}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                            {/* One Way Rate Input */}
+                            <td className="px-3 py-3.5">
+                              <div className="relative flex items-center">
+                                <span className="absolute left-2.5 text-xs font-bold text-primary">₹</span>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  value={fleet.oneWayRatePerKm}
+                                  onChange={(e) =>
+                                    handleFareRateChange(fleet.fleetId, 'oneWayRatePerKm', Number(e.target.value))
+                                  }
+                                  className="h-9 pl-6 pr-8 text-xs sm:text-sm font-extrabold text-primary border-primary/40 focus-visible:ring-primary/30 w-full"
+                                />
+                                <span className="absolute right-2 text-[10px] text-gray-400 font-semibold">/km</span>
+                              </div>
+                            </td>
+
+                            {/* Round Trip Rate Input */}
+                            <td className="px-3 py-3.5">
+                              <div className="relative flex items-center">
+                                <span className="absolute left-2.5 text-xs font-bold text-emerald-600">₹</span>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  value={fleet.roundTripRatePerKm}
+                                  onChange={(e) =>
+                                    handleFareRateChange(fleet.fleetId, 'roundTripRatePerKm', Number(e.target.value))
+                                  }
+                                  className="h-9 pl-6 pr-8 text-xs sm:text-sm font-extrabold text-emerald-700 border-emerald-300 focus-visible:ring-emerald-200 w-full"
+                                />
+                                <span className="absolute right-2 text-[10px] text-gray-400 font-semibold">/km</span>
+                              </div>
+                            </td>
+
+                            {/* One Way Min KM */}
+                            <td className="px-3 py-3.5">
+                              <div className="relative flex items-center">
+                                <Input
+                                  type="number"
+                                  min={10}
+                                  value={fleet.oneWayMinimumKm}
+                                  onChange={(e) =>
+                                    handleFareRateChange(fleet.fleetId, 'oneWayMinimumKm', Number(e.target.value))
+                                  }
+                                  className="h-9 pr-7 text-xs font-semibold text-gray-800 w-full"
+                                />
+                                <span className="absolute right-2 text-[10px] text-gray-400">km</span>
+                              </div>
+                            </td>
+
+                            {/* Round Trip Min KM / Day */}
+                            <td className="px-3 py-3.5">
+                              <div className="relative flex items-center">
+                                <Input
+                                  type="number"
+                                  min={50}
+                                  value={fleet.roundTripMinimumKmPerDay}
+                                  onChange={(e) =>
+                                    handleFareRateChange(fleet.fleetId, 'roundTripMinimumKmPerDay', Number(e.target.value))
+                                  }
+                                  className="h-9 pr-9 text-xs font-semibold text-gray-800 w-full"
+                                />
+                                <span className="absolute right-2 text-[10px] text-gray-400">km/d</span>
+                              </div>
+                            </td>
+
+                            {/* Driver Allowance */}
+                            <td className="px-3 py-3.5">
+                              <div className="relative flex items-center">
+                                <span className="absolute left-2.5 text-xs font-medium text-gray-500">₹</span>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={fleet.roundTripDriverAllowancePerDay}
+                                  onChange={(e) => {
+                                    const val = Number(e.target.value);
+                                    handleFareRateChange(fleet.fleetId, 'roundTripDriverAllowancePerDay', val);
+                                    handleFareRateChange(fleet.fleetId, 'oneWayDriverAllowance', val);
+                                  }}
+                                  className="h-9 pl-6 pr-2 text-xs font-semibold text-gray-800 w-full"
+                                />
+                              </div>
+                            </td>
+
+                            {/* Active Switch */}
+                            <td className="px-3 py-3.5 text-center">
+                              <Switch
+                                checked={fleet.isActive !== false}
+                                onCheckedChange={(checked) => handleFareRateChange(fleet.fleetId, 'isActive', checked)}
+                              />
+                            </td>
+
+                            {/* Calculated Min Tariff Pill */}
+                            <td className="px-4 py-3.5 hidden xl:table-cell">
+                              <div className="space-y-1 text-[11px]">
+                                <div className="flex items-center gap-1.5 text-primary font-bold">
+                                  <ArrowRight size={12} />
+                                  <span>1-Way ({fleet.oneWayMinimumKm}km min): ₹{oneWayMinCost.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
+                                  <ArrowLeftRight size={12} />
+                                  <span>Round ({fleet.roundTripMinimumKmPerDay}km/day): ₹{roundTripMinCost.toLocaleString('en-IN')}/d</span>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Sticky Bottom Save Bar */}
+          <div className="p-4 bg-gradient-to-r from-orange-50 via-white to-orange-50 border border-orange-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-2 text-xs text-gray-700">
+              <CheckCircle2 size={16} className="text-green-600 shrink-0" />
+              <span>
+                Editing prices here updates the public <strong>/fleet</strong> rate badges, WhatsApp quotes, booking requests, and the auto fare engine.
+              </span>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFareResetConfirm(true)}
+                className="text-xs text-red-600 hover:bg-red-50"
+              >
+                Reset Rates
+              </Button>
+              <Button
+                onClick={handleSaveAllPrices}
+                disabled={isSavingPrices}
+                className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700 text-white font-bold gap-2 text-xs sm:text-sm h-10 px-6 shadow-md"
+              >
+                <Save size={16} />
+                {isSavingPrices ? 'Saving Changes...' : 'Save All Fleet Prices'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: VEHICLE LISTINGS & DETAILS CONTENT                                */}
+      {/* ========================================================================= */}
+      {activeMainTab === 'vehicles' && (
+        <div className="space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search by name, brand, or category..."
+              className="pl-9"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Fleet Table */}
+          <Card>
+            <CardContent className="p-0">
+              {filtered.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <Car className="mx-auto mb-2 opacity-30" size={32} />
+                  <p>{search ? 'No vehicles match your search' : 'No vehicles yet — click "Add Vehicle" to start'}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50 text-xs text-gray-500">
+                        <th className="text-left px-4 py-3">Vehicle</th>
+                        <th className="text-left px-4 py-3 hidden sm:table-cell">Category</th>
+                        <th className="text-left px-4 py-3 hidden md:table-cell">Capacity</th>
+                        <th className="text-left px-4 py-3">Rates (1-Way / Round)</th>
+                        <th className="text-left px-4 py-3 hidden sm:table-cell">Status</th>
+                        <th className="text-right px-4 py-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filtered.map((v) => {
+                        const fareCfg = fareSettings.find((f) => f.fleetId === v.id || f.vehicleSlug === v.slug);
+                        const oneWayRate = fareCfg?.oneWayRatePerKm ?? v.pricePerKm;
+                        const roundTripRate = fareCfg?.roundTripRatePerKm ?? (v.pricePerKm > 11 ? v.pricePerKm - 1 : v.pricePerKm);
+
+                        return (
+                          <tr key={v.id} className="hover:bg-gray-50">
+                            {/* Vehicle name + image thumbnail */}
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-14 rounded overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                                  {v.image ? (
+                                    <img
+                                      src={typeof v.image === 'string' ? v.image : undefined}
+                                      alt={v.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="h-full w-full flex items-center justify-center">
+                                      <Car size={16} className="text-gray-300" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="font-semibold text-gray-900 leading-tight">{v.name}</p>
+                                    <a
+                                      href={`/fleet/${v.slug}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      title="View public detail page"
+                                      className="text-gray-400 hover:text-primary transition-colors inline-flex items-center"
+                                    >
+                                      <ExternalLink size={12} />
+                                    </a>
+                                  </div>
+                                  <p className="text-xs text-gray-400">
+                                    {v.brand} {v.model} ·{' '}
+                                    <span className="font-mono text-[11px] text-gray-400">/fleet/{v.slug}</span>
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-xs hidden sm:table-cell">
+                              <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded capitalize">
+                                {vehicleCategories.find((c) => c.slug === v.categorySlug)?.label ?? v.categorySlug}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-600 hidden md:table-cell">
+                              {v.seats} Seats · {v.luggage} Bags · {v.ac ? 'AC' : 'Non-AC'}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-col gap-0.5">
+                                <span className="font-bold text-primary text-xs">₹{oneWayRate}/km (1-Way)</span>
+                                <span className="font-semibold text-emerald-600 text-[11px]">₹{roundTripRate}/km (Round)</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 hidden sm:table-cell">
+                              <div className="flex flex-col gap-1">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-xs font-medium w-fit ${
+                                    v.published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                  }`}
+                                >
+                                  {v.published ? 'Published' : 'Hidden'}
+                                </span>
+                                {v.featured && (
+                                  <span className="px-2 py-0.5 rounded-full text-xs font-medium w-fit bg-amber-100 text-amber-700">
+                                    Featured
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {/* Edit Public Page Details Button */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openDetailEditor(v)}
+                                  className="h-8 px-2.5 text-xs font-semibold border-primary/50 text-primary hover:bg-primary/10 gap-1"
+                                  title="Edit all content on the separate vehicle page"
+                                >
+                                  <FileText size={13} />
+                                  <span>Edit Page Details</span>
+                                </Button>
+
+                                <button
+                                  title={v.published ? 'Hide from public' : 'Publish'}
+                                  className="p-1.5 rounded hover:bg-gray-100 text-gray-600"
+                                  onClick={() => handleTogglePublish(v)}
+                                >
+                                  {v.published ? <Eye size={13} /> : <EyeOff size={13} className="text-gray-400" />}
+                                </button>
+                                <button
+                                  title={v.featured ? 'Remove from featured' : 'Mark as featured'}
+                                  className={`p-1.5 rounded hover:bg-amber-50 ${v.featured ? 'text-amber-500' : 'text-gray-300'}`}
+                                  onClick={() => handleToggleFeatured(v)}
+                                >
+                                  <Star size={13} />
+                                </button>
+                                <button
+                                  title="Edit Basic Listing"
+                                  className="p-1.5 rounded hover:bg-gray-100 text-gray-600"
+                                  onClick={() => openEdit(v)}
+                                >
+                                  <Edit2 size={13} />
+                                </button>
+                                <button
+                                  title="Delete"
+                                  className="p-1.5 rounded hover:bg-red-50 text-red-500"
+                                  onClick={() => setDeleteId(v.id)}
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Pricing Reset Confirmation */}
+      <AlertDialog open={fareResetConfirm} onOpenChange={setFareResetConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset all fleet tariffs to default?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will reset One-Way and Round-Trip rates, minimum KM rules, and driver allowances for all fleets back to factory defaults.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetAllPrices} className="bg-red-600 hover:bg-red-700">
+              Reset All Rates
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

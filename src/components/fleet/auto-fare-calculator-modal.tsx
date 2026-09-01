@@ -83,11 +83,13 @@ export function AutoFareCalculatorModal({
   const savedSearch = getLatestTravelSearch();
 
   // Form states
-  const [selectedVehicleSlug, setSelectedVehicleSlug] = useState<string>(
-    initialVehicle?.slug || savedSearch.vehicleType?.includes("WagonR") || savedSearch.vehicleType?.includes("Hatchback")
-      ? "hatchback-wagonr"
-      : publishedVehicles[0]?.slug || "hatchback-wagonr",
-  );
+  const [selectedVehicleSlug, setSelectedVehicleSlug] = useState<string>(() => {
+    if (initialVehicle?.slug) return initialVehicle.slug;
+    if (savedSearch.vehicleType?.includes("WagonR") || savedSearch.vehicleType?.includes("Hatchback")) {
+      return "hatchback-wagonr";
+    }
+    return publishedVehicles[0]?.slug || "hatchback-wagonr";
+  });
   const [tripType, setTripType] = useState<"one-way" | "round-trip">(
     initialTripType || (savedSearch.tripType?.toLowerCase().includes("round") ? "round-trip" : "one-way"),
   );
@@ -117,6 +119,12 @@ export function AutoFareCalculatorModal({
       }
     }
   }, [open, initialVehicle]);
+
+  useEffect(() => {
+    if (initialVehicle?.slug) {
+      setSelectedVehicleSlug(initialVehicle.slug);
+    }
+  }, [initialVehicle?.slug]);
 
   // Autocomplete UI states
   const [pickupSuggestions, setPickupSuggestions] = useState<LocationSuggestion[]>([]);
@@ -700,7 +708,9 @@ export function AutoFareCalculatorModal({
                   </div>
                   <div>
                     <span className="text-muted-foreground block text-[11px]">Vehicle:</span>
-                    <span className="font-bold text-primary truncate block">{fareResult.fleet.vehicleName}</span>
+                    <span className="font-bold text-primary block break-words" title={currentVehicle?.name || fareResult.fleet.vehicleName}>
+                      {currentVehicle?.name || fareResult.fleet.vehicleName}
+                    </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground block text-[11px]">Rate / KM:</span>
@@ -766,10 +776,10 @@ export function AutoFareCalculatorModal({
 
                   <div className="flex items-center justify-between py-2 gap-2">
                     <span className="text-muted-foreground font-medium">
-                      Toll Charges {fareResult.tollAmount != null ? `(₹${fareResult.fleet.tollRatePerKm ?? 1.5}/km count)` : ""}:
+                      Toll Charges:
                     </span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400 shrink-0 text-right">
-                      {fareResult.tollDisplay}
+                      Included
                     </span>
                   </div>
 
@@ -893,7 +903,7 @@ export function AutoFareCalculatorModal({
               <div className="rounded-xl border border-border bg-muted/20 p-3 text-[11px] text-muted-foreground flex items-start gap-2">
                 <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p>
-                  Fare shown is an estimated fare based on the selected route and vehicle. Toll is auto-calculated at ₹1.5/km.
+                  Fare shown is an estimated fare based on the selected route and vehicle. Toll charges are included.
                   Parking, permits, and interstate/state taxes are paid directly by customer where applicable.
                 </p>
               </div>

@@ -93,7 +93,7 @@ export function VehicleCard({
               className="h-7 sm:h-8 w-full text-[10px] sm:text-xs font-semibold gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
             >
               <Calculator className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
-              Calculate Fare
+              Fair
             </Button>
             <div className="flex gap-1.5">
               <Button
