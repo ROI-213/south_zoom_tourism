@@ -458,20 +458,11 @@ function VehicleDetailPage() {
 
             <aside className="hidden lg:block">
               <div className="sticky top-24 rounded-xl border border-border bg-card p-5">
-                <div className="flex items-center justify-between mb-2">
+                <div className="mb-2">
                   <h2 className="text-base font-bold">Book the {vehicle.name}</h2>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowCalculator(true)}
-                    className="text-xs text-primary font-bold hover:bg-primary/10 gap-1 h-7 px-2"
-                  >
-                    <Calculator className="h-3 w-3" /> Auto Calculator
-                  </Button>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Send a request or calculate an instant route fare.
+                  Send a booking request with your journey details.
                 </p>
                 <div className="mt-4">
                   <VehicleBookingForm
