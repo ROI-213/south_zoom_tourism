@@ -302,19 +302,6 @@ function FleetPage() {
                 </p>
               </section>
             ) : null}
-
-            {/* Auto Fare Calculator Trigger */}
-            <div className="flex items-center self-start sm:self-center shrink-0 gap-2">
-              <Button
-                type="button"
-                size="default"
-                onClick={() => setCalculatorOpen(true)}
-                className="font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-xs sm:text-sm h-10 px-5 rounded-xl transition-transform active:scale-95"
-              >
-                <Calculator className="h-4 w-4" />
-                Auto Fare Calculator
-              </Button>
-            </div>
           </div>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
