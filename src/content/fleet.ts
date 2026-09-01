@@ -68,11 +68,26 @@ export const setDynamicFleetVehicles = (vehicles: FleetVehicle[]) => {
   dynamicFleetVehicles = vehicles;
 };
 
+export function getStandardVehiclePrice(slugOrNameOrCategory: string, customPrice?: number): number {
+  if (customPrice && customPrice > 0 && customPrice !== 12) return customPrice;
+  const lower = (slugOrNameOrCategory || "").toLowerCase();
+  if (lower.includes("hatchback") || lower.includes("wagonr")) return 12;
+  if (lower.includes("dzire") || lower.includes("sedan") || lower.includes("etios")) return 14;
+  if (lower.includes("ertiga") || lower.includes("small suv") || lower.includes("small-suv") || lower.includes("6-seater")) return 18;
+  if (lower.includes("crysta") || lower.includes("innova") || lower.includes("big suv") || lower.includes("big-suv") || lower.includes("7-seater")) return 21;
+  if (lower.includes("urbania") || lower.includes("14-seater")) return 28;
+  if (lower.includes("tempo") || lower.includes("traveller") || lower.includes("12-seater") || lower.includes("17-seater")) return 24;
+  if (lower.includes("bus") || lower.includes("coach") || lower.includes("27-seater") || lower.includes("45-seater")) return 38;
+  if (lower.includes("bmw") || lower.includes("mercedes") || lower.includes("premium")) return 45;
+  return customPrice && customPrice > 0 ? customPrice : 14;
+}
+
 export function mapDbFleetToRecord(row: any, index: number = 0): FleetVehicle {
   const existing = fleetVehicles.find(
     (v) => v.id === row.id || v.slug === row.slug || v.name?.toLowerCase() === (row.name || '').toLowerCase()
   );
   const resolvedImg = resolveVehicleImage(row.image || existing?.image, row.slug || row.name || existing?.slug || existing?.name);
+  const rate = getStandardVehiclePrice(row.slug || row.name || row.category_slug || existing?.slug || existing?.name || '', row.price_per_km || existing?.pricePerKm);
 
   return {
     id: row.id || existing?.id || `fv-${row.slug || index}`,
@@ -85,8 +100,8 @@ export function mapDbFleetToRecord(row: any, index: number = 0): FleetVehicle {
     luggage: row.luggage || existing?.luggage || 3,
     ac: row.ac !== false,
     fuel: row.fuel || existing?.fuel || 'Diesel',
-    pricePerKm: row.price_per_km || existing?.pricePerKm || 14,
-    priceFromLabel: existing?.priceFromLabel || `₹${row.price_per_km || 14} / km`,
+    pricePerKm: rate,
+    priceFromLabel: `₹${rate} / km`,
     available: true,
     availabilityText: 'Available today',
     allowEnquiryWhenUnavailable: true,
