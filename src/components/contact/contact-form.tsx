@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { syncEnquiryToSupabase } from "@/lib/booking-sync";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -129,6 +130,17 @@ export function ContactForm({
       phone: payload.phone,
       email: payload.email ?? "",
     });
+
+    // Persist directly into Supabase backend database for admin & operations
+    syncEnquiryToSupabase({
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email,
+      serviceType: serviceLabel,
+      message: `Subject: ${payload.subject}\n${payload.message}`,
+      reference: ref,
+    });
+
     const lines = [
       `New contact enquiry — ${ref}`,
       `Name: ${payload.name}`,

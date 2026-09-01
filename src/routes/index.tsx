@@ -7,6 +7,7 @@ import { TravelSearchCard } from "@/components/home/travel-search-card";
 import { AboutSection } from "@/components/home/about-section";
 import { ServicesSection } from "@/components/home/services-section";
 import { FleetSection } from "@/components/home/fleet-section";
+import { KarnatakaSlider } from "@/components/home/karnataka-slider";
 import { PackagesSection } from "@/components/home/packages-section";
 import { HotelsSection } from "@/components/home/hotels-section";
 import { DestinationsSection } from "@/components/home/destinations-section";
@@ -80,6 +81,7 @@ function Index() {
         <AboutSection />
         <ServicesSection />
         <FleetSection />
+        <KarnatakaSlider />
         <PackagesSection />
         <HotelsSection />
         <DestinationsSection />

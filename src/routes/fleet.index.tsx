@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Calculator, Car, Sparkles, Settings } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -8,6 +8,9 @@ import { PageBanner } from "@/components/common/page-banner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { VehicleCard } from "@/components/fleet/vehicle-card";
+import { AutoFareCalculatorModal } from "@/components/fleet/auto-fare-calculator-modal";
+import { AdminFleetManagementDialog } from "@/components/admin/fleet-management-dialog";
+import { AdminFleetFareManagementDialog } from "@/components/admin/fleet-fare-management";
 import {
   FleetFilters,
   defaultFleetFilters,
@@ -19,12 +22,17 @@ import {
   fleetIntroBlock,
   fleetPriceBounds,
   getPublishedVehicles,
+  getFleetVehicles,
   getVehicleCategoryLabel,
+  setDynamicFleetVehicles,
+  mapDbFleetToRecord,
   sortOptions,
   tripTypeOptions,
   type SortValue,
 } from "@/content/fleet";
 import { company } from "@/content/site";
+import { getLatestTravelSearch, saveLatestTravelSearch } from "@/lib/search-storage";
+import supabase from "@/lib/supabase";
 
 type FleetSearch = {
   categories?: string;
@@ -35,6 +43,14 @@ type FleetSearch = {
   maxPrice?: number;
   available?: string;
   sort?: string;
+  pickupCity?: string;
+  dropCity?: string;
+  pickupDate?: string;
+  pickupTime?: string;
+  passengers?: string;
+  vehicleType?: string;
+  pickup?: string;
+  destination?: string;
 };
 
 export const Route = createFileRoute("/fleet/")({
@@ -47,6 +63,14 @@ export const Route = createFileRoute("/fleet/")({
     maxPrice: Number(search.maxPrice) > 0 ? Number(search.maxPrice) : undefined,
     available: search.available === "1" ? "1" : undefined,
     sort: typeof search.sort === "string" ? search.sort : undefined,
+    pickupCity: typeof search.pickupCity === "string" ? search.pickupCity : undefined,
+    dropCity: typeof search.dropCity === "string" ? search.dropCity : undefined,
+    pickupDate: typeof search.pickupDate === "string" ? search.pickupDate : undefined,
+    pickupTime: typeof search.pickupTime === "string" ? search.pickupTime : undefined,
+    passengers: typeof search.passengers === "string" ? search.passengers : undefined,
+    vehicleType: typeof search.vehicleType === "string" ? search.vehicleType : undefined,
+    pickup: typeof search.pickup === "string" ? search.pickup : undefined,
+    destination: typeof search.destination === "string" ? search.destination : undefined,
   }),
   component: FleetPage,
   errorComponent: ({ error }) => (
@@ -101,6 +125,50 @@ function FleetPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/fleet/" });
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [fleetAdminOpen, setFleetAdminOpen] = useState(false);
+  const [fleetFareAdminOpen, setFleetFareAdminOpen] = useState(false);
+  const [fleetDataVersion, setFleetDataVersion] = useState(0);
+
+  // Re-calculate price bounds reactively from current fleet data
+  const fleetPriceBoundsLive = useMemo(() => {
+    const prices = getFleetVehicles().map((v) => v.pricePerKm);
+    return { min: Math.min(...prices), max: Math.max(...prices) };
+  }, [fleetDataVersion]);
+
+  // Re-render when fleet data changes in localStorage (admin edits)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase.from('fleets').select('*').order('display_order');
+        if (!error && data && data.length > 0) {
+          const mapped = data.map(mapDbFleetToRecord);
+          setDynamicFleetVehicles(mapped);
+          setFleetDataVersion((v) => v + 1);
+        }
+      } catch (err) {
+        console.error('Error fetching fleet from Supabase:', err);
+      }
+    })();
+
+    const handleUpdate = () => setFleetDataVersion((v) => v + 1);
+    window.addEventListener("fleetDataUpdated", handleUpdate);
+    return () => window.removeEventListener("fleetDataUpdated", handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    if (search.pickupCity || search.dropCity || search.pickup || search.destination || search.vehicleType) {
+      saveLatestTravelSearch({
+        pickupCity: search.pickupCity || search.pickup,
+        dropCity: search.dropCity || search.destination,
+        pickupDate: search.pickupDate,
+        pickupTime: search.pickupTime,
+        tripType: search.trip,
+        passengers: search.passengers,
+        vehicleType: search.vehicleType,
+      });
+    }
+  }, [search]);
 
   const filters: FleetFilterState = {
     categories: search.categories ? search.categories.split(",").filter(Boolean) : [],
@@ -108,7 +176,7 @@ function FleetPage() {
     seats: search.seats ?? 0,
     luggage: search.luggage ?? 0,
     trip: search.trip ?? "all",
-    maxPrice: search.maxPrice ?? fleetPriceBounds.max,
+    maxPrice: search.maxPrice ?? fleetPriceBoundsLive.max,
     availableOnly: search.available === "1",
   };
   const sort = (search.sort ?? "recommended") as SortValue;
@@ -167,7 +235,7 @@ function FleetPage() {
           (a, b) => Number(b.featured) - Number(a.featured) || a.order - b.order,
         );
     }
-  }, [filters, sort]);
+  }, [filters, sort, fleetDataVersion]);
 
   const chips: Chip[] = [
     ...filters.categories.map((slug) => ({
@@ -223,16 +291,31 @@ function FleetPage() {
         ) : null}
 
         <div className="mx-auto max-w-7xl px-4 py-10 sm:py-14">
-          {fleetIntroBlock.visible ? (
-            <section aria-labelledby="fleet-intro-heading" className="max-w-3xl">
-              <h2 id="fleet-intro-heading" className="text-xl font-bold sm:text-2xl">
-                {fleetIntroBlock.heading}
-              </h2>
-              <p className="mt-3 text-pretty text-sm text-muted-foreground sm:text-base">
-                {fleetIntroBlock.body}
-              </p>
-            </section>
-          ) : null}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-6">
+            {fleetIntroBlock.visible ? (
+              <section aria-labelledby="fleet-intro-heading" className="max-w-2xl">
+                <h2 id="fleet-intro-heading" className="text-xl font-bold sm:text-2xl text-foreground">
+                  {fleetIntroBlock.heading}
+                </h2>
+                <p className="mt-2 text-pretty text-sm text-muted-foreground">
+                  {fleetIntroBlock.body}
+                </p>
+              </section>
+            ) : null}
+
+            {/* Auto Fare Calculator Trigger */}
+            <div className="flex items-center self-start sm:self-center shrink-0 gap-2">
+              <Button
+                type="button"
+                size="default"
+                onClick={() => setCalculatorOpen(true)}
+                className="font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-xs sm:text-sm h-10 px-5 rounded-xl transition-transform active:scale-95"
+              >
+                <Calculator className="h-4 w-4" />
+                Auto Fare Calculator
+              </Button>
+            </div>
+          </div>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
             <aside className="hidden lg:block">
@@ -306,7 +389,7 @@ function FleetPage() {
                   </div>
                 </div>
               ) : (
-                <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <ul className="mt-6 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
                   {vehicles.map((vehicle, index) => (
                     <li key={vehicle.id}>
                       <VehicleCard vehicle={vehicle} priority={index < 3} />
@@ -318,6 +401,25 @@ function FleetPage() {
           </div>
         </div>
       </main>
+
+      {/* Auto Fare Calculator Modal */}
+      <AutoFareCalculatorModal
+        open={calculatorOpen}
+        onOpenChange={setCalculatorOpen}
+      />
+
+      {/* Admin Fleet Management Dialog */}
+      <AdminFleetManagementDialog
+        open={fleetAdminOpen}
+        onOpenChange={setFleetAdminOpen}
+      />
+
+      {/* Admin Fleet Fare Management Dialog */}
+      <AdminFleetFareManagementDialog
+        open={fleetFareAdminOpen}
+        onOpenChange={setFleetFareAdminOpen}
+      />
+
       <Footer />
     </div>
   );

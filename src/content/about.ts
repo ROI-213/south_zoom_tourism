@@ -45,15 +45,15 @@ export const overviewBlock = {
   visible: true,
   heading: "A travel desk built on repeat customers",
   paragraphs: [
-    "South Zoom Tourism began in 2009 in Chennai with two sedans and a landline. The promise was simple — a clean vehicle, a driver who knows the route, and a fare quoted before the trip, not after it.",
-    "Today the same team runs a full travel desk: airport and outstation cabs, tempo travellers and buses for groups, curated tour packages across the southern states, and rooms with vetted hotel partners. Roughly seven in ten bookings each month come from a customer who has travelled with us before.",
+    "South Zoom Tourism began in 2009 in Bengaluru with two sedans and a landline. The promise was simple — a clean vehicle, a driver who knows the route, and a fare quoted before the trip, not after it.",
+    "Today the same team runs a full travel desk from Bengaluru: airport and outstation cabs, tempo travellers and buses for groups, curated tour packages across Karnataka and southern states, and rooms with vetted hotel partners. Roughly seven in ten bookings each month come from a customer who has travelled with us before.",
   ],
   image: serviceGroup,
   imageAlt: "South Zoom Tourism fleet ready for travel",
   facts: [
     { id: "since", label: "Operating since", value: "2009" },
     { id: "hq", label: "Head office", value: "Bangalore in Karnataka" },
-    { id: "areas", label: "Areas of operation", value: "Karnataka · Tamilnadu · Kerala · Andhra Pradesh · Goa · Puducherry" },
+    { id: "areas", label: "Areas of operation", value: "Karnataka · Kerala · Tamilnadu · Andhra Pradesh · Goa · Puducherry" },
     {
       id: "customers",
       label: "Customers served",
@@ -77,7 +77,7 @@ export type Milestone = Block & {
 export const timelineBlock = {
   visible: true,
   heading: "Our journey",
-  subheading: "From two cars in Chennai to a four-state travel operation.",
+  subheading: "From two cars in Bengaluru to a multi-state travel operation across South India.",
   items: ([
     {
       id: "m-2009",
@@ -86,7 +86,7 @@ export const timelineBlock = {
       year: "2009",
       title: "Two cars, one phone line",
       description:
-        "Founded in Chennai as a local taxi service for airport runs and city trips, operating out of a single-room office on Anna Salai.",
+        "Founded in Bengaluru, Karnataka as a local taxi service for airport runs, city trips and reliable outstation travel.",
     },
     {
       id: "m-2012",
@@ -95,7 +95,7 @@ export const timelineBlock = {
       year: "2012",
       title: "Outstation routes open",
       description:
-        "Added Ooty, Kodaikanal and Pondicherry round trips, and introduced published per-kilometre rates instead of negotiated fares.",
+        "Added Mysuru, Coorg, Ooty, Wayanad and outstation round trips, and introduced published per-kilometre rates instead of negotiated fares.",
       image: heroFleet,
       imageAlt: "Company sedan on a hill road",
     },
@@ -106,7 +106,7 @@ export const timelineBlock = {
       year: "2015",
       title: "Tour packages launched",
       description:
-        "Started building full itineraries with stays, sightseeing and transfers — beginning with the Kerala backwaters and temple circuits.",
+        "Started building full itineraries with stays, sightseeing and transfers — beginning with Karnataka heritage & nature circuits.",
       image: heroTours,
       imageAlt: "Hill temple surrounded by tea plantations",
     },
@@ -135,9 +135,9 @@ export const timelineBlock = {
       order: 6,
       visible: true,
       year: "2024",
-      title: "140+ vehicles across four states",
+      title: "140+ vehicles across South India",
       description:
-        "Corporate travel desks in Chennai, Coimbatore and Bengaluru, with 24×7 assistance and GST-compliant monthly billing.",
+        "Corporate travel desks based in Bengaluru, with 24×7 assistance, Karnataka & interstate permits, and GST-compliant monthly billing.",
       image: office1,
       imageAlt: "South Zoom Tourism operations office",
     },
@@ -215,7 +215,7 @@ export const aboutStatsBlock = {
 };
 
 export const messageBlock = {
-  visible: true,
+  visible: false,
   heading: "A message from our founder",
   quote:
     "We have never advertised much. What we have done is answer the phone at 2 a.m. when a family was stuck on the ghat road, and send a replacement vehicle before anyone asked for one. That is the whole business.",
@@ -237,7 +237,7 @@ export type TeamMember = Block & {
 };
 
 export const teamBlock = {
-  visible: true,
+  visible: false,
   heading: "The people behind your trip",
   subheading: "Small team, long tenure — most of us have been here over a decade.",
   items: [
@@ -287,8 +287,8 @@ export const achievementsBlock = {
   visible: true,
   heading: "Achievements & certifications",
   items: [
-    { id: "a-1", order: 1, visible: true, icon: "Award", title: "TN Tourism registered operator", description: "Registered tour operator with the Department of Tourism, Government of Tamil Nadu." },
-    { id: "a-2", order: 2, visible: true, icon: "FileCheck", title: "All-India tourist permits", description: "Fleet cleared for interstate travel across Tamil Nadu, Kerala, Karnataka and Puducherry." },
+    { id: "a-1", order: 1, visible: true, icon: "Award", title: "Govt. Registered MSME Enterprise", description: "Registered MSME enterprise & tour operator based in Bengaluru, Karnataka (URN: UDYAM-KR-03-0750906)." },
+    { id: "a-2", order: 2, visible: true, icon: "FileCheck", title: "All-India tourist permits", description: "Fleet cleared for interstate travel across Karnataka, Kerala, Tamil Nadu, Andhra Pradesh, Goa and Puducherry." },
     { id: "a-3", order: 3, visible: true, icon: "ShieldCheck", title: "Fully insured fleet", description: "Comprehensive insurance and passenger cover on every vehicle we dispatch." },
     { id: "a-4", order: 4, visible: true, icon: "Star", title: "4.8 average rating", description: "Across 3,400+ verified customer reviews collected after completed trips." },
   ] satisfies Achievement[],

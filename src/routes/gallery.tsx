@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ImageOff, LayoutGrid, Images as ImagesIcon, ArrowLeft } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
@@ -21,7 +21,10 @@ import {
   getPublishedAlbums,
   getPublishedCategories,
   getPublishedMedia,
+  setDynamicGalleryMedia,
+  mapDbGalleryToMedia,
 } from "@/content/gallery";
+import supabase from "@/lib/supabase";
 
 type GallerySearch = {
   category?: string;
@@ -110,10 +113,26 @@ function GalleryPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/gallery" });
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [galleryVersion, setGalleryVersion] = useState(0);
 
-  const categories = getPublishedCategories();
-  const albums = getPublishedAlbums();
-  const allMedia = getPublishedMedia();
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase.from('gallery').select('*').eq('active', true).order('display_order');
+        if (!error && data && data.length > 0) {
+          const mapped = data.map(mapDbGalleryToMedia);
+          setDynamicGalleryMedia(mapped);
+          setGalleryVersion((v) => v + 1);
+        }
+      } catch (err) {
+        console.error('Error fetching gallery:', err);
+      }
+    })();
+  }, []);
+
+  const categories = useMemo(() => getPublishedCategories(), [galleryVersion]);
+  const albums = useMemo(() => getPublishedAlbums(), [galleryVersion]);
+  const allMedia = useMemo(() => getPublishedMedia(), [galleryVersion]);
 
   const category = search.category ?? "all";
   const albumSlug = search.album;

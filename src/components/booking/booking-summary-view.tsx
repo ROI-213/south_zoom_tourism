@@ -70,6 +70,16 @@ export function BookingSummaryView({
 
   return (
     <div className="mt-6 space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-card border px-4 py-2.5 text-xs shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-foreground text-sm">{company.name}</span>
+          <Badge variant="outline" className="text-[11px] font-semibold text-primary border-primary/40 bg-primary/5">
+            Verified Operator
+          </Badge>
+        </div>
+        <span className="text-muted-foreground font-medium">{company.msmeRegistration}</span>
+      </div>
+
       <section
         aria-labelledby="booking-heading"
         className={`rounded-2xl border p-5 sm:p-7 ${toneClass[meta.tone]} print:border-black`}
@@ -283,9 +293,13 @@ export function BookingSummaryView({
                 <AppLink href="/contact-us">Contact form</AppLink>
               </Button>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              {company.address} · {company.email}
-            </p>
+            <div className="mt-4 border-t border-border pt-3 text-xs space-y-1">
+              <p className="font-semibold text-foreground">{company.name}</p>
+              <p className="text-muted-foreground font-medium">{company.msmeRegistration}</p>
+              <p className="text-muted-foreground">
+                {company.address} · {company.email}
+              </p>
+            </div>
           </section>
         </div>
       </div>

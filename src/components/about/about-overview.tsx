@@ -3,19 +3,27 @@ import { AppLink } from "@/components/common/app-link";
 import { Reveal } from "@/components/common/reveal";
 import { overviewBlock } from "@/content/about";
 
-import heroFleet from "@/assets/hero-fleet.jpg";
-import carInnova from "@/assets/car-innova.png";
-import carErtiga from "@/assets/car-ertiga.png";
-import carDzire from "@/assets/car-dzire.png";
+import fleetWagonR from "@/assets/fleet-wagonr-ka.jpg";
+import fleetDzire from "@/assets/fleet-dzire-new.png";
+import fleetErtiga from "@/assets/fleet-ertiga-new.png";
+import fleetInnova from "@/assets/fleet-innova-new.png";
+import fleetTempo from "@/assets/fleet-tempo-new.png";
+import fleetUrbania from "@/assets/fleet-urbania-ka.jpg";
+import fleetBus from "@/assets/fleet-bus-ka.jpg";
+import fleetBmw from "@/assets/fleet-bmw-new.png";
 
 const fleetImages = [
-  { src: heroFleet, alt: "White SUV taxi on coastal highway" },
-  { src: carInnova, alt: "Toyota Innova Crysta SUV" },
-  { src: carErtiga, alt: "Maruti Ertiga MPV" },
-  { src: carDzire, alt: "Maruti Dzire Sedan" },
+  { src: fleetDzire, alt: "White Swift Dzire Sedan with KA yellow board" },
+  { src: fleetInnova, alt: "White Toyota Innova Crysta with KA yellow board" },
+  { src: fleetErtiga, alt: "White Maruti Ertiga with KA yellow board" },
+  { src: fleetTempo, alt: "White Force Tempo Traveller TT with KA yellow board & SZT sticker" },
+  { src: fleetUrbania, alt: "White Force Urbania Luxury Van with KA yellow board & SZT sticker" },
+  { src: fleetBus, alt: "White Tourist Coach Bus with KA yellow board & SZT sticker" },
+  { src: fleetWagonR, alt: "White Maruti WagonR with KA yellow board" },
+  { src: fleetBmw, alt: "White BMW 5 Series Premium Sedan with yellow board" },
 ];
 
-const slidingFleetImages = [...fleetImages, ...fleetImages, ...fleetImages, ...fleetImages];
+const slidingFleetImages = [...fleetImages, ...fleetImages];
 
 export function AboutOverview() {
   if (!overviewBlock.visible) return null;
@@ -24,21 +32,21 @@ export function AboutOverview() {
     <section className="mx-auto max-w-7xl px-4 py-14 sm:py-20">
       <div className="grid items-center gap-10 lg:grid-cols-2">
         <Reveal className="min-w-0">
-          <div className="relative min-w-0 overflow-hidden rounded-2xl border border-border bg-card/50 shadow-md">
+          <div className="relative min-w-0 overflow-hidden py-2">
             {/* Subtle edge fade overlays */}
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-10 sm:w-16 bg-gradient-to-r from-background to-transparent" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-10 sm:w-16 bg-gradient-to-l from-background to-transparent" />
 
-            <div className="flex h-[320px] w-max gap-4 p-3 animate-continuous-slide sm:h-[400px]">
+            <div className="flex h-[280px] w-max gap-4 animate-continuous-slide sm:h-[380px]">
               {slidingFleetImages.map((img, idx) => (
                 <div
                   key={`${idx}`}
-                  className="h-full w-[280px] shrink-0 overflow-hidden rounded-xl border border-border/80 bg-muted/30 sm:w-[360px]"
+                  className="flex h-full w-[280px] shrink-0 items-center justify-center sm:w-[360px]"
                 >
                   <img
                     src={img.src}
                     alt={img.alt}
-                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                    className="h-full w-full object-contain transition-transform duration-500 hover:scale-105"
                   />
                 </div>
               ))}

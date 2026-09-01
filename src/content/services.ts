@@ -12,15 +12,18 @@
  * code changes.
  */
 
-import servicesBanner from "@/assets/hero-fleet.jpg";
+import servicesBanner from "@/assets/services-banner.jpg";
+import serviceLocalTaxi from "@/assets/service-local-taxi.png";
+import serviceOutstation from "@/assets/service-outstation.png";
+import serviceAirport from "@/assets/service-airport.png";
 import serviceCorporate from "@/assets/service-corporate-new.png";
-import serviceWedding from "@/assets/service-wedding-new.png";
-import servicePilgrimage from "@/assets/service-pilgrimage-new.png";
-import heroFleet from "@/assets/hero-fleet.jpg";
-import heroTours from "@/assets/hero-tours.jpg";
-import heroHotels from "@/assets/hero-hotels.jpg";
 import serviceGroup from "@/assets/service-group.png";
-import office1 from "@/assets/office-1.jpg";
+import servicePilgrimage from "@/assets/service-pilgrimage-new.png";
+import serviceWedding from "@/assets/service-wedding-new.png";
+import heroHotels from "@/assets/hero-hotels.jpg";
+import pkgOoty from "@/assets/pkg-ooty.png";
+import destBengaluru from "@/assets/destinations/dest-bengaluru-new.jpg";
+import team1 from "@/assets/team-1.jpg";
 
 export type ServiceCategory = {
   id: string;
@@ -49,6 +52,34 @@ export type Service = {
   featured: boolean;
 };
 
+// Dynamic cache for admin-managed services
+export let dynamicServices: Service[] = [];
+export const setDynamicServices = (items: Service[]) => {
+  dynamicServices = items;
+};
+
+export function mapDbServiceToRecord(row: any, index: number = 0): Service {
+  const existing = services.find((s) => s.slug === row.slug || s.title.toLowerCase() === (row.name || '').toLowerCase());
+  return {
+    id: row.id || existing?.id || `srv-${index}`,
+    slug: row.slug || existing?.slug || (row.name || '').toLowerCase().replace(/\s+/g, '-'),
+    categorySlug: existing?.categorySlug || 'cabs',
+    title: row.name || existing?.title || '',
+    icon: row.icon || existing?.icon || 'Car',
+    shortDescription: row.short_description || existing?.shortDescription || '',
+    detailDescription: row.full_description || existing?.detailDescription || row.short_description || '',
+    image: row.main_image || existing?.image || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
+    imageAlt: row.name || existing?.imageAlt || '',
+    features: existing?.features || ['Verified Chauffeurs', 'Transparent Pricing', '24x7 Support'],
+    benefits: existing?.benefits || ['No surge pricing', 'Clean vehicles', 'GST Invoices'],
+    priceFrom: existing?.priceFrom || 'From ₹14 / km',
+    showPricing: true,
+    order: row.display_order || existing?.order || index + 1,
+    published: row.active !== false,
+    featured: existing?.featured || false,
+  };
+}
+
 export const serviceCategories: ServiceCategory[] = [
   { id: "c-all", slug: "all", label: "All Services", order: 0, visible: true },
   { id: "c-cabs", slug: "cabs", label: "Cabs & Transfers", order: 1, visible: true },
@@ -69,8 +100,8 @@ export const services: Service[] = [
       "Hourly and full-day city cabs with waiting time, fuel and driver charges included in the quoted fare.",
     detailDescription:
       "City travel packages of 4 hours / 40 km, 8 hours / 80 km and 12 hours / 120 km across Chennai, Coimbatore, Madurai, Bengaluru and Kochi. Extra hours and kilometres are billed at the published slab rate, never at a surge price.",
-    image: heroFleet,
-    imageAlt: "White sedan taxi waiting on a city street for a local hire",
+    image: serviceLocalTaxi,
+    imageAlt: "White sedan local city taxi with verified chauffeur",
     features: ["4h / 8h / 12h packages", "Hatchback to SUV", "Waiting time included"],
     benefits: ["No surge pricing", "Same driver all day", "Pay after the trip"],
     priceFrom: "₹1,400 / 4 hrs",
@@ -89,8 +120,8 @@ export const services: Service[] = [
       "One-way drops and round trips anywhere in South India on a transparent per-kilometre rate.",
     detailDescription:
       "Round trips bill a 250 km daily minimum; one-way drops bill only the distance you travel. Tolls, permits and driver bata are itemised in the quote before you confirm, so the final invoice matches the estimate.",
-    image: heroTours,
-    imageAlt: "SUV taxi on a highway between hill stations at sunrise",
+    image: serviceOutstation,
+    imageAlt: "Outstation journey across scenic South India highway routes",
     features: ["One-way and round trip", "Per-km published rates", "Multi-day itineraries"],
     benefits: ["Tolls and permits itemised", "Night driving allowance shown upfront", "Route-experienced drivers"],
     priceFrom: "₹14 / km",
@@ -109,8 +140,8 @@ export const services: Service[] = [
       "Fixed-fare pickups and drops with live flight tracking and complimentary waiting on arrivals.",
     detailDescription:
       "We track your flight number and adjust the pickup automatically for delays. Arrival pickups include 60 minutes of free waiting, and meet-and-greet at the terminal gate is available on request.",
-    image: servicesBanner,
-    imageAlt: "Taxi fleet lined up outside an airport terminal at golden hour",
+    image: serviceAirport,
+    imageAlt: "Airport transfer taxi pickup outside modern international terminal",
     features: ["Flight tracking", "60 min free waiting", "Meet and greet option"],
     benefits: ["Fixed fare, no meter", "24×7 including red-eye flights", "Luggage-sized vehicles"],
     priceFrom: "₹899 per transfer",
@@ -207,7 +238,7 @@ export const services: Service[] = [
     detailDescription:
       "Every partner property is visited by our team before it goes on the list. Rooms can be added to any vehicle or package booking so the stay, transfers and sightseeing arrive on one confirmation.",
     image: heroHotels,
-    imageAlt: "Partner hotel room with a balcony overlooking the hills",
+    imageAlt: "Partner hotel room with a balcony overlooking scenic hills",
     features: ["Inspected partner hotels", "Budget to premium", "Add-on to any trip"],
     benefits: ["Negotiated partner rates", "Free cancellation options", "One combined confirmation"],
     priceFrom: "₹1,800 / night",
@@ -226,8 +257,8 @@ export const services: Service[] = [
       "Tell us your dates, budget and interests and we build the whole itinerary around them.",
     detailDescription:
       "A planner drafts a day-by-day route with drive times, stays, entry tickets and meal stops, then revises it with you until it fits. Quotes stay valid for seven days and break down every cost line.",
-    image: heroTours,
-    imageAlt: "Travel planner marking a South India route on a map with photographs",
+    image: pkgOoty,
+    imageAlt: "Customized holiday tour planning in scenic South India destinations",
     features: ["Day-by-day itinerary", "Unlimited revisions", "Itemised quote"],
     benefits: ["Built around your budget", "Realistic drive times", "Quote valid 7 days"],
     showPricing: false,
@@ -245,8 +276,8 @@ export const services: Service[] = [
       "Train, bus, flight and monument tickets booked and reconfirmed alongside your travel plan.",
     detailDescription:
       "We handle IRCTC and airline bookings, seat selection, rescheduling and monument entry passes so your tickets line up with your pickup times instead of being booked separately.",
-    image: office1,
-    imageAlt: "Travel desk agent booking tickets for a customer at the office counter",
+    image: destBengaluru,
+    imageAlt: "City transport and travel reservation booking services",
     features: ["Train, bus and flight", "Monument entry passes", "Reschedule support"],
     benefits: ["Tickets matched to pickups", "Single support number", "Digital copies on WhatsApp"],
     showPricing: false,
@@ -264,8 +295,8 @@ export const services: Service[] = [
       "A real person on the phone for breakdowns, route changes and late-night arrivals — any day.",
     detailDescription:
       "Our control room stays open every day of the year. If a vehicle has trouble, a replacement is dispatched from the nearest hub, and any change of plan mid-trip is re-quoted in writing before it is applied.",
-    image: serviceGroup,
-    imageAlt: "Support team member taking a customer call at the operations desk",
+    image: team1,
+    imageAlt: "Dedicated 24/7 travel desk support coordinator assisting customers",
     features: ["365-day control room", "Replacement vehicle dispatch", "Written re-quotes"],
     benefits: ["No automated menus", "WhatsApp and phone", "Escalation to a manager"],
     showPricing: false,
@@ -342,9 +373,9 @@ export const servicesFaqBlock = {
   items: [
     { id: "sf1", question: "Can I combine more than one service in a single booking?", answer: "Yes. Cabs, hotel rooms, sightseeing and tickets can be combined into one plan with a single confirmation and one invoice. Tell us everything you need in the enquiry and we quote it together." },
     { id: "sf2", question: "Are driver allowance, tolls and permits extra?", answer: "They are shown as separate lines in your quote before you confirm, so the final invoice matches what you approved. Nothing is added after the trip." },
-    { id: "sf3", question: "Do you operate outside Tamil Nadu?", answer: "Yes — we run trips across Tamil Nadu, Kerala, Karnataka and Puducherry, and interstate permits are arranged by us." },
+    { id: "sf3", question: "Do you operate outside Tamil Nadu?", answer: "Yes — we run trips across Karnataka, Tamil Nadu, Kerala, Andhra Pradesh, Goa and Puducherry, and interstate permits are arranged by us." },
     { id: "sf4", question: "How quickly do you respond to a service enquiry?", answer: "Within an hour during office hours (6:00 AM – 11:00 PM, all days). Overnight enquiries are answered first thing the next morning." },
-    { id: "sf5", question: "Can I change or cancel a booked service?", answer: "Vehicle bookings can be cancelled free up to 24 hours before pickup. Hotel and package changes follow the property or operator policy shown at the time of booking." },
+    { id: "sf5", question: "Can I change or cancel a booked service?", answer: "Vehicle bookings can be cancelled free up to 2 hours before pickup. Hotel and package changes follow the property or operator policy shown at the time of booking." },
   ],
 };
 
@@ -353,10 +384,16 @@ export const servicesFaqBlock = {
 /* ------------------------------------------------------------------ */
 
 export function getPublishedServices(): Service[] {
+  if (dynamicServices.length > 0) {
+    return dynamicServices.filter((s) => s.published).sort((a, b) => a.order - b.order);
+  }
   return services.filter((s) => s.published).sort((a, b) => a.order - b.order);
 }
 
 export function getServiceBySlug(slug: string): Service | undefined {
+  if (dynamicServices.length > 0) {
+    return dynamicServices.find((s) => s.slug === slug && s.published);
+  }
   return getPublishedServices().find((s) => s.slug === slug);
 }
 

@@ -20,6 +20,7 @@ const money = (label: string, amount: number) =>
 function companyBlock(): PdfLine[] {
   return [
     { text: company.name, style: "heading" },
+    { text: company.msmeRegistration, style: "small" },
     { text: company.address, style: "small" },
     { text: `${company.phone} · ${company.email}`, style: "small" },
     { text: `GSTIN ${hotelBookingSettings.gstin}`, style: "small" },

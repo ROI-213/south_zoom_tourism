@@ -46,6 +46,27 @@ export type FaqItem = {
   published: boolean;
 };
 
+// Dynamic cache for admin-managed FAQs
+export let dynamicFaqItems: FaqItem[] = [];
+export const setDynamicFaqs = (faqs: FaqItem[]) => {
+  dynamicFaqItems = faqs;
+};
+
+export function mapDbFaqToItem(row: any, index: number = 0): FaqItem {
+  const catSlug = (row.category || "general").toLowerCase().replace(/\s+/g, "-");
+  const slug = (row.question || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 50);
+  return {
+    id: row.id || `faq-${index}`,
+    slug: slug || `faq-${index}`,
+    categorySlug: catSlug === "packages" ? "tour-packages" : catSlug === "hotels" ? "hotels-rooms" : catSlug,
+    question: row.question || "",
+    answer: row.answer || "",
+    scopes: ["global"],
+    order: row.display_order || index + 1,
+    published: row.active !== false,
+  };
+}
+
 export const faqsBannerBlock = {
   visible: true,
   title: "Frequently Asked Questions",
@@ -269,7 +290,7 @@ export const faqItems: FaqItem[] = [
     categorySlug: "cancellations",
     question: "What is the cancellation policy for vehicle bookings?",
     answer:
-      "Vehicle bookings can be cancelled free of charge up to 24 hours before pickup. Cancellations within 24 hours may attract a nominal charge covering driver deployment, and no-shows are charged one day's minimum fare.",
+      "Vehicle bookings can be cancelled free of charge up to 2 hours before pickup. Cancellations within 2 hours may attract a nominal charge covering driver deployment, and no-shows are charged one day's minimum fare.",
     scopes: ["global", "fleet"],
     order: 1,
     published: true,
@@ -291,7 +312,7 @@ export const faqItems: FaqItem[] = [
     categorySlug: "cancellations",
     question: "Can I reschedule instead of cancelling?",
     answer:
-      "Yes, and it's usually cheaper. Date and vehicle changes are free if requested at least 24 hours before travel, subject to availability. Hotel date changes depend on the property's policy.",
+      "Yes, and it's usually cheaper. Date and vehicle changes are free if requested at least 2 hours before travel, subject to availability. Hotel date changes depend on the property's policy.",
     scopes: ["global"],
     order: 3,
     published: true,
@@ -386,7 +407,7 @@ export const faqItems: FaqItem[] = [
     categorySlug: "driver-policies",
     question: "What is driver allowance and night charge?",
     answer:
-      "Driver allowance covers the driver's meals and stay on multi-day trips and is shown as a separate line item. A night charge applies for driving between 11:00 PM and 6:00 AM. Both are quoted before confirmation, never added afterwards.",
+      "Driver allowance covers the driver's meals and stay on multi-day trips and is shown as a separate line item. A night charge applies for driving between 9:30 PM and 5:30 AM. Both are quoted before confirmation, never added afterwards.",
     scopes: ["fleet", "payment"],
     order: 2,
     published: true,
@@ -450,6 +471,9 @@ export function getPublishedFaqCategories(): FaqCategory[] {
 }
 
 export function getPublishedFaqs(): FaqItem[] {
+  if (dynamicFaqItems.length > 0) {
+    return dynamicFaqItems.filter((f) => f.published);
+  }
   const live = new Set(getPublishedFaqCategories().map((c) => c.slug));
   return faqItems
     .filter((f) => f.published && live.has(f.categorySlug))

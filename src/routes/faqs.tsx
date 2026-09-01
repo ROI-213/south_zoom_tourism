@@ -19,14 +19,15 @@ import {
   getPublishedFaqCategories,
   getPublishedFaqs,
   searchFaqs,
+  setDynamicFaqs,
+  mapDbFaqToItem,
   type FaqItem,
 } from "@/content/faqs";
+import supabase from "@/lib/supabase";
 
 type FaqSearchParams = { category?: string; q?: string; question?: string };
 
 const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
-
-const publishedFaqs = getPublishedFaqs();
 
 export const Route = createFileRoute("/faqs")({
   validateSearch: (search: Record<string, unknown>): FaqSearchParams => ({
@@ -99,6 +100,22 @@ export const Route = createFileRoute("/faqs")({
 function FaqsPage() {
   const navigate = useNavigate({ from: "/faqs" });
   const { category = "all", q = "", question } = Route.useSearch();
+  const [faqsList, setFaqsList] = useState<FaqItem[]>(() => getPublishedFaqs());
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase.from('faqs').select('*').eq('active', true).order('display_order');
+        if (!error && data && data.length > 0) {
+          const mapped = data.map(mapDbFaqToItem);
+          setDynamicFaqs(mapped);
+          setFaqsList(mapped);
+        }
+      } catch (err) {
+        console.error('Error fetching FAQs:', err);
+      }
+    })();
+  }, []);
 
   const categories = getPublishedFaqCategories();
   const [open, setOpen] = useState<string[]>(() => (question ? [question] : []));
@@ -106,10 +123,10 @@ function FaqsPage() {
   const filtered = useMemo(() => {
     const scoped =
       category === "all"
-        ? publishedFaqs
-        : publishedFaqs.filter((f) => f.categorySlug === category);
+        ? faqsList
+        : faqsList.filter((f) => f.categorySlug === category);
     return searchFaqs(scoped, q);
-  }, [category, q]);
+  }, [category, q, faqsList]);
 
   // Deep link: open and scroll to the requested question.
   useEffect(() => {

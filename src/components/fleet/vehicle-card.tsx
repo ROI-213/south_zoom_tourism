@@ -1,8 +1,11 @@
-import { Users, Briefcase, Snowflake, Fuel, MessageCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { Badge } from "@/components/ui/badge";
+import { Users, Briefcase, Snowflake, Maximize2, X, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { getVehicleCategoryLabel, type FleetVehicle } from "@/content/fleet";
+import { getFleetFareConfig, getFleetFareSettings, type FleetFareConfig } from "@/content/fleet-pricing";
+import { AutoFareCalculatorModal } from "@/components/fleet/auto-fare-calculator-modal";
 import { waLink } from "@/content/site";
 
 export function VehicleCard({
@@ -12,90 +15,143 @@ export function VehicleCard({
   vehicle: FleetVehicle;
   priority?: boolean;
 }) {
-  const bookable = vehicle.available;
+  const [showLightbox, setShowLightbox] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [fareConfig, setFareConfig] = useState<FleetFareConfig>(() => getFleetFareConfig(vehicle.id));
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setFareConfig(getFleetFareConfig(vehicle.id));
+    };
+    window.addEventListener("fleetFareSettingsUpdated", handleUpdate);
+    return () => window.removeEventListener("fleetFareSettingsUpdated", handleUpdate);
+  }, [vehicle.id]);
+
+  const displayRate = fareConfig?.oneWayRatePerKm ?? vehicle.pricePerKm;
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors focus-within:border-primary hover:border-primary">
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
-        <img
-          src={vehicle.image}
-          alt={vehicle.imageAlt}
-          width={1200}
-          height={750}
-          loading={priority ? "eager" : "lazy"}
-          decoding="async"
-          className="h-full w-full object-cover"
-        />
-        <Badge
-          variant={bookable ? "default" : "secondary"}
-          className="absolute left-3 top-3"
+    <>
+      <article
+        className="group flex flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl"
+      >
+        {/* Full-bleed Image Box with Lightbox Trigger */}
+        <div
+          onClick={() => setShowLightbox(true)}
+          className="relative aspect-[16/10] w-full overflow-hidden bg-white cursor-pointer"
         >
-          {vehicle.availabilityText}
-        </Badge>
-        <Badge variant="outline" className="absolute right-3 top-3 bg-background/90">
-          {getVehicleCategoryLabel(vehicle.categorySlug)}
-        </Badge>
-      </div>
+          <img
+            src={vehicle.image}
+            alt={vehicle.imageAlt}
+            width={1920}
+            height={1080}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <h3 className="text-base font-bold sm:text-lg">{vehicle.name}</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {vehicle.brand} · {vehicle.model}
-        </p>
-
-        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-foreground/90">
-          <li className="inline-flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-            {vehicle.seats} seats
-          </li>
-          <li className="inline-flex items-center gap-1.5">
-            <Briefcase className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-            {vehicle.luggage} bags
-          </li>
-          <li className="inline-flex items-center gap-1.5">
-            <Snowflake className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-            {vehicle.ac ? "AC" : "Non-AC"}
-          </li>
-          {vehicle.fuel ? (
-            <li className="inline-flex items-center gap-1.5">
-              <Fuel className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-              {vehicle.fuel}
-            </li>
-          ) : null}
-        </ul>
-
-        <p className="mt-4 text-sm font-semibold text-primary">Starting {vehicle.priceFromLabel}</p>
-
-        <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
-          <Button variant="outline" asChild>
-            <Link to="/fleet/$slug" params={{ slug: vehicle.slug }}>
-              View Details
-            </Link>
-          </Button>
-          {bookable ? (
-            <Button asChild>
-              <Link to="/contact-us" search={{ vehicle: vehicle.slug, intent: "booking" }}>
-                Book Now
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild>
-              <Link to="/fleet/$slug" params={{ slug: vehicle.slug }}>
-                Enquire
-              </Link>
-            </Button>
-          )}
-          <a
-            href={waLink(`Hi South Zoom Tourism, I'd like to book the ${vehicle.name}.`)}
-            target="_blank"
-            rel="noreferrer noopener"
-            aria-label={`Chat on WhatsApp about the ${vehicle.name}`}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-primary transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            <MessageCircle className="h-4 w-4" aria-hidden="true" />
-          </a>
+          {/* Fullscreen hover trigger badge */}
+          <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-center justify-center gap-1 sm:gap-2 text-white font-medium text-[10px] sm:text-xs backdrop-blur-[2px]">
+            <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">View Full Screen</span>
+          </div>
         </div>
-      </div>
-    </article>
+
+        {/* Vehicle Card Body */}
+        <div className="flex flex-1 flex-col p-2.5 sm:p-5">
+          <div className="flex items-start justify-between gap-1 sm:gap-2">
+            <div className="min-w-0">
+              <Link to="/fleet/$slug" params={{ slug: vehicle.slug }}>
+                <h3 className="text-xs sm:text-base font-bold group-hover:text-primary transition-colors truncate">{vehicle.name}</h3>
+              </Link>
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{getVehicleCategoryLabel(vehicle.categorySlug)}</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-primary/10 px-1.5 sm:px-2.5 py-0.5 text-[9px] sm:text-xs font-bold text-primary">
+              ₹{displayRate}/km
+            </span>
+          </div>
+
+          <ul className="mt-2 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-3 text-[9px] sm:text-xs text-muted-foreground border-t border-b border-border/60 py-1.5 sm:py-3">
+            <li className="inline-flex items-center gap-1 font-medium">
+              <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> {vehicle.seats}s
+            </li>
+            <li className="inline-flex items-center gap-1 font-medium">
+              <Briefcase className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> {vehicle.luggage}b
+            </li>
+            {vehicle.ac ? (
+              <li className="inline-flex items-center gap-1 font-medium">
+                <Snowflake className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> AC
+              </li>
+            ) : null}
+          </ul>
+
+          <div className="mt-2.5 sm:mt-4 flex flex-col gap-1.5 pt-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setShowCalculator(true)}
+              className="h-7 sm:h-8 w-full text-[10px] sm:text-xs font-semibold gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
+            >
+              <Calculator className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
+              Calculate Fare
+            </Button>
+            <div className="flex gap-1.5">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => setShowCalculator(true)}
+                className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3"
+              >
+                Book
+              </Button>
+              <Button asChild size="sm" variant="outline" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
+                <a
+                  href={waLink(
+                    `Hi South Zoom Tourism, I'd like a quote for the ${vehicle.name} (${getVehicleCategoryLabel(vehicle.categorySlug)}, ${vehicle.seats} seats, ₹${displayRate}/km).`,
+                  )}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  WhatsApp
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      {/* Auto Fare Calculator Modal */}
+      <AutoFareCalculatorModal
+        open={showCalculator}
+        onOpenChange={setShowCalculator}
+        initialVehicle={vehicle}
+      />
+
+      {/* Full-Screen Image Lightbox Modal */}
+      <Dialog open={showLightbox} onOpenChange={(open) => !open && setShowLightbox(false)}>
+        <DialogContent className="max-w-4xl p-2 bg-black/95 border-none text-white overflow-hidden">
+          <DialogTitle className="sr-only">
+            {vehicle.name ?? "Vehicle Preview"}
+          </DialogTitle>
+          <div className="relative flex flex-col items-center justify-center p-4">
+            <button
+              onClick={() => setShowLightbox(false)}
+              className="absolute top-2 right-2 rounded-full bg-white/20 p-2 text-white hover:bg-white/40 transition-colors z-20"
+              aria-label="Close preview"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex flex-col items-center">
+              <img
+                src={vehicle.image}
+                alt={vehicle.imageAlt}
+                className="max-h-[80vh] w-auto object-contain rounded-lg shadow-2xl"
+              />
+              <h4 className="mt-3 text-lg font-bold text-white text-center">{vehicle.name}</h4>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

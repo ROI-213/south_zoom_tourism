@@ -1,6 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Search, History, X } from "lucide-react";
+import {
+  Search,
+  History,
+  X,
+  MapPin,
+  Building2,
+  Calendar,
+  BedDouble,
+  Users,
+  UserPlus,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -209,7 +221,7 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
 
         <form
           noValidate
-          className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-4 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4"
           onSubmit={(e) => {
             e.preventDefault();
             submit(values);
@@ -221,7 +233,7 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
             ))}
           </datalist>
 
-          <Field label="Destination" htmlFor="h-destination" error={errors.destination}>
+          <Field label="Destination" htmlFor="h-destination" icon={MapPin} error={errors.destination}>
             <Input
               id="h-destination"
               list="sz-hotel-cities"
@@ -231,10 +243,11 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
               value={values.destination}
               aria-invalid={Boolean(errors.destination)}
               onChange={(e) => set("destination", e.target.value)}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
           </Field>
 
-          <Field label="Hotel name (optional)" htmlFor="h-name" error={errors.hotelName}>
+          <Field label="Hotel name (opt)" htmlFor="h-name" icon={Building2} error={errors.hotelName}>
             <Input
               id="h-name"
               placeholder="e.g. Hillview"
@@ -243,10 +256,11 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
               value={values.hotelName}
               aria-invalid={Boolean(errors.hotelName)}
               onChange={(e) => set("hotelName", e.target.value)}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
           </Field>
 
-          <Field label="Check-in" htmlFor="h-checkin" error={errors.checkIn}>
+          <Field label="Check-in" htmlFor="h-checkin" icon={Calendar} error={errors.checkIn}>
             <Input
               id="h-checkin"
               type="date"
@@ -255,12 +269,14 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
               value={values.checkIn}
               aria-invalid={Boolean(errors.checkIn)}
               onChange={(e) => set("checkIn", e.target.value)}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
           </Field>
 
           <Field
             label="Check-out"
             htmlFor="h-checkout"
+            icon={Calendar}
             error={errors.checkOut}
             hint={nights > 0 ? `${nights} night${nights > 1 ? "s" : ""}` : undefined}
           >
@@ -272,10 +288,11 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
               value={values.checkOut}
               aria-invalid={Boolean(errors.checkOut)}
               onChange={(e) => set("checkOut", e.target.value)}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
           </Field>
 
-          <Field label="Rooms" htmlFor="h-rooms" error={errors.rooms}>
+          <Field label="Rooms" htmlFor="h-rooms" icon={BedDouble} error={errors.rooms}>
             <Input
               id="h-rooms"
               type="number"
@@ -285,10 +302,11 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
               value={values.rooms}
               aria-invalid={Boolean(errors.rooms)}
               onChange={(e) => set("rooms", Number(e.target.value))}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
           </Field>
 
-          <Field label="Adults" htmlFor="h-adults" error={errors.adults}>
+          <Field label="Adults" htmlFor="h-adults" icon={Users} error={errors.adults}>
             <Input
               id="h-adults"
               type="number"
@@ -298,10 +316,11 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
               value={values.adults}
               aria-invalid={Boolean(errors.adults)}
               onChange={(e) => set("adults", Number(e.target.value))}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
           </Field>
 
-          <Field label="Children" htmlFor="h-children" error={errors.children}>
+          <Field label="Children" htmlFor="h-children" icon={UserPlus} error={errors.children}>
             <Input
               id="h-children"
               type="number"
@@ -311,15 +330,17 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
               value={values.children}
               aria-invalid={Boolean(errors.children)}
               onChange={(e) => set("children", Number(e.target.value))}
+              className="h-9 sm:h-10 text-xs sm:text-sm"
             />
           </Field>
 
           <div className="min-w-0">
-            <Label htmlFor="h-roomtype" className="text-xs font-semibold">
-              Room type
+            <Label htmlFor="h-roomtype" className="flex items-center gap-1 text-xs font-semibold">
+              <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span>Room type</span>
             </Label>
             <Select value={values.roomType} onValueChange={(v) => set("roomType", v)}>
-              <SelectTrigger id="h-roomtype" className="mt-1.5 w-full">
+              <SelectTrigger id="h-roomtype" className="mt-1.5 w-full h-9 sm:h-10 text-xs sm:text-sm">
                 <SelectValue placeholder="Any room type" />
               </SelectTrigger>
               <SelectContent>
@@ -332,8 +353,8 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
             </Select>
           </div>
 
-          <div className="sm:col-span-2 lg:col-span-4">
-            <Button type="submit" size="lg" className="w-full sm:w-auto">
+          <div className="col-span-2 sm:col-span-2 lg:col-span-4 mt-1 sm:mt-2">
+            <Button type="submit" size="lg" className="w-full sm:w-auto font-bold">
               <Search className="mr-2 h-4 w-4" aria-hidden="true" />
               Search Hotels
             </Button>
@@ -382,28 +403,31 @@ export function HotelSearchForm({ initial }: { initial?: Partial<HotelSearchForm
 function Field({
   label,
   htmlFor,
+  icon: Icon,
   error,
   hint,
   children,
 }: {
   label: string;
   htmlFor: string;
+  icon?: LucideIcon;
   error?: string;
   hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="min-w-0">
-      <Label htmlFor={htmlFor} className="text-xs font-semibold">
-        {label}
+      <Label htmlFor={htmlFor} className="flex items-center gap-1 text-xs font-semibold">
+        {Icon ? <Icon className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden="true" /> : null}
+        <span className="truncate">{label}</span>
       </Label>
-      <div className="mt-1.5">{children}</div>
+      <div className="mt-1 sm:mt-1.5">{children}</div>
       {error ? (
         <p role="alert" className="mt-1 text-xs font-medium text-destructive">
           {error}
         </p>
       ) : hint ? (
-        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+        <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   );

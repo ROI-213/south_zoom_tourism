@@ -24,7 +24,11 @@ import destMunnarNew from "@/assets/destinations/dest-munnar-new2.png";
 import destBengaluruNew from "@/assets/destinations/dest-bengaluru-new.jpg";
 import destMysuruNew from "@/assets/destinations/dest-mysuru-new.jpg";
 import destOotyNew2 from "@/assets/destinations/dest-ooty-new2.jpg";
-import destGoaNew2 from "@/assets/destinations/dest-goa-new2.jpg";
+import destGoaNew2 from "@/assets/destinations/dest-goa.jpg";
+import destCoorg from "@/assets/destinations/dest-coorg.jpg";
+import destWayanad from "@/assets/destinations/dest-wayanad.jpg";
+import destHampi from "@/assets/destinations/dest_hampi_1786683714278.jpg";
+import destGokarna from "@/assets/destinations/dest_gokarna_1786683734925.jpg";
 import { hotels } from "@/content/site";
 import { getPublishedPackages } from "@/content/tour-packages";
 
@@ -34,6 +38,12 @@ export type DestinationTripType = {
   label: string;
   order: number;
   visible: boolean;
+};
+
+// Dynamic cache for admin-managed destinations
+export let dynamicDestinationRecords: DestinationRecord[] = [];
+export const setDynamicDestinations = (dests: DestinationRecord[]) => {
+  dynamicDestinationRecords = dests;
 };
 
 export type DestinationRecord = {
@@ -136,8 +146,8 @@ export const destinationRecords: DestinationRecord[] = [
     hotelIds: ["h-hillview"],
     recommendedVehicles: ["SUV", "Tempo Traveller"],
     recommendedServiceSlugs: ["custom-tour-planning", "outstation-trips"],
-    image: heroTours,
-    imageAlt: "Coffee plantations under morning mist in Coorg",
+    image: destCoorg,
+    imageAlt: "Coffee plantations under morning mist in Coorg Karnataka",
     order: 3,
     published: true,
     popular: true,
@@ -251,8 +261,8 @@ export const destinationRecords: DestinationRecord[] = [
     hotelIds: ["h-hillview"],
     recommendedVehicles: ["SUV", "Tempo Traveller"],
     recommendedServiceSlugs: ["outstation-trips", "custom-tour-planning"],
-    image: heroTours,
-    imageAlt: "Misty forest and paddy fields in Wayanad",
+    image: destWayanad,
+    imageAlt: "Lush tea gardens and misty Western Ghats hills in Wayanad Kerala",
     order: 8,
     published: true,
     popular: false,
@@ -320,8 +330,8 @@ export const destinationRecords: DestinationRecord[] = [
     hotelIds: ["h-templestay"],
     recommendedVehicles: ["SUV", "Tempo Traveller"],
     recommendedServiceSlugs: ["custom-tour-planning", "outstation-trips"],
-    image: servicesBanner,
-    imageAlt: "Stone temple ruins and boulders at Hampi",
+    image: destHampi,
+    imageAlt: "Stone chariot ruins at the Vittala temple complex in Hampi",
     order: 11,
     published: true,
     popular: false,
@@ -343,7 +353,7 @@ export const destinationRecords: DestinationRecord[] = [
     hotelIds: ["h-backwater"],
     recommendedVehicles: ["Sedan", "SUV"],
     recommendedServiceSlugs: ["outstation-trips", "custom-tour-planning"],
-    image: heroFleet,
+    image: destGokarna,
     imageAlt: "Crescent beach and headland at Gokarna",
     order: 12,
     published: true,
@@ -398,6 +408,9 @@ export const destinationsPerPage = 9;
 /* ------------------------------------------------------------------ */
 
 export function getPublishedDestinations(): DestinationRecord[] {
+  if (dynamicDestinationRecords.length) {
+    return dynamicDestinationRecords.filter((d) => d.published).slice().sort((a, b) => a.order - b.order);
+  }
   return destinationRecords
     .filter((d) => d.published)
     .slice()
@@ -405,7 +418,39 @@ export function getPublishedDestinations(): DestinationRecord[] {
 }
 
 export function getDestinationBySlug(slug: string): DestinationRecord | undefined {
+  if (dynamicDestinationRecords.length) {
+    return dynamicDestinationRecords.find((d) => d.slug === slug && d.published);
+  }
   return destinationRecords.find((d) => d.slug === slug && d.published);
+}
+
+/** Map Supabase DB row to DestinationRecord */
+export function mapDbDestinationToRecord(row: any, index: number = 0): DestinationRecord {
+  const existing = destinationRecords.find(
+    (d) => d.slug === row.slug || d.name.toLowerCase() === (row.name || "").toLowerCase()
+  );
+  return {
+    id: row.id || existing?.id || `dest-${row.slug || index}`,
+    slug: row.slug || existing?.slug || (row.name || '').toLowerCase().replace(/\s+/g, '-'),
+    name: row.name || existing?.name || '',
+    state: row.state || existing?.state || 'Karnataka',
+    region: existing?.region || 'South India',
+    shortDescription: row.description || existing?.shortDescription || `${row.name} in ${row.state}`,
+    bestTime: existing?.bestTime || 'October to March',
+    idealDuration: existing?.idealDuration || '2 – 3 days',
+    tripTypeSlugs: existing?.tripTypeSlugs || ['hill-station', 'weekend'],
+    highlights: existing?.highlights || ['Sightseeing & Viewpoints', 'Heritage & Culture', 'Local Cuisine'],
+    packageSlugs: existing?.packageSlugs || [],
+    hotelIds: existing?.hotelIds || [],
+    recommendedVehicles: existing?.recommendedVehicles || ['Sedan', 'SUV', 'Tempo Traveller'],
+    recommendedServiceSlugs: existing?.recommendedServiceSlugs || ['outstation-trips', 'local-taxi'],
+    image: row.image_url || existing?.image || 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80',
+    imageAlt: `${row.name}, ${row.state}`,
+    order: existing?.order || index + 1,
+    published: row.published !== false,
+    popular: existing?.popular || true,
+    featured: row.featured !== false,
+  };
 }
 
 export function getDestinationStates(): string[] {

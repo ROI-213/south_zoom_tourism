@@ -20,6 +20,7 @@
  */
 
 import packagesBanner from "@/assets/hero-tours.jpg";
+import { syncPackageBookingToSupabase } from "@/lib/booking-sync";
 import {
   estimatePackageTotal,
   formatRupees,
@@ -549,6 +550,26 @@ export function saveBookingRecord(record: PackageBookingRecord) {
   } catch {
     /* storage unavailable — the confirmation page falls back to a generic message */
   }
+
+  // Persist directly into Supabase backend database for admin & operations
+  syncPackageBookingToSupabase({
+    bookingNumber: record.bookingNumber,
+    packageTitle: record.packageSnapshot?.title || "Tour Package",
+    customerName: record.contact?.name || "Customer",
+    phone: record.contact?.phone || "",
+    email: record.contact?.email || null,
+    city: record.contact?.city || "",
+    travelDate: record.departureSnapshot?.date || record.travelDate || null,
+    adults: record.travellers?.adults || 2,
+    children: record.travellers?.children || 0,
+    totalAmount: record.estimatedTotal || 0,
+    advanceAmount: record.advanceDue || 0,
+    pickupLocation: record.transport?.pickup || "Bengaluru",
+    hotelCategory: record.hotelSnapshot?.category || "Standard",
+    vehicleCategory: record.vehicleSnapshot?.category || "Sedan",
+    paymentMode: record.paymentMode || "Advance",
+    notes: record.requirements?.notes || "",
+  });
 }
 
 export function loadBookingRecord(bookingNumber: string): PackageBookingRecord | null {

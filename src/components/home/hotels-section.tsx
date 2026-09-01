@@ -1,20 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, Star, Maximize2, X, BedDouble } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { featuredHotels, hotels, waLink } from "@/content/site";
+import { featuredHotels, hotels as staticHotels, waLink } from "@/content/site";
 import { SectionHeader, ViewAllMobile } from "@/components/common/section-header";
 import { AppLink } from "@/components/common/app-link";
 import { EmptyState } from "@/components/home/fleet-section";
+import { fetchLiveHotels, mapDbHotelsToHomeList, type DynamicHomeHotel } from "@/lib/hotel-service";
 
 export function HotelsSection() {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string; title: string } | null>(null);
 
-  if (!featuredHotels.meta.visible) return null;
+  // Initialize with static fallback items
+  const initialItems: DynamicHomeHotel[] = featuredHotels.itemIds
+    .map((id) => staticHotels.find((h) => h.id === id))
+    .filter((h): h is (typeof staticHotels)[number] => Boolean(h))
+    .map((h) => ({
+      id: h.id,
+      name: h.name,
+      city: h.city,
+      starRating: h.starRating,
+      roomType: h.roomType,
+      pricePerNight: h.pricePerNight,
+      image: h.image,
+      alt: h.alt,
+      amenities: h.amenities,
+      active: true,
+      featured: true,
+    }));
 
-  const items = featuredHotels.itemIds
-    .map((id) => hotels.find((h) => h.id === id))
-    .filter((h): h is (typeof hotels)[number] => Boolean(h));
+  const [items, setItems] = useState<DynamicHomeHotel[]>(initialItems);
+
+  useEffect(() => {
+    async function loadDynamicHotels() {
+      try {
+        const dbHotels = await fetchLiveHotels();
+        if (dbHotels && dbHotels.length > 0) {
+          // Filter to featured hotels first, or take top 8 active
+          const featuredDb = dbHotels.filter((h) => h.featured);
+          const listToUse = featuredDb.length > 0 ? featuredDb : dbHotels.slice(0, 8);
+          const mapped = mapDbHotelsToHomeList(listToUse);
+          if (mapped.length > 0) {
+            setItems(mapped);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading dynamic hotels for homepage:", err);
+      }
+    }
+    loadDynamicHotels();
+  }, []);
+
+  if (!featuredHotels.meta.visible) return null;
 
   return (
     <section id="hotels" className="mx-auto max-w-7xl px-4 py-14 sm:py-20">
@@ -23,11 +60,11 @@ export function HotelsSection() {
       {items.length === 0 ? (
         <EmptyState message="No hotels are featured right now." />
       ) : (
-        <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {items.map((h) => (
             <li
               key={h.id}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-primary/60 hover:shadow-xl hover:shadow-primary/10"
+              className="group flex flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/60 hover:shadow-xl hover:shadow-primary/10"
             >
               {/* Photo Header with Lightbox Trigger */}
               <div
@@ -41,69 +78,73 @@ export function HotelsSection() {
                   height={1080}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80";
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
 
                 {/* Star rating badge */}
-                <div className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md">
+                <div className="absolute left-2 top-2 sm:left-3 sm:top-3 inline-flex items-center gap-0.5 sm:gap-1 rounded-full bg-black/60 px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-bold text-white backdrop-blur-md">
                   {Array.from({ length: h.starRating }).map((_, i) => (
                     <Star
                       key={i}
-                      className="h-3 w-3 fill-primary text-primary"
+                      className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-primary text-primary"
                       aria-hidden="true"
                     />
                   ))}
-                  <span className="ml-1 text-[10px] text-white/90">{h.starRating} Star</span>
+                  <span className="ml-0.5 text-[8px] sm:text-[10px] text-white/90">{h.starRating}★</span>
                 </div>
 
                 {/* Fullscreen hover badge */}
-                <div className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-xl bg-black/40 text-white opacity-0 backdrop-blur-md transition-all duration-300 group-hover:opacity-100 group-hover:scale-110">
-                  <Maximize2 className="h-4 w-4" />
+                <div className="absolute right-2 top-2 sm:right-3 sm:top-3 grid h-6 w-6 sm:h-8 sm:w-8 place-items-center rounded-lg sm:rounded-xl bg-black/40 text-white opacity-0 backdrop-blur-md transition-all duration-300 group-hover:opacity-100 group-hover:scale-110">
+                  <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </div>
               </div>
 
               {/* Card Body */}
-              <div className="flex flex-1 flex-col p-5">
+              <div className="flex flex-1 flex-col p-2.5 sm:p-5">
                 <div>
-                  <h3 className="text-base font-bold text-foreground transition-colors group-hover:text-primary">
+                  <h3 className="text-xs sm:text-base font-bold text-foreground transition-colors group-hover:text-primary truncate">
                     {h.name}
                   </h3>
-                  <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden="true" /> {h.city}
+                  <p className="mt-0.5 inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-muted-foreground truncate">
+                    <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary shrink-0" aria-hidden="true" /> {h.city}
                   </p>
                 </div>
 
-                <p className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground/90">
-                  <BedDouble className="h-3.5 w-3.5 text-primary" /> {h.roomType}
+                <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-foreground/90 truncate">
+                  <BedDouble className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary shrink-0" /> {h.roomType}
                 </p>
 
                 {/* Amenities Badges */}
-                <ul className="mt-3 flex flex-wrap gap-1.5 border-t border-b border-border/60 py-3">
-                  {h.amenities.map((a) => (
+                <ul className="mt-2 flex flex-wrap gap-1 border-t border-b border-border/60 py-1.5 sm:py-2.5 max-h-12 overflow-hidden">
+                  {h.amenities.slice(0, 2).map((a) => (
                     <li
                       key={a}
-                      className="rounded-full bg-secondary/80 px-2.5 py-0.5 text-[10px] font-medium text-secondary-foreground"
+                      className="rounded-full bg-secondary/80 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[10px] font-medium text-secondary-foreground truncate"
                     >
                       {a}
                     </li>
                   ))}
                 </ul>
 
-                <div className="mt-4 flex items-baseline justify-between">
+                <div className="mt-2.5 flex items-baseline justify-between">
                   <div>
-                    <span className="text-[11px] text-muted-foreground">Nightly rate</span>
-                    <p className="text-base font-extrabold text-primary">
+                    <span className="text-[9px] sm:text-[11px] text-muted-foreground">Nightly rate</span>
+                    <p className="text-xs sm:text-base font-extrabold text-primary">
                       ₹{h.pricePerNight.toLocaleString("en-IN")}
-                      <span className="text-xs font-normal text-muted-foreground"> / night</span>
+                      <span className="text-[9px] sm:text-xs font-normal text-muted-foreground"> / night</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 flex gap-2 pt-1">
-                  <Button asChild size="sm" className="flex-1 font-semibold">
-                    <AppLink href="/contact-us">Book</AppLink>
+                <div className="mt-2.5 flex gap-1.5 pt-1">
+                  <Button asChild size="sm" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
+                    <AppLink href={`/hotels`}>Explore</AppLink>
                   </Button>
-                  <Button asChild size="sm" variant="outline" className="flex-1 font-semibold">
+                  <Button asChild size="sm" variant="outline" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
                     <a
                       href={waLink(
                         `Hi South Zoom Tourism, I'd like to check availability at ${h.name}, ${h.city} (${h.roomType}).`,
@@ -111,7 +152,7 @@ export function HotelsSection() {
                       target="_blank"
                       rel="noreferrer noopener"
                     >
-                      Enquire
+                      WhatsApp
                     </a>
                   </Button>
                 </div>

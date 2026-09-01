@@ -144,7 +144,17 @@ function BookingDetails({ record }: { record: HotelBookingRecord }) {
 
   return (
     <>
-      <section className="mt-8 rounded-2xl border border-border bg-card p-5 sm:p-7">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-card border px-4 py-2.5 text-xs shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-foreground text-sm">{company.name}</span>
+          <Badge variant="outline" className="text-[11px] font-semibold text-primary border-primary/40 bg-primary/5">
+            Verified Operator
+          </Badge>
+        </div>
+        <span className="text-muted-foreground font-medium">{company.msmeRegistration}</span>
+      </div>
+
+      <section className="mt-4 rounded-2xl border border-border bg-card p-5 sm:p-7">
         <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
           {pending ? (
             <Clock className="mt-1 h-7 w-7 shrink-0 text-amber-600" aria-hidden="true" />

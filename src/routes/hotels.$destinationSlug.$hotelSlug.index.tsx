@@ -47,9 +47,24 @@ const slugify = (value: string) =>
 
 function findHotel(destinationSlug: string, hotelSlug: string) {
   return (
+    getPublishedHotels().find((h) => {
+      const matchHotel =
+        h.slug === hotelSlug ||
+        h.id === hotelSlug ||
+        slugify(h.name) === hotelSlug;
+      const matchDest =
+        slugify(h.city) === destinationSlug ||
+        slugify(h.state) === destinationSlug ||
+        destinationSlug === "all";
+      return matchHotel && matchDest;
+    }) ??
     getPublishedHotels().find(
-      (h) => h.slug === hotelSlug && slugify(h.city) === destinationSlug,
-    ) ?? null
+      (h) =>
+        h.slug === hotelSlug ||
+        h.id === hotelSlug ||
+        slugify(h.name) === hotelSlug,
+    ) ??
+    null
   );
 }
 

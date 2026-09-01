@@ -71,6 +71,31 @@ export type GalleryMedia = {
   published: boolean;
 };
 
+// Dynamic cache for admin-managed gallery media
+export let dynamicGalleryMedia: GalleryMedia[] = [];
+export const setDynamicGalleryMedia = (media: GalleryMedia[]) => {
+  dynamicGalleryMedia = media;
+};
+
+export function mapDbGalleryToMedia(row: any, index: number = 0): GalleryMedia {
+  const catSlug = (row.category || "fleet").toLowerCase().replace(/\s+/g, "-");
+  return {
+    id: row.id || `gm-${index}`,
+    type: row.video_url ? "video" : "image",
+    albumSlug: "customer-trips",
+    categorySlug: catSlug === "tamil-nadu" ? "destinations" : catSlug === "kerala" ? "destinations" : catSlug === "karnataka" ? "destinations" : catSlug === "vehicles" ? "fleet" : catSlug,
+    image: row.image_url || "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80",
+    alt: row.alt_text || "South Zoom Tourism travel photo",
+    caption: row.alt_text || "South India travel with South Zoom Tourism",
+    attribution: "South Zoom Tourism",
+    width: 1600,
+    height: 1067,
+    videoUrl: row.video_url,
+    order: row.display_order || index + 1,
+    published: row.active !== false,
+  };
+}
+
 export const galleryBannerBlock = {
   visible: true,
   title: "Gallery",
@@ -103,7 +128,7 @@ export const galleryAlbums: GalleryAlbum[] = [
   { id: "a2", slug: "hill-stations", title: "Hill Stations", description: "Ooty, Munnar, Coorg and Kodaikanal.", coverImage: heroTours, coverAlt: "Misty tea plantations on a hill station tour", categorySlug: "destinations", order: 2, published: true },
   { id: "a3", slug: "partner-hotels", title: "Partner Hotels", description: "Properties we book across South India.", coverImage: heroHotels, coverAlt: "Partner hotel exterior with hill views", categorySlug: "hotels", order: 3, published: true },
   { id: "a4", slug: "room-categories", title: "Room Categories", description: "Deluxe, premium and family rooms.", coverImage: aboutBanner, coverAlt: "Deluxe hotel room with a valley-facing window", categorySlug: "rooms", order: 4, published: true },
-  { id: "a5", slug: "traveller-moments", title: "Traveller Moments", description: "Photos shared by our customers.", coverImage: team1, coverAlt: "Family on a South Zoom tour at a viewpoint", categorySlug: "customer-trips", order: 5, published: true },
+  { id: "a5", slug: "traveller-moments", title: "Traveller Moments", description: "Photos shared by our customers.", coverImage: team1, coverAlt: "Family on a South Zoom tour at a viewpoint", categorySlug: "customer-trips", order: 5, published: false },
   { id: "a6", slug: "group-departures", title: "Group Departures", description: "Large groups travelling with our tempo fleet.", coverImage: servicePilgrimage, coverAlt: "Group of pilgrims boarding a tempo traveller", categorySlug: "group-tours", order: 6, published: true },
   { id: "a7", slug: "corporate-accounts", title: "Corporate Accounts", description: "Employee shuttles and business transfers.", coverImage: serviceCorporate, coverAlt: "Executive MPV used for employee and business transfers", categorySlug: "corporate-travel", order: 7, published: true },
   { id: "a8", slug: "weddings-and-events", title: "Weddings & Events", description: "Wedding fleets and conference logistics.", coverImage: serviceWedding, coverAlt: "Decorated wedding car arranged by South Zoom", categorySlug: "events", order: 8, published: true },
@@ -156,6 +181,9 @@ export const galleryMedia: GalleryMedia[] = [
 const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
 
 export function getPublishedMedia(): GalleryMedia[] {
+  if (dynamicGalleryMedia.length > 0) {
+    return dynamicGalleryMedia.filter((m) => m.published).sort(byOrder);
+  }
   return galleryMedia.filter((m) => m.published).sort(byOrder);
 }
 

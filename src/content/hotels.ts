@@ -739,17 +739,82 @@ export function getRoomAvailability(
   };
 }
 
+let dynamicHotelRecords: HotelRecord[] | null = null;
+let dynamicRoomRecords: RoomRecord[] | null = null;
+
+export function setDynamicHotelsAndRooms(hotels: HotelRecord[], rooms: RoomRecord[]) {
+  dynamicHotelRecords = hotels;
+  dynamicRoomRecords = rooms;
+}
+
+export function mapDbHotelToHotelRecord(h: any, index: number = 0): HotelRecord {
+  const slug = (h.name || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return {
+    id: h.id,
+    slug: slug,
+    name: h.name,
+    city: h.city,
+    state: h.destinations?.state || "South India",
+    categorySlug: "standard",
+    starRating: h.star_rating || 3,
+    shortDescription: h.description || `${h.name} in ${h.city}`,
+    address: `${h.name}, ${h.city}`,
+    amenities: ["Wi-Fi", "Free breakfast", "Parking"],
+    image: h.main_image || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+    imageAlt: `${h.name} in ${h.city}`,
+    verifiedPartner: true,
+    published: h.active !== false,
+    featured: h.featured || false,
+    order: index + 1,
+  };
+}
+
+export function mapDbRoomToRoomRecord(r: any, index: number = 0): RoomRecord {
+  return {
+    id: r.id,
+    hotelId: r.hotel_id,
+    name: r.room_type,
+    roomTypeSlug: (r.room_type || "deluxe").toLowerCase().includes("deluxe") ? "deluxe" : "double",
+    maxAdults: r.capacity_adults || 2,
+    maxChildren: r.capacity_children || 1,
+    basePricePerNight: Number(r.price_per_night) || 2500,
+    bedType: "1 Queen Bed",
+    sizeSqft: 280,
+    amenities: Array.isArray(r.amenities) ? r.amenities : ["Wi-Fi", "AC", "Hot Water"],
+    image: r.image_url || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+    imageAlt: r.room_type,
+    published: r.active !== false,
+    featured: index === 0,
+    order: index + 1,
+    inventory: rule(8, 6),
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /* Public reads                                                         */
 /* ------------------------------------------------------------------ */
 
-export const getPublishedHotels = () =>
-  hotelRecords.filter((h) => h.published).sort((a, b) => a.order - b.order);
+export const getPublishedHotels = () => {
+  if (dynamicHotelRecords && dynamicHotelRecords.length > 0) {
+    return dynamicHotelRecords.filter((h) => h.published).sort((a, b) => a.order - b.order);
+  }
+  return hotelRecords.filter((h) => h.published).sort((a, b) => a.order - b.order);
+};
 
-export const getHotelRooms = (hotelId: string) =>
-  roomRecords
+export const getHotelRooms = (hotelId: string) => {
+  if (dynamicRoomRecords && dynamicRoomRecords.length > 0) {
+    const list = dynamicRoomRecords.filter((r) => r.published && r.hotelId === hotelId);
+    if (list.length > 0) return list.sort((a, b) => a.order - b.order);
+  }
+  return roomRecords
     .filter((r) => r.published && r.hotelId === hotelId)
     .sort((a, b) => a.order - b.order);
+};
 
 export const getVisibleCategories = () =>
   hotelCategories.filter((c) => c.visible).sort((a, b) => a.order - b.order);

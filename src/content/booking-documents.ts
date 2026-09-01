@@ -26,6 +26,7 @@ function genericConfirmationLines(summary: BookingSummary): PdfLine[] {
   const meta = bookingStatusMeta[summary.status];
   return [
     { text: company.name, style: "heading" },
+    { text: company.msmeRegistration, style: "small" },
     { text: company.address, style: "small" },
     { text: `${company.phone} · ${company.email}`, style: "small" },
     { text: "Booking confirmation", style: "title", gapBefore: 10 },

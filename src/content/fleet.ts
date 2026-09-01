@@ -13,17 +13,26 @@
 
 import heroFleet from "@/assets/hero-fleet.jpg";
 import heroTours from "@/assets/hero-tours.jpg";
-import serviceCorporate from "@/assets/service-corporate-new.png";
-import serviceGroup from "@/assets/service-group.png";
 import carInnova from "@/assets/car-innova.png";
 import carErtiga from "@/assets/car-ertiga.png";
 import carDzire from "@/assets/car-dzire.png";
-import fleetSedan from "@/assets/fleet-sedan.png";
-import fleetSuv from "@/assets/fleet-suv.png";
-import fleetTempo from "@/assets/fleet-tempo.png";
-import fleetBus from "@/assets/fleet-bus.png";
+import fleetWagonr from "@/assets/fleet-wagonr-ka.jpg";
+import fleetDzire from "@/assets/fleet-dzire-new.png";
+import fleetErtiga from "@/assets/fleet-ertiga-new.png";
+import fleetInnova from "@/assets/fleet-innova-new.png";
+import fleetTempo from "@/assets/fleet-tempo-new.png";
+import fleetUrbania from "@/assets/fleet-urbania-ka.jpg";
+import fleetBus from "@/assets/fleet-bus-ka.jpg";
+import fleetBmw from "@/assets/fleet-bmw-new.png";
+import { resolveVehicleImage } from "@/lib/image-map";
 
-export type VehicleCategory = { id: string; slug: string; label: string; order: number; visible: boolean };
+export type VehicleCategory = {
+  id: string;
+  slug: string;
+  label: string;
+  order: number;
+  visible: boolean;
+};
 
 export type TripType = "local" | "outstation" | "airport" | "group";
 
@@ -53,11 +62,63 @@ export type FleetVehicle = {
   popular: number;
 };
 
+// Dynamic cache for admin-managed fleet vehicles
+export let dynamicFleetVehicles: FleetVehicle[] = [];
+export const setDynamicFleetVehicles = (vehicles: FleetVehicle[]) => {
+  dynamicFleetVehicles = vehicles;
+};
+
+export function mapDbFleetToRecord(row: any, index: number = 0): FleetVehicle {
+  const existing = fleetVehicles.find(
+    (v) => v.id === row.id || v.slug === row.slug || v.name?.toLowerCase() === (row.name || '').toLowerCase()
+  );
+  const resolvedImg = resolveVehicleImage(row.image || existing?.image, row.slug || row.name || existing?.slug || existing?.name);
+
+  return {
+    id: row.id || existing?.id || `fv-${row.slug || index}`,
+    slug: row.slug || existing?.slug || (row.name || '').toLowerCase().replace(/\s+/g, '-'),
+    name: row.name || existing?.name || '',
+    brand: row.brand || existing?.brand || 'Toyota / Maruti',
+    model: row.model || existing?.model || row.name || '',
+    categorySlug: row.category_slug || existing?.categorySlug || 'sedan',
+    seats: row.seats || existing?.seats || 4,
+    luggage: row.luggage || existing?.luggage || 3,
+    ac: row.ac !== false,
+    fuel: row.fuel || existing?.fuel || 'Diesel',
+    pricePerKm: row.price_per_km || existing?.pricePerKm || 14,
+    priceFromLabel: existing?.priceFromLabel || `₹${row.price_per_km || 14} / km`,
+    available: true,
+    availabilityText: 'Available today',
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: existing?.tripTypes || ['local', 'outstation', 'airport'],
+    features: existing?.features || [
+      'AC with individual vents',
+      'KA registered yellow board',
+      'SZT verified fleet sticker',
+      'Professional chauffeur',
+    ],
+    image: resolvedImg,
+    imageAlt: row.image_alt || existing?.imageAlt || row.name || '',
+    order: row.display_order || existing?.order || index + 1,
+    published: row.is_published !== false,
+    featured: row.is_featured !== false,
+    popular: row.popularity || existing?.popular || 80,
+  };
+}
+
 export const vehicleCategories: VehicleCategory[] = [
-  { id: "vc-sedan", slug: "sedan", label: "Sedan", order: 1, visible: true },
-  { id: "vc-suv", slug: "suv", label: "SUV", order: 2, visible: true },
-  { id: "vc-tempo", slug: "tempo-traveller", label: "Tempo Traveller (TT)", order: 3, visible: true },
-  { id: "vc-bus", slug: "bus", label: "Bus", order: 4, visible: true },
+  { id: "vc-hatchback", slug: "hatchback", label: "Hatchback", order: 1, visible: true },
+  { id: "vc-sedan", slug: "sedan", label: "Sedan", order: 2, visible: true },
+  { id: "vc-suv", slug: "suv", label: "SUV", order: 3, visible: true },
+  { id: "vc-premium", slug: "premium", label: "Premium", order: 4, visible: true },
+  {
+    id: "vc-tempo",
+    slug: "tempo-traveller",
+    label: "Tempo Traveller (TT)",
+    order: 5,
+    visible: true,
+  },
+  { id: "vc-bus", slug: "bus", label: "Bus", order: 6, visible: true },
 ];
 
 export const tripTypeOptions: { value: TripType; label: string }[] = [
@@ -69,40 +130,252 @@ export const tripTypeOptions: { value: TripType; label: string }[] = [
 
 export const fleetVehicles: FleetVehicle[] = [
   {
-    id: "fv-dzire", slug: "maruti-dzire", name: "Maruti Dzire / Etios (Sedan)", brand: "Maruti Suzuki / Toyota", model: "Dzire ZXi",
-    categorySlug: "sedan", seats: 4, luggage: 2, ac: true, fuel: "Petrol",
-    pricePerKm: 14, priceFromLabel: "₹14 / km", available: true, availabilityText: "Available today",
-    allowEnquiryWhenUnavailable: true, tripTypes: ["local", "outstation", "airport"],
-    features: ["Boot space for 2-3 bags", "GPS tracked", "Yellow South Zoom Tourism board", "Ideal for small families"],
-    image: fleetSedan, imageAlt: "White Maruti Dzire sedan taxi with yellow South Zoom Tourism board",
-    order: 1, published: true, featured: true, popular: 96,
+    id: "fv-hatchback",
+    slug: "hatchback-wagonr",
+    name: "Hatchback (WagonR or similar)",
+    brand: "Maruti Suzuki",
+    model: "WagonR",
+    categorySlug: "hatchback",
+    seats: 4,
+    luggage: 2,
+    ac: true,
+    fuel: "Petrol",
+    pricePerKm: 12,
+    priceFromLabel: "₹12 / km",
+    available: true,
+    availabilityText: "Available today",
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: ["local", "outstation", "airport"],
+    features: [
+      "Compact and city-friendly",
+      "GPS tracked",
+      "KA registered yellow board",
+      "SZT verified fleet sticker",
+      "Budget-friendly local rides",
+    ],
+    image: fleetWagonr,
+    imageAlt: "White Maruti Suzuki WagonR hatchback cab with KA registered yellow board and SZT sticker",
+    order: 1,
+    published: true,
+    featured: true,
+    popular: 82,
   },
   {
-    id: "fv-ertiga", slug: "maruti-ertiga", name: "Maruti Ertiga / Innova Crysta (SUV)", brand: "Toyota / Maruti", model: "Innova Crysta / Ertiga",
-    categorySlug: "suv", seats: 7, luggage: 4, ac: true, fuel: "Diesel",
-    pricePerKm: 20, priceFromLabel: "₹20 / km", available: true, availabilityText: "Available today",
-    allowEnquiryWhenUnavailable: true, tripTypes: ["local", "outstation", "airport", "group"],
-    features: ["7-seater luxury seating", "Extra legroom", "Yellow South Zoom Tourism board", "Best for family outstation trips"],
-    image: fleetSuv, imageAlt: "White Toyota Innova Crysta SUV taxi with yellow South Zoom Tourism board",
-    order: 2, published: true, featured: true, popular: 100,
+    id: "fv-dzire",
+    slug: "maruti-dzire",
+    name: "Sedan (Swift Dzire or similar)",
+    brand: "Maruti Suzuki / Toyota",
+    model: "Swift Dzire ZXi",
+    categorySlug: "sedan",
+    seats: 4,
+    luggage: 3,
+    ac: true,
+    fuel: "Petrol",
+    pricePerKm: 14,
+    priceFromLabel: "₹14 / km",
+    available: true,
+    availabilityText: "Available today",
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: ["local", "outstation", "airport"],
+    features: [
+      "Boot space for 2-3 bags",
+      "GPS tracked",
+      "KA registered yellow board",
+      "SZT verified fleet sticker",
+      "Ideal for small families",
+    ],
+    image: fleetDzire,
+    imageAlt: "White Swift Dzire sedan taxi with KA registered yellow board and SZT sticker",
+    order: 2,
+    published: true,
+    featured: true,
+    popular: 96,
   },
   {
-    id: "fv-tempo12", slug: "tempo-traveller-12", name: "Tempo Traveller (12-17 Seater)", brand: "Force Motors", model: "Traveller 3350",
-    categorySlug: "tempo-traveller", seats: 12, luggage: 10, ac: true, fuel: "Diesel",
-    pricePerKm: 24, priceFromLabel: "₹24 / km", available: true, availabilityText: "Available today",
-    allowEnquiryWhenUnavailable: true, tripTypes: ["local", "outstation", "group"],
-    features: ["Push-back recliner seats", "Yellow South Zoom Tourism board", "Overhead luggage rack", "Music system"],
-    image: fleetTempo, imageAlt: "White 12-seater Tempo Traveller with yellow South Zoom Tourism board",
-    order: 3, published: true, featured: true, popular: 89,
+    id: "fv-ertiga",
+    slug: "maruti-ertiga",
+    name: "Small SUV (Ertiga or similar)",
+    brand: "Maruti Suzuki",
+    model: "Ertiga",
+    categorySlug: "suv",
+    seats: 6,
+    luggage: 4,
+    ac: true,
+    fuel: "Diesel",
+    pricePerKm: 18,
+    priceFromLabel: "₹18 / km",
+    available: true,
+    availabilityText: "Available today",
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: ["local", "outstation", "airport", "group"],
+    features: [
+      "6-seater family seating",
+      "Extra legroom",
+      "KA registered yellow board",
+      "SZT verified fleet sticker",
+      "Great for outstation trips",
+    ],
+    image: fleetErtiga,
+    imageAlt: "White Maruti Ertiga small SUV taxi with KA registered yellow board and SZT sticker",
+    order: 3,
+    published: true,
+    featured: true,
+    popular: 91,
   },
   {
-    id: "fv-bus27", slug: "mini-bus-27", name: "Tourist Bus (27-45 Seater)", brand: "Tata / Volvo", model: "Starbus 27 / Volvo",
-    categorySlug: "bus", seats: 35, luggage: 25, ac: true, fuel: "Diesel",
-    pricePerKm: 38, priceFromLabel: "₹38 / km", available: true, availabilityText: "Available today",
-    allowEnquiryWhenUnavailable: true, tripTypes: ["outstation", "group"],
-    features: ["Air-conditioned luxury coach", "Yellow South Zoom Tourism board", "Push-back seats", "Ample luggage bay"],
-    image: fleetBus, imageAlt: "White Tourist Bus coach with yellow South Zoom Tourism board",
-    order: 4, published: true, featured: true, popular: 75,
+    id: "fv-crysta",
+    slug: "innova-crysta",
+    name: "Big SUV (Innova Crysta or similar)",
+    brand: "Toyota",
+    model: "Innova Crysta",
+    categorySlug: "suv",
+    seats: 7,
+    luggage: 5,
+    ac: true,
+    fuel: "Diesel",
+    pricePerKm: 21,
+    priceFromLabel: "₹21 / km",
+    available: true,
+    availabilityText: "Available today",
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: ["local", "outstation", "airport", "group"],
+    features: [
+      "7-seater luxury seating",
+      "Captain seats available",
+      "KA registered yellow board",
+      "SZT verified fleet sticker",
+      "Best for family outstation trips",
+    ],
+    image: fleetInnova,
+    imageAlt: "White Toyota Innova Crysta big SUV taxi with KA registered yellow board and SZT sticker",
+    order: 4,
+    published: true,
+    featured: true,
+    popular: 100,
+  },
+  {
+    id: "fv-tempo12",
+    slug: "tempo-traveller-12",
+    name: "Tempo Traveller (12-17 Seater)",
+    brand: "Force Motors",
+    model: "Traveller 3350",
+    categorySlug: "tempo-traveller",
+    seats: 12,
+    luggage: 10,
+    ac: true,
+    fuel: "Diesel",
+    pricePerKm: 24,
+    priceFromLabel: "₹24 / km",
+    available: true,
+    availabilityText: "Available today",
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: ["local", "outstation", "group"],
+    features: [
+      "2×1 Push-back recliner seats",
+      "KA registered yellow board",
+      "SZT verified fleet sticker",
+      "Overhead luggage rack",
+      "Music system",
+    ],
+    image: fleetTempo,
+    imageAlt: "White 12-17 Seater Force Tempo Traveller TT with KA registered yellow board and SZT sticker",
+    order: 5,
+    published: true,
+    featured: true,
+    popular: 89,
+  },
+  {
+    id: "fv-urbania",
+    slug: "force-urbania",
+    name: "Force Urbania (10-17 Seater Luxury Van)",
+    brand: "Force Motors",
+    model: "Urbania Luxury",
+    categorySlug: "tempo-traveller",
+    seats: 14,
+    luggage: 12,
+    ac: true,
+    fuel: "Diesel",
+    pricePerKm: 28,
+    priceFromLabel: "₹28 / km",
+    available: true,
+    availabilityText: "Available today",
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: ["local", "outstation", "group", "airport"],
+    features: [
+      "Luxury individual recliner seats",
+      "KA registered yellow board",
+      "SZT verified fleet sticker",
+      "Personal AC vents & reading lights",
+      "Panoramic tinted windows",
+    ],
+    image: fleetUrbania,
+    imageAlt: "Force Urbania Luxury Van with KA registered yellow board and SZT sticker",
+    order: 6,
+    published: true,
+    featured: true,
+    popular: 95,
+  },
+  {
+    id: "fv-bus27",
+    slug: "mini-bus-27",
+    name: "Tourist Bus (27-45 Seater)",
+    brand: "Tata / Volvo",
+    model: "Starbus 27 / Volvo",
+    categorySlug: "bus",
+    seats: 35,
+    luggage: 25,
+    ac: true,
+    fuel: "Diesel",
+    pricePerKm: 38,
+    priceFromLabel: "₹38 / km",
+    available: true,
+    availabilityText: "Available today",
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: ["outstation", "group"],
+    features: [
+      "Air-conditioned luxury coach",
+      "KA registered yellow board",
+      "SZT verified fleet sticker",
+      "2×2 Push-back seats",
+      "Ample luggage bay",
+    ],
+    image: fleetBus,
+    imageAlt: "White Tourist Bus coach with KA registered yellow board and SZT sticker",
+    order: 7,
+    published: true,
+    featured: true,
+    popular: 75,
+  },
+  {
+    id: "fv-premium",
+    slug: "premium-bmw",
+    name: "Premium (BMW or similar)",
+    brand: "BMW",
+    model: "5 Series",
+    categorySlug: "premium",
+    seats: 4,
+    luggage: 3,
+    ac: true,
+    fuel: "Petrol",
+    pricePerKm: 45,
+    priceFromLabel: "₹45 / km",
+    available: true,
+    availabilityText: "Available today",
+    allowEnquiryWhenUnavailable: true,
+    tripTypes: ["local", "outstation", "airport"],
+    features: [
+      "Luxury interiors",
+      "Chauffeur service",
+      "KA registered yellow board",
+      "SZT verified fleet sticker",
+      "Perfect for executive travel",
+    ],
+    image: fleetBmw,
+    imageAlt: "White BMW premium luxury sedan with KA registered yellow board and SZT sticker",
+    order: 8,
+    published: true,
+    featured: true,
+    popular: 68,
   },
 ];
 
@@ -139,12 +412,14 @@ export const sortOptions = [
 export type SortValue = (typeof sortOptions)[number]["value"];
 
 export function getPublishedVehicles(): FleetVehicle[] {
-  return fleetVehicles.filter((v) => v.published).sort((a, b) => a.order - b.order);
+  return getFleetVehicles().filter((v) => v.published).sort((a, b) => a.order - b.order);
 }
 
 export function getVisibleVehicleCategories(): VehicleCategory[] {
   const used = new Set(getPublishedVehicles().map((v) => v.categorySlug));
-  return vehicleCategories.filter((c) => c.visible && used.has(c.slug)).sort((a, b) => a.order - b.order);
+  return vehicleCategories
+    .filter((c) => c.visible && used.has(c.slug))
+    .sort((a, b) => a.order - b.order);
 }
 
 export function getVehicleCategoryLabel(slug: string): string {
@@ -155,7 +430,82 @@ export function getVehicleBySlug(slug: string): FleetVehicle | undefined {
   return getPublishedVehicles().find((v) => v.slug === slug);
 }
 
+const STORAGE_KEY_FLEET_DATA = "szt_fleet_data_v1";
+
+let memoryFleetVehicles: FleetVehicle[] = [...fleetVehicles];
+
+const isBrowser = () => typeof window !== "undefined";
+
+export function getFleetVehicles(): FleetVehicle[] {
+  if (dynamicFleetVehicles.length > 0) {
+    return dynamicFleetVehicles;
+  }
+  if (!isBrowser()) return memoryFleetVehicles;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY_FLEET_DATA);
+    if (!raw) return memoryFleetVehicles;
+    const stored: Partial<FleetVehicle>[] = JSON.parse(raw);
+    const merged = fleetVehicles.map((def) => {
+      const found = stored.find((s) => s.id === def.id || s.slug === def.slug);
+      return found ? { ...def, ...found } : def;
+    });
+    memoryFleetVehicles = merged.sort((a, b) => a.order - b.order);
+    return memoryFleetVehicles;
+  } catch {
+    return memoryFleetVehicles;
+  }
+}
+
+export function saveFleetVehicles(vehicles: FleetVehicle[]): void {
+  memoryFleetVehicles = [...vehicles];
+  if (!isBrowser()) return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY_FLEET_DATA, JSON.stringify(vehicles));
+    window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+export function resetFleetVehicles(): FleetVehicle[] {
+  memoryFleetVehicles = [...fleetVehicles];
+  if (isBrowser()) {
+    window.localStorage.removeItem(STORAGE_KEY_FLEET_DATA);
+    window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
+  }
+  return fleetVehicles;
+}
+
+export function getFleetVehicleById(id: string): FleetVehicle | undefined {
+  return getFleetVehicles().find((v) => v.id === id);
+}
+
+export function updateFleetVehicle(
+  id: string,
+  updates: Partial<FleetVehicle>,
+): FleetVehicle | undefined {
+  const vehicles = getFleetVehicles();
+  const index = vehicles.findIndex((v) => v.id === id);
+  if (index === -1) return undefined;
+  vehicles[index] = { ...vehicles[index], ...updates };
+  saveFleetVehicles(vehicles);
+  return vehicles[index];
+}
+
+export function addFleetVehicle(vehicle: FleetVehicle): FleetVehicle[] {
+  const vehicles = getFleetVehicles();
+  vehicles.push(vehicle);
+  saveFleetVehicles(vehicles);
+  return vehicles;
+}
+
+export function deleteFleetVehicle(id: string): FleetVehicle[] {
+  const vehicles = getFleetVehicles().filter((v) => v.id !== id);
+  saveFleetVehicles(vehicles);
+  return vehicles;
+}
+
 export const fleetPriceBounds = (() => {
-  const prices = getPublishedVehicles().map((v) => v.pricePerKm);
+  const prices = getFleetVehicles().map((v) => v.pricePerKm);
   return { min: Math.min(...prices), max: Math.max(...prices) };
 })();

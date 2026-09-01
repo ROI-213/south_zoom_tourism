@@ -24,6 +24,7 @@ import { loadBookingRecord } from "@/content/package-booking";
 import { loadBookingSummary, type BookingSummary } from "@/content/booking-summary";
 import { listPaymentSubmissions, type PaymentSubmissionRecord } from "@/content/payment";
 import type { CustomerProfile } from "@/content/customer-auth";
+import { syncVehicleBookingToSupabase } from "@/lib/booking-sync";
 
 /* --------------------------------------------------------------- storage io */
 
@@ -227,6 +228,23 @@ export function registerVehicleBooking(input: {
       total: 0,
       productHref: input.vehicleHref,
     },
+  });
+
+  // Persist directly into Supabase backend database for admin & operations
+  syncVehicleBookingToSupabase({
+    reference: input.reference,
+    customerName: input.customerName,
+    phone: input.phone,
+    email: input.email,
+    vehicleName: input.vehicleName,
+    pickup: input.pickup,
+    destination: input.destination,
+    pickupDate: input.pickupDate,
+    pickupTime: input.pickupTime,
+    returnDate: input.returnDate,
+    passengers: input.passengers,
+    tripType: input.tripType,
+    notes: input.notes,
   });
 }
 

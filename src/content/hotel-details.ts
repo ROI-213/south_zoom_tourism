@@ -773,8 +773,53 @@ export const roomDetailAttributes: RoomDetailAttributes[] = [
 /* Public reads                                                         */
 /* ------------------------------------------------------------------ */
 
-export const getHotelProfile = (hotelId: string): HotelProfile | undefined =>
-  hotelProfiles.find((p) => p.published && p.hotelId === hotelId);
+export const getHotelProfile = (hotelId: string): HotelProfile | undefined => {
+  const existing = hotelProfiles.find((p) => p.published && p.hotelId === hotelId);
+  if (existing) return existing;
+
+  const hotel = getPublishedHotels().find((h) => h.id === hotelId);
+  if (!hotel) return undefined;
+
+  return {
+    hotelId: hotel.id,
+    overview: [
+      hotel.shortDescription || `${hotel.name} is a verified partner hotel in ${hotel.city}.`,
+      "Enjoy transparent pricing, comfortable amenities, and instant booking confirmation.",
+    ],
+    checkInTime: "12:00 PM",
+    checkOutTime: "11:00 AM",
+    latitude: 12.9716,
+    longitude: 77.5946,
+    mapsQuery: `${hotel.name}, ${hotel.city}`,
+    travellerTypes: ["Families", "Couples", "Solo Travellers", "Corporate"],
+    distances: [],
+    nearbyPlaces: [],
+    faqs: [
+      {
+        id: `faq-${hotel.id}-1`,
+        hotelId: hotel.id,
+        question: "What are the standard check-in and check-out timings?",
+        answer: "Standard check-in is at 12:00 PM and check-out is at 11:00 AM. Early check-in or late check-out is subject to room availability.",
+        order: 1,
+        visible: true,
+      },
+      {
+        id: `faq-${hotel.id}-2`,
+        hotelId: hotel.id,
+        question: "Is vehicle parking available at this property?",
+        answer: "Yes, complimentary secure parking is available for guest vehicles and cabs.",
+        order: 2,
+        visible: true,
+      },
+    ],
+    policies: standardPolicies(hotel.id),
+    taxPercent: 12,
+    taxNote: "GST at 12% is included in the shown tariffs.",
+    childPolicy: "Children under 6 stay free using existing bedding.",
+    cancellationSummary: "Free cancellation up to 48 hours before check-in.",
+    published: true,
+  };
+};
 
 export const getHotelGallery = (hotelId: string): HotelMediaItem[] =>
   hotelMedia

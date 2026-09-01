@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AboutUsRouteImport } from './routes/about-us'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BookingStatusRouteImport } from './routes/booking-status'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ContactUsRouteImport } from './routes/contact-us'
@@ -22,6 +23,9 @@ import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as QrPaymentRouteImport } from './routes/qr-payment'
 import { Route as RateCardsRouteImport } from './routes/rate-cards'
 import { Route as TestimonialsRouteImport } from './routes/testimonials'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminCmsRouteImport } from './routes/admin.cms'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as BookingConfirmationBookingNumberRouteImport } from './routes/booking-confirmation.$bookingNumber'
 import { Route as CustomerAccountRouteImport } from './routes/customer.account'
 import { Route as CustomerLoginRouteImport } from './routes/customer.login'
@@ -35,6 +39,36 @@ import { Route as ServicesIndexRouteImport } from './routes/services.index'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
 import { Route as TourPackagesIndexRouteImport } from './routes/tour-packages.index'
 import { Route as TourPackagesSlugRouteImport } from './routes/tour-packages.$slug'
+import { Route as AdminAdministrationLogsRouteImport } from './routes/admin.administration.logs'
+import { Route as AdminAdministrationUsersRouteImport } from './routes/admin.administration.users'
+import { Route as AdminCmsIndexRouteImport } from './routes/admin.cms.index'
+import { Route as AdminCmsHeroRouteImport } from './routes/admin.cms.hero'
+import { Route as AdminCmsTestimonialsRouteImport } from './routes/admin.cms.testimonials'
+import { Route as AdminContentFaqsRouteImport } from './routes/admin.content.faqs'
+import { Route as AdminContentFooterRouteImport } from './routes/admin.content.footer'
+import { Route as AdminContentGalleryRouteImport } from './routes/admin.content.gallery'
+import { Route as AdminContentHeroRouteImport } from './routes/admin.content.hero'
+import { Route as AdminContentHomepageRouteImport } from './routes/admin.content.homepage'
+import { Route as AdminContentNavigationRouteImport } from './routes/admin.content.navigation'
+import { Route as AdminContentTestimonialsRouteImport } from './routes/admin.content.testimonials'
+import { Route as AdminOperationsBookingsRouteImport } from './routes/admin.operations.bookings'
+import { Route as AdminOperationsCustomersRouteImport } from './routes/admin.operations.customers'
+import { Route as AdminOperationsDriversRouteImport } from './routes/admin.operations.drivers'
+import { Route as AdminOperationsEnquiriesRouteImport } from './routes/admin.operations.enquiries'
+import { Route as AdminOperationsPaymentsRouteImport } from './routes/admin.operations.payments'
+import { Route as AdminOperationsRoutesRouteImport } from './routes/admin.operations.routes'
+import { Route as AdminOperationsVehiclesRouteImport } from './routes/admin.operations.vehicles'
+import { Route as AdminProductsDestinationsRouteImport } from './routes/admin.products.destinations'
+import { Route as AdminProductsFleetRouteImport } from './routes/admin.products.fleet'
+import { Route as AdminProductsHotelsRouteImport } from './routes/admin.products.hotels'
+import { Route as AdminProductsPackagesRouteImport } from './routes/admin.products.packages'
+import { Route as AdminProductsServicesRouteImport } from './routes/admin.products.services'
+import { Route as AdminReportsBookingsRouteImport } from './routes/admin.reports.bookings'
+import { Route as AdminReportsRevenueRouteImport } from './routes/admin.reports.revenue'
+import { Route as AdminSettingsBookingRouteImport } from './routes/admin.settings.booking'
+import { Route as AdminSettingsContactRouteImport } from './routes/admin.settings.contact'
+import { Route as AdminSettingsGeneralRouteImport } from './routes/admin.settings.general'
+import { Route as AdminSettingsPaymentRouteImport } from './routes/admin.settings.payment'
 import { Route as BookHotelIndexRouteImport } from './routes/book.hotel.index'
 import { Route as BookHotelConfirmationRouteImport } from './routes/book.hotel.confirmation'
 import { Route as BookTourPackageIndexRouteImport } from './routes/book.tour-package.index'
@@ -69,6 +103,11 @@ const AboutRoute = AboutRouteImport.update({
 const AboutUsRoute = AboutUsRouteImport.update({
   id: '/about-us',
   path: '/about-us',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BookingStatusRoute = BookingStatusRouteImport.update({
@@ -120,6 +159,21 @@ const TestimonialsRoute = TestimonialsRouteImport.update({
   id: '/testimonials',
   path: '/testimonials',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCmsRoute = AdminCmsRouteImport.update({
+  id: '/cms',
+  path: '/cms',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AdminRoute,
 } as any)
 const BookingConfirmationBookingNumberRoute =
   BookingConfirmationBookingNumberRouteImport.update({
@@ -186,6 +240,161 @@ const TourPackagesSlugRoute = TourPackagesSlugRouteImport.update({
   id: '/tour-packages/$slug',
   path: '/tour-packages/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAdministrationLogsRoute = AdminAdministrationLogsRouteImport.update({
+  id: '/administration/logs',
+  path: '/administration/logs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdministrationUsersRoute =
+  AdminAdministrationUsersRouteImport.update({
+    id: '/administration/users',
+    path: '/administration/users',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminCmsIndexRoute = AdminCmsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminCmsRoute,
+} as any)
+const AdminCmsHeroRoute = AdminCmsHeroRouteImport.update({
+  id: '/hero',
+  path: '/hero',
+  getParentRoute: () => AdminCmsRoute,
+} as any)
+const AdminCmsTestimonialsRoute = AdminCmsTestimonialsRouteImport.update({
+  id: '/testimonials',
+  path: '/testimonials',
+  getParentRoute: () => AdminCmsRoute,
+} as any)
+const AdminContentFaqsRoute = AdminContentFaqsRouteImport.update({
+  id: '/content/faqs',
+  path: '/content/faqs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentFooterRoute = AdminContentFooterRouteImport.update({
+  id: '/content/footer',
+  path: '/content/footer',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentGalleryRoute = AdminContentGalleryRouteImport.update({
+  id: '/content/gallery',
+  path: '/content/gallery',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentHeroRoute = AdminContentHeroRouteImport.update({
+  id: '/content/hero',
+  path: '/content/hero',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentHomepageRoute = AdminContentHomepageRouteImport.update({
+  id: '/content/homepage',
+  path: '/content/homepage',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentNavigationRoute = AdminContentNavigationRouteImport.update({
+  id: '/content/navigation',
+  path: '/content/navigation',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentTestimonialsRoute =
+  AdminContentTestimonialsRouteImport.update({
+    id: '/content/testimonials',
+    path: '/content/testimonials',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminOperationsBookingsRoute = AdminOperationsBookingsRouteImport.update({
+  id: '/operations/bookings',
+  path: '/operations/bookings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOperationsCustomersRoute =
+  AdminOperationsCustomersRouteImport.update({
+    id: '/operations/customers',
+    path: '/operations/customers',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminOperationsDriversRoute = AdminOperationsDriversRouteImport.update({
+  id: '/operations/drivers',
+  path: '/operations/drivers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOperationsEnquiriesRoute =
+  AdminOperationsEnquiriesRouteImport.update({
+    id: '/operations/enquiries',
+    path: '/operations/enquiries',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminOperationsPaymentsRoute = AdminOperationsPaymentsRouteImport.update({
+  id: '/operations/payments',
+  path: '/operations/payments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOperationsRoutesRoute = AdminOperationsRoutesRouteImport.update({
+  id: '/operations/routes',
+  path: '/operations/routes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOperationsVehiclesRoute = AdminOperationsVehiclesRouteImport.update({
+  id: '/operations/vehicles',
+  path: '/operations/vehicles',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsDestinationsRoute =
+  AdminProductsDestinationsRouteImport.update({
+    id: '/products/destinations',
+    path: '/products/destinations',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminProductsFleetRoute = AdminProductsFleetRouteImport.update({
+  id: '/products/fleet',
+  path: '/products/fleet',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsHotelsRoute = AdminProductsHotelsRouteImport.update({
+  id: '/products/hotels',
+  path: '/products/hotels',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsPackagesRoute = AdminProductsPackagesRouteImport.update({
+  id: '/products/packages',
+  path: '/products/packages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProductsServicesRoute = AdminProductsServicesRouteImport.update({
+  id: '/products/services',
+  path: '/products/services',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsBookingsRoute = AdminReportsBookingsRouteImport.update({
+  id: '/reports/bookings',
+  path: '/reports/bookings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRevenueRoute = AdminReportsRevenueRouteImport.update({
+  id: '/reports/revenue',
+  path: '/reports/revenue',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsBookingRoute = AdminSettingsBookingRouteImport.update({
+  id: '/settings/booking',
+  path: '/settings/booking',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsContactRoute = AdminSettingsContactRouteImport.update({
+  id: '/settings/contact',
+  path: '/settings/contact',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsGeneralRoute = AdminSettingsGeneralRouteImport.update({
+  id: '/settings/general',
+  path: '/settings/general',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsPaymentRoute = AdminSettingsPaymentRouteImport.update({
+  id: '/settings/payment',
+  path: '/settings/payment',
+  getParentRoute: () => AdminRoute,
 } as any)
 const BookHotelIndexRoute = BookHotelIndexRouteImport.update({
   id: '/book/hotel/',
@@ -307,6 +516,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/about-us': typeof AboutUsRoute
+  '/admin': typeof AdminRouteWithChildren
   '/booking-status': typeof BookingStatusRoute
   '/contact': typeof ContactRoute
   '/contact-us': typeof ContactUsRoute
@@ -317,6 +527,8 @@ export interface FileRoutesByFullPath {
   '/qr-payment': typeof QrPaymentRoute
   '/rate-cards': typeof RateCardsRoute
   '/testimonials': typeof TestimonialsRoute
+  '/admin/cms': typeof AdminCmsRouteWithChildren
+  '/admin/login': typeof AdminLoginRoute
   '/booking-confirmation/$bookingNumber': typeof BookingConfirmationBookingNumberRoute
   '/customer/account': typeof CustomerAccountRoute
   '/customer/login': typeof CustomerLoginRoute
@@ -325,11 +537,41 @@ export interface FileRoutesByFullPath {
   '/hotels/search': typeof HotelsSearchRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/tour-packages/$slug': typeof TourPackagesSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/fleet/': typeof FleetIndexRoute
   '/hotels/': typeof HotelsIndexRoute
   '/services/': typeof ServicesIndexRoute
   '/tour-packages/': typeof TourPackagesIndexRoute
+  '/admin/administration/logs': typeof AdminAdministrationLogsRoute
+  '/admin/administration/users': typeof AdminAdministrationUsersRoute
+  '/admin/cms/hero': typeof AdminCmsHeroRoute
+  '/admin/cms/testimonials': typeof AdminCmsTestimonialsRoute
+  '/admin/content/faqs': typeof AdminContentFaqsRoute
+  '/admin/content/footer': typeof AdminContentFooterRoute
+  '/admin/content/gallery': typeof AdminContentGalleryRoute
+  '/admin/content/hero': typeof AdminContentHeroRoute
+  '/admin/content/homepage': typeof AdminContentHomepageRoute
+  '/admin/content/navigation': typeof AdminContentNavigationRoute
+  '/admin/content/testimonials': typeof AdminContentTestimonialsRoute
+  '/admin/operations/bookings': typeof AdminOperationsBookingsRoute
+  '/admin/operations/customers': typeof AdminOperationsCustomersRoute
+  '/admin/operations/drivers': typeof AdminOperationsDriversRoute
+  '/admin/operations/enquiries': typeof AdminOperationsEnquiriesRoute
+  '/admin/operations/payments': typeof AdminOperationsPaymentsRoute
+  '/admin/operations/routes': typeof AdminOperationsRoutesRoute
+  '/admin/operations/vehicles': typeof AdminOperationsVehiclesRoute
+  '/admin/products/destinations': typeof AdminProductsDestinationsRoute
+  '/admin/products/fleet': typeof AdminProductsFleetRoute
+  '/admin/products/hotels': typeof AdminProductsHotelsRoute
+  '/admin/products/packages': typeof AdminProductsPackagesRoute
+  '/admin/products/services': typeof AdminProductsServicesRoute
+  '/admin/reports/bookings': typeof AdminReportsBookingsRoute
+  '/admin/reports/revenue': typeof AdminReportsRevenueRoute
+  '/admin/settings/booking': typeof AdminSettingsBookingRoute
+  '/admin/settings/contact': typeof AdminSettingsContactRoute
+  '/admin/settings/general': typeof AdminSettingsGeneralRoute
+  '/admin/settings/payment': typeof AdminSettingsPaymentRoute
   '/book/hotel/confirmation': typeof BookHotelConfirmationRoute
   '/book/tour-package/confirmation': typeof BookTourPackageConfirmationRoute
   '/customer/dashboard/cancellations': typeof CustomerDashboardCancellationsRoute
@@ -340,6 +582,7 @@ export interface FileRoutesByFullPath {
   '/customer/dashboard/status': typeof CustomerDashboardStatusRoute
   '/customer/dashboard/support': typeof CustomerDashboardSupportRoute
   '/customer/dashboard/travellers': typeof CustomerDashboardTravellersRoute
+  '/admin/cms/': typeof AdminCmsIndexRoute
   '/book/hotel/': typeof BookHotelIndexRoute
   '/book/tour-package/': typeof BookTourPackageIndexRoute
   '/customer/dashboard/': typeof CustomerDashboardIndexRoute
@@ -365,6 +608,7 @@ export interface FileRoutesByTo {
   '/qr-payment': typeof QrPaymentRoute
   '/rate-cards': typeof RateCardsRoute
   '/testimonials': typeof TestimonialsRoute
+  '/admin/login': typeof AdminLoginRoute
   '/booking-confirmation/$bookingNumber': typeof BookingConfirmationBookingNumberRoute
   '/customer/account': typeof CustomerAccountRoute
   '/customer/login': typeof CustomerLoginRoute
@@ -373,11 +617,41 @@ export interface FileRoutesByTo {
   '/hotels/search': typeof HotelsSearchRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/tour-packages/$slug': typeof TourPackagesSlugRoute
+  '/admin': typeof AdminIndexRoute
   '/destinations': typeof DestinationsIndexRoute
   '/fleet': typeof FleetIndexRoute
   '/hotels': typeof HotelsIndexRoute
   '/services': typeof ServicesIndexRoute
   '/tour-packages': typeof TourPackagesIndexRoute
+  '/admin/administration/logs': typeof AdminAdministrationLogsRoute
+  '/admin/administration/users': typeof AdminAdministrationUsersRoute
+  '/admin/cms/hero': typeof AdminCmsHeroRoute
+  '/admin/cms/testimonials': typeof AdminCmsTestimonialsRoute
+  '/admin/content/faqs': typeof AdminContentFaqsRoute
+  '/admin/content/footer': typeof AdminContentFooterRoute
+  '/admin/content/gallery': typeof AdminContentGalleryRoute
+  '/admin/content/hero': typeof AdminContentHeroRoute
+  '/admin/content/homepage': typeof AdminContentHomepageRoute
+  '/admin/content/navigation': typeof AdminContentNavigationRoute
+  '/admin/content/testimonials': typeof AdminContentTestimonialsRoute
+  '/admin/operations/bookings': typeof AdminOperationsBookingsRoute
+  '/admin/operations/customers': typeof AdminOperationsCustomersRoute
+  '/admin/operations/drivers': typeof AdminOperationsDriversRoute
+  '/admin/operations/enquiries': typeof AdminOperationsEnquiriesRoute
+  '/admin/operations/payments': typeof AdminOperationsPaymentsRoute
+  '/admin/operations/routes': typeof AdminOperationsRoutesRoute
+  '/admin/operations/vehicles': typeof AdminOperationsVehiclesRoute
+  '/admin/products/destinations': typeof AdminProductsDestinationsRoute
+  '/admin/products/fleet': typeof AdminProductsFleetRoute
+  '/admin/products/hotels': typeof AdminProductsHotelsRoute
+  '/admin/products/packages': typeof AdminProductsPackagesRoute
+  '/admin/products/services': typeof AdminProductsServicesRoute
+  '/admin/reports/bookings': typeof AdminReportsBookingsRoute
+  '/admin/reports/revenue': typeof AdminReportsRevenueRoute
+  '/admin/settings/booking': typeof AdminSettingsBookingRoute
+  '/admin/settings/contact': typeof AdminSettingsContactRoute
+  '/admin/settings/general': typeof AdminSettingsGeneralRoute
+  '/admin/settings/payment': typeof AdminSettingsPaymentRoute
   '/book/hotel/confirmation': typeof BookHotelConfirmationRoute
   '/book/tour-package/confirmation': typeof BookTourPackageConfirmationRoute
   '/customer/dashboard/cancellations': typeof CustomerDashboardCancellationsRoute
@@ -388,6 +662,7 @@ export interface FileRoutesByTo {
   '/customer/dashboard/status': typeof CustomerDashboardStatusRoute
   '/customer/dashboard/support': typeof CustomerDashboardSupportRoute
   '/customer/dashboard/travellers': typeof CustomerDashboardTravellersRoute
+  '/admin/cms': typeof AdminCmsIndexRoute
   '/book/hotel': typeof BookHotelIndexRoute
   '/book/tour-package': typeof BookTourPackageIndexRoute
   '/customer/dashboard': typeof CustomerDashboardIndexRoute
@@ -404,6 +679,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/about-us': typeof AboutUsRoute
+  '/admin': typeof AdminRouteWithChildren
   '/booking-status': typeof BookingStatusRoute
   '/contact': typeof ContactRoute
   '/contact-us': typeof ContactUsRoute
@@ -414,6 +690,8 @@ export interface FileRoutesById {
   '/qr-payment': typeof QrPaymentRoute
   '/rate-cards': typeof RateCardsRoute
   '/testimonials': typeof TestimonialsRoute
+  '/admin/cms': typeof AdminCmsRouteWithChildren
+  '/admin/login': typeof AdminLoginRoute
   '/booking-confirmation/$bookingNumber': typeof BookingConfirmationBookingNumberRoute
   '/customer/account': typeof CustomerAccountRoute
   '/customer/login': typeof CustomerLoginRoute
@@ -422,11 +700,41 @@ export interface FileRoutesById {
   '/hotels/search': typeof HotelsSearchRoute
   '/services/$slug': typeof ServicesSlugRoute
   '/tour-packages/$slug': typeof TourPackagesSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/destinations/': typeof DestinationsIndexRoute
   '/fleet/': typeof FleetIndexRoute
   '/hotels/': typeof HotelsIndexRoute
   '/services/': typeof ServicesIndexRoute
   '/tour-packages/': typeof TourPackagesIndexRoute
+  '/admin/administration/logs': typeof AdminAdministrationLogsRoute
+  '/admin/administration/users': typeof AdminAdministrationUsersRoute
+  '/admin/cms/hero': typeof AdminCmsHeroRoute
+  '/admin/cms/testimonials': typeof AdminCmsTestimonialsRoute
+  '/admin/content/faqs': typeof AdminContentFaqsRoute
+  '/admin/content/footer': typeof AdminContentFooterRoute
+  '/admin/content/gallery': typeof AdminContentGalleryRoute
+  '/admin/content/hero': typeof AdminContentHeroRoute
+  '/admin/content/homepage': typeof AdminContentHomepageRoute
+  '/admin/content/navigation': typeof AdminContentNavigationRoute
+  '/admin/content/testimonials': typeof AdminContentTestimonialsRoute
+  '/admin/operations/bookings': typeof AdminOperationsBookingsRoute
+  '/admin/operations/customers': typeof AdminOperationsCustomersRoute
+  '/admin/operations/drivers': typeof AdminOperationsDriversRoute
+  '/admin/operations/enquiries': typeof AdminOperationsEnquiriesRoute
+  '/admin/operations/payments': typeof AdminOperationsPaymentsRoute
+  '/admin/operations/routes': typeof AdminOperationsRoutesRoute
+  '/admin/operations/vehicles': typeof AdminOperationsVehiclesRoute
+  '/admin/products/destinations': typeof AdminProductsDestinationsRoute
+  '/admin/products/fleet': typeof AdminProductsFleetRoute
+  '/admin/products/hotels': typeof AdminProductsHotelsRoute
+  '/admin/products/packages': typeof AdminProductsPackagesRoute
+  '/admin/products/services': typeof AdminProductsServicesRoute
+  '/admin/reports/bookings': typeof AdminReportsBookingsRoute
+  '/admin/reports/revenue': typeof AdminReportsRevenueRoute
+  '/admin/settings/booking': typeof AdminSettingsBookingRoute
+  '/admin/settings/contact': typeof AdminSettingsContactRoute
+  '/admin/settings/general': typeof AdminSettingsGeneralRoute
+  '/admin/settings/payment': typeof AdminSettingsPaymentRoute
   '/book/hotel/confirmation': typeof BookHotelConfirmationRoute
   '/book/tour-package/confirmation': typeof BookTourPackageConfirmationRoute
   '/customer/dashboard/cancellations': typeof CustomerDashboardCancellationsRoute
@@ -437,6 +745,7 @@ export interface FileRoutesById {
   '/customer/dashboard/status': typeof CustomerDashboardStatusRoute
   '/customer/dashboard/support': typeof CustomerDashboardSupportRoute
   '/customer/dashboard/travellers': typeof CustomerDashboardTravellersRoute
+  '/admin/cms/': typeof AdminCmsIndexRoute
   '/book/hotel/': typeof BookHotelIndexRoute
   '/book/tour-package/': typeof BookTourPackageIndexRoute
   '/customer/dashboard/': typeof CustomerDashboardIndexRoute
@@ -454,6 +763,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/about-us'
+    | '/admin'
     | '/booking-status'
     | '/contact'
     | '/contact-us'
@@ -464,6 +774,8 @@ export interface FileRouteTypes {
     | '/qr-payment'
     | '/rate-cards'
     | '/testimonials'
+    | '/admin/cms'
+    | '/admin/login'
     | '/booking-confirmation/$bookingNumber'
     | '/customer/account'
     | '/customer/login'
@@ -472,11 +784,41 @@ export interface FileRouteTypes {
     | '/hotels/search'
     | '/services/$slug'
     | '/tour-packages/$slug'
+    | '/admin/'
     | '/destinations/'
     | '/fleet/'
     | '/hotels/'
     | '/services/'
     | '/tour-packages/'
+    | '/admin/administration/logs'
+    | '/admin/administration/users'
+    | '/admin/cms/hero'
+    | '/admin/cms/testimonials'
+    | '/admin/content/faqs'
+    | '/admin/content/footer'
+    | '/admin/content/gallery'
+    | '/admin/content/hero'
+    | '/admin/content/homepage'
+    | '/admin/content/navigation'
+    | '/admin/content/testimonials'
+    | '/admin/operations/bookings'
+    | '/admin/operations/customers'
+    | '/admin/operations/drivers'
+    | '/admin/operations/enquiries'
+    | '/admin/operations/payments'
+    | '/admin/operations/routes'
+    | '/admin/operations/vehicles'
+    | '/admin/products/destinations'
+    | '/admin/products/fleet'
+    | '/admin/products/hotels'
+    | '/admin/products/packages'
+    | '/admin/products/services'
+    | '/admin/reports/bookings'
+    | '/admin/reports/revenue'
+    | '/admin/settings/booking'
+    | '/admin/settings/contact'
+    | '/admin/settings/general'
+    | '/admin/settings/payment'
     | '/book/hotel/confirmation'
     | '/book/tour-package/confirmation'
     | '/customer/dashboard/cancellations'
@@ -487,6 +829,7 @@ export interface FileRouteTypes {
     | '/customer/dashboard/status'
     | '/customer/dashboard/support'
     | '/customer/dashboard/travellers'
+    | '/admin/cms/'
     | '/book/hotel/'
     | '/book/tour-package/'
     | '/customer/dashboard/'
@@ -512,6 +855,7 @@ export interface FileRouteTypes {
     | '/qr-payment'
     | '/rate-cards'
     | '/testimonials'
+    | '/admin/login'
     | '/booking-confirmation/$bookingNumber'
     | '/customer/account'
     | '/customer/login'
@@ -520,11 +864,41 @@ export interface FileRouteTypes {
     | '/hotels/search'
     | '/services/$slug'
     | '/tour-packages/$slug'
+    | '/admin'
     | '/destinations'
     | '/fleet'
     | '/hotels'
     | '/services'
     | '/tour-packages'
+    | '/admin/administration/logs'
+    | '/admin/administration/users'
+    | '/admin/cms/hero'
+    | '/admin/cms/testimonials'
+    | '/admin/content/faqs'
+    | '/admin/content/footer'
+    | '/admin/content/gallery'
+    | '/admin/content/hero'
+    | '/admin/content/homepage'
+    | '/admin/content/navigation'
+    | '/admin/content/testimonials'
+    | '/admin/operations/bookings'
+    | '/admin/operations/customers'
+    | '/admin/operations/drivers'
+    | '/admin/operations/enquiries'
+    | '/admin/operations/payments'
+    | '/admin/operations/routes'
+    | '/admin/operations/vehicles'
+    | '/admin/products/destinations'
+    | '/admin/products/fleet'
+    | '/admin/products/hotels'
+    | '/admin/products/packages'
+    | '/admin/products/services'
+    | '/admin/reports/bookings'
+    | '/admin/reports/revenue'
+    | '/admin/settings/booking'
+    | '/admin/settings/contact'
+    | '/admin/settings/general'
+    | '/admin/settings/payment'
     | '/book/hotel/confirmation'
     | '/book/tour-package/confirmation'
     | '/customer/dashboard/cancellations'
@@ -535,6 +909,7 @@ export interface FileRouteTypes {
     | '/customer/dashboard/status'
     | '/customer/dashboard/support'
     | '/customer/dashboard/travellers'
+    | '/admin/cms'
     | '/book/hotel'
     | '/book/tour-package'
     | '/customer/dashboard'
@@ -550,6 +925,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/about-us'
+    | '/admin'
     | '/booking-status'
     | '/contact'
     | '/contact-us'
@@ -560,6 +936,8 @@ export interface FileRouteTypes {
     | '/qr-payment'
     | '/rate-cards'
     | '/testimonials'
+    | '/admin/cms'
+    | '/admin/login'
     | '/booking-confirmation/$bookingNumber'
     | '/customer/account'
     | '/customer/login'
@@ -568,11 +946,41 @@ export interface FileRouteTypes {
     | '/hotels/search'
     | '/services/$slug'
     | '/tour-packages/$slug'
+    | '/admin/'
     | '/destinations/'
     | '/fleet/'
     | '/hotels/'
     | '/services/'
     | '/tour-packages/'
+    | '/admin/administration/logs'
+    | '/admin/administration/users'
+    | '/admin/cms/hero'
+    | '/admin/cms/testimonials'
+    | '/admin/content/faqs'
+    | '/admin/content/footer'
+    | '/admin/content/gallery'
+    | '/admin/content/hero'
+    | '/admin/content/homepage'
+    | '/admin/content/navigation'
+    | '/admin/content/testimonials'
+    | '/admin/operations/bookings'
+    | '/admin/operations/customers'
+    | '/admin/operations/drivers'
+    | '/admin/operations/enquiries'
+    | '/admin/operations/payments'
+    | '/admin/operations/routes'
+    | '/admin/operations/vehicles'
+    | '/admin/products/destinations'
+    | '/admin/products/fleet'
+    | '/admin/products/hotels'
+    | '/admin/products/packages'
+    | '/admin/products/services'
+    | '/admin/reports/bookings'
+    | '/admin/reports/revenue'
+    | '/admin/settings/booking'
+    | '/admin/settings/contact'
+    | '/admin/settings/general'
+    | '/admin/settings/payment'
     | '/book/hotel/confirmation'
     | '/book/tour-package/confirmation'
     | '/customer/dashboard/cancellations'
@@ -583,6 +991,7 @@ export interface FileRouteTypes {
     | '/customer/dashboard/status'
     | '/customer/dashboard/support'
     | '/customer/dashboard/travellers'
+    | '/admin/cms/'
     | '/book/hotel/'
     | '/book/tour-package/'
     | '/customer/dashboard/'
@@ -599,6 +1008,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AboutUsRoute: typeof AboutUsRoute
+  AdminRoute: typeof AdminRouteWithChildren
   BookingStatusRoute: typeof BookingStatusRoute
   ContactRoute: typeof ContactRoute
   ContactUsRoute: typeof ContactUsRoute
@@ -665,6 +1075,13 @@ declare module '@tanstack/react-router' {
       path: '/about-us'
       fullPath: '/about-us'
       preLoaderRoute: typeof AboutUsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/booking-status': {
@@ -736,6 +1153,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/testimonials'
       preLoaderRoute: typeof TestimonialsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/cms': {
+      id: '/admin/cms'
+      path: '/cms'
+      fullPath: '/admin/cms'
+      preLoaderRoute: typeof AdminCmsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/booking-confirmation/$bookingNumber': {
       id: '/booking-confirmation/$bookingNumber'
@@ -827,6 +1265,216 @@ declare module '@tanstack/react-router' {
       fullPath: '/tour-packages/$slug'
       preLoaderRoute: typeof TourPackagesSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/administration/logs': {
+      id: '/admin/administration/logs'
+      path: '/administration/logs'
+      fullPath: '/admin/administration/logs'
+      preLoaderRoute: typeof AdminAdministrationLogsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/administration/users': {
+      id: '/admin/administration/users'
+      path: '/administration/users'
+      fullPath: '/admin/administration/users'
+      preLoaderRoute: typeof AdminAdministrationUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/cms/': {
+      id: '/admin/cms/'
+      path: '/'
+      fullPath: '/admin/cms/'
+      preLoaderRoute: typeof AdminCmsIndexRouteImport
+      parentRoute: typeof AdminCmsRoute
+    }
+    '/admin/cms/hero': {
+      id: '/admin/cms/hero'
+      path: '/hero'
+      fullPath: '/admin/cms/hero'
+      preLoaderRoute: typeof AdminCmsHeroRouteImport
+      parentRoute: typeof AdminCmsRoute
+    }
+    '/admin/cms/testimonials': {
+      id: '/admin/cms/testimonials'
+      path: '/testimonials'
+      fullPath: '/admin/cms/testimonials'
+      preLoaderRoute: typeof AdminCmsTestimonialsRouteImport
+      parentRoute: typeof AdminCmsRoute
+    }
+    '/admin/content/faqs': {
+      id: '/admin/content/faqs'
+      path: '/content/faqs'
+      fullPath: '/admin/content/faqs'
+      preLoaderRoute: typeof AdminContentFaqsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/footer': {
+      id: '/admin/content/footer'
+      path: '/content/footer'
+      fullPath: '/admin/content/footer'
+      preLoaderRoute: typeof AdminContentFooterRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/gallery': {
+      id: '/admin/content/gallery'
+      path: '/content/gallery'
+      fullPath: '/admin/content/gallery'
+      preLoaderRoute: typeof AdminContentGalleryRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/hero': {
+      id: '/admin/content/hero'
+      path: '/content/hero'
+      fullPath: '/admin/content/hero'
+      preLoaderRoute: typeof AdminContentHeroRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/homepage': {
+      id: '/admin/content/homepage'
+      path: '/content/homepage'
+      fullPath: '/admin/content/homepage'
+      preLoaderRoute: typeof AdminContentHomepageRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/navigation': {
+      id: '/admin/content/navigation'
+      path: '/content/navigation'
+      fullPath: '/admin/content/navigation'
+      preLoaderRoute: typeof AdminContentNavigationRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content/testimonials': {
+      id: '/admin/content/testimonials'
+      path: '/content/testimonials'
+      fullPath: '/admin/content/testimonials'
+      preLoaderRoute: typeof AdminContentTestimonialsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations/bookings': {
+      id: '/admin/operations/bookings'
+      path: '/operations/bookings'
+      fullPath: '/admin/operations/bookings'
+      preLoaderRoute: typeof AdminOperationsBookingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations/customers': {
+      id: '/admin/operations/customers'
+      path: '/operations/customers'
+      fullPath: '/admin/operations/customers'
+      preLoaderRoute: typeof AdminOperationsCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations/drivers': {
+      id: '/admin/operations/drivers'
+      path: '/operations/drivers'
+      fullPath: '/admin/operations/drivers'
+      preLoaderRoute: typeof AdminOperationsDriversRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations/enquiries': {
+      id: '/admin/operations/enquiries'
+      path: '/operations/enquiries'
+      fullPath: '/admin/operations/enquiries'
+      preLoaderRoute: typeof AdminOperationsEnquiriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations/payments': {
+      id: '/admin/operations/payments'
+      path: '/operations/payments'
+      fullPath: '/admin/operations/payments'
+      preLoaderRoute: typeof AdminOperationsPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations/routes': {
+      id: '/admin/operations/routes'
+      path: '/operations/routes'
+      fullPath: '/admin/operations/routes'
+      preLoaderRoute: typeof AdminOperationsRoutesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations/vehicles': {
+      id: '/admin/operations/vehicles'
+      path: '/operations/vehicles'
+      fullPath: '/admin/operations/vehicles'
+      preLoaderRoute: typeof AdminOperationsVehiclesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products/destinations': {
+      id: '/admin/products/destinations'
+      path: '/products/destinations'
+      fullPath: '/admin/products/destinations'
+      preLoaderRoute: typeof AdminProductsDestinationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products/fleet': {
+      id: '/admin/products/fleet'
+      path: '/products/fleet'
+      fullPath: '/admin/products/fleet'
+      preLoaderRoute: typeof AdminProductsFleetRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products/hotels': {
+      id: '/admin/products/hotels'
+      path: '/products/hotels'
+      fullPath: '/admin/products/hotels'
+      preLoaderRoute: typeof AdminProductsHotelsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products/packages': {
+      id: '/admin/products/packages'
+      path: '/products/packages'
+      fullPath: '/admin/products/packages'
+      preLoaderRoute: typeof AdminProductsPackagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/products/services': {
+      id: '/admin/products/services'
+      path: '/products/services'
+      fullPath: '/admin/products/services'
+      preLoaderRoute: typeof AdminProductsServicesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports/bookings': {
+      id: '/admin/reports/bookings'
+      path: '/reports/bookings'
+      fullPath: '/admin/reports/bookings'
+      preLoaderRoute: typeof AdminReportsBookingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports/revenue': {
+      id: '/admin/reports/revenue'
+      path: '/reports/revenue'
+      fullPath: '/admin/reports/revenue'
+      preLoaderRoute: typeof AdminReportsRevenueRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/booking': {
+      id: '/admin/settings/booking'
+      path: '/settings/booking'
+      fullPath: '/admin/settings/booking'
+      preLoaderRoute: typeof AdminSettingsBookingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/contact': {
+      id: '/admin/settings/contact'
+      path: '/settings/contact'
+      fullPath: '/admin/settings/contact'
+      preLoaderRoute: typeof AdminSettingsContactRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/general': {
+      id: '/admin/settings/general'
+      path: '/settings/general'
+      fullPath: '/admin/settings/general'
+      preLoaderRoute: typeof AdminSettingsGeneralRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings/payment': {
+      id: '/admin/settings/payment'
+      path: '/settings/payment'
+      fullPath: '/admin/settings/payment'
+      preLoaderRoute: typeof AdminSettingsPaymentRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/book/hotel/': {
       id: '/book/hotel/'
@@ -971,10 +1619,95 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminCmsRouteChildren {
+  AdminCmsHeroRoute: typeof AdminCmsHeroRoute
+  AdminCmsTestimonialsRoute: typeof AdminCmsTestimonialsRoute
+  AdminCmsIndexRoute: typeof AdminCmsIndexRoute
+}
+
+const AdminCmsRouteChildren: AdminCmsRouteChildren = {
+  AdminCmsHeroRoute: AdminCmsHeroRoute,
+  AdminCmsTestimonialsRoute: AdminCmsTestimonialsRoute,
+  AdminCmsIndexRoute: AdminCmsIndexRoute,
+}
+
+const AdminCmsRouteWithChildren = AdminCmsRoute._addFileChildren(
+  AdminCmsRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminCmsRoute: typeof AdminCmsRouteWithChildren
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminAdministrationLogsRoute: typeof AdminAdministrationLogsRoute
+  AdminAdministrationUsersRoute: typeof AdminAdministrationUsersRoute
+  AdminContentFaqsRoute: typeof AdminContentFaqsRoute
+  AdminContentFooterRoute: typeof AdminContentFooterRoute
+  AdminContentGalleryRoute: typeof AdminContentGalleryRoute
+  AdminContentHeroRoute: typeof AdminContentHeroRoute
+  AdminContentHomepageRoute: typeof AdminContentHomepageRoute
+  AdminContentNavigationRoute: typeof AdminContentNavigationRoute
+  AdminContentTestimonialsRoute: typeof AdminContentTestimonialsRoute
+  AdminOperationsBookingsRoute: typeof AdminOperationsBookingsRoute
+  AdminOperationsCustomersRoute: typeof AdminOperationsCustomersRoute
+  AdminOperationsDriversRoute: typeof AdminOperationsDriversRoute
+  AdminOperationsEnquiriesRoute: typeof AdminOperationsEnquiriesRoute
+  AdminOperationsPaymentsRoute: typeof AdminOperationsPaymentsRoute
+  AdminOperationsRoutesRoute: typeof AdminOperationsRoutesRoute
+  AdminOperationsVehiclesRoute: typeof AdminOperationsVehiclesRoute
+  AdminProductsDestinationsRoute: typeof AdminProductsDestinationsRoute
+  AdminProductsFleetRoute: typeof AdminProductsFleetRoute
+  AdminProductsHotelsRoute: typeof AdminProductsHotelsRoute
+  AdminProductsPackagesRoute: typeof AdminProductsPackagesRoute
+  AdminProductsServicesRoute: typeof AdminProductsServicesRoute
+  AdminReportsBookingsRoute: typeof AdminReportsBookingsRoute
+  AdminReportsRevenueRoute: typeof AdminReportsRevenueRoute
+  AdminSettingsBookingRoute: typeof AdminSettingsBookingRoute
+  AdminSettingsContactRoute: typeof AdminSettingsContactRoute
+  AdminSettingsGeneralRoute: typeof AdminSettingsGeneralRoute
+  AdminSettingsPaymentRoute: typeof AdminSettingsPaymentRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCmsRoute: AdminCmsRouteWithChildren,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminAdministrationLogsRoute: AdminAdministrationLogsRoute,
+  AdminAdministrationUsersRoute: AdminAdministrationUsersRoute,
+  AdminContentFaqsRoute: AdminContentFaqsRoute,
+  AdminContentFooterRoute: AdminContentFooterRoute,
+  AdminContentGalleryRoute: AdminContentGalleryRoute,
+  AdminContentHeroRoute: AdminContentHeroRoute,
+  AdminContentHomepageRoute: AdminContentHomepageRoute,
+  AdminContentNavigationRoute: AdminContentNavigationRoute,
+  AdminContentTestimonialsRoute: AdminContentTestimonialsRoute,
+  AdminOperationsBookingsRoute: AdminOperationsBookingsRoute,
+  AdminOperationsCustomersRoute: AdminOperationsCustomersRoute,
+  AdminOperationsDriversRoute: AdminOperationsDriversRoute,
+  AdminOperationsEnquiriesRoute: AdminOperationsEnquiriesRoute,
+  AdminOperationsPaymentsRoute: AdminOperationsPaymentsRoute,
+  AdminOperationsRoutesRoute: AdminOperationsRoutesRoute,
+  AdminOperationsVehiclesRoute: AdminOperationsVehiclesRoute,
+  AdminProductsDestinationsRoute: AdminProductsDestinationsRoute,
+  AdminProductsFleetRoute: AdminProductsFleetRoute,
+  AdminProductsHotelsRoute: AdminProductsHotelsRoute,
+  AdminProductsPackagesRoute: AdminProductsPackagesRoute,
+  AdminProductsServicesRoute: AdminProductsServicesRoute,
+  AdminReportsBookingsRoute: AdminReportsBookingsRoute,
+  AdminReportsRevenueRoute: AdminReportsRevenueRoute,
+  AdminSettingsBookingRoute: AdminSettingsBookingRoute,
+  AdminSettingsContactRoute: AdminSettingsContactRoute,
+  AdminSettingsGeneralRoute: AdminSettingsGeneralRoute,
+  AdminSettingsPaymentRoute: AdminSettingsPaymentRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AboutUsRoute: AboutUsRoute,
+  AdminRoute: AdminRouteWithChildren,
   BookingStatusRoute: BookingStatusRoute,
   ContactRoute: ContactRoute,
   ContactUsRoute: ContactUsRoute,

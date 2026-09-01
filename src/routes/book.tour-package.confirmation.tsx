@@ -94,6 +94,16 @@ function ConfirmationPage() {
               ]}
             />
 
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-card border px-4 py-2.5 text-xs shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-foreground text-sm">{company.name}</span>
+                <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/5 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                  Verified Operator
+                </span>
+              </div>
+              <span className="text-muted-foreground font-medium">{company.msmeRegistration}</span>
+            </div>
+
             <div className="mt-4 flex items-start gap-3">
               <CheckCircle2 className="mt-1 h-7 w-7 shrink-0 text-primary" aria-hidden="true" />
               <div className="min-w-0">

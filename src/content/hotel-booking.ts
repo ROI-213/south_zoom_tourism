@@ -33,6 +33,7 @@ import {
   getRoomSlug,
   type RoomQuote,
 } from "@/content/room-details";
+import { syncHotelBookingToSupabase } from "@/lib/booking-sync";
 
 /* ------------------------------------------------------------------ */
 /* Admin-managed content                                                */
@@ -560,6 +561,25 @@ export function saveHotelBooking(record: HotelBookingRecord) {
   } catch {
     /* storage unavailable — the confirmation page shows a fallback */
   }
+
+  // Persist directly into Supabase backend database for admin & operations
+  syncHotelBookingToSupabase({
+    bookingNumber: record.bookingNumber,
+    hotelName: record.hotelSnapshot?.name || "Hotel",
+    hotelCity: record.hotelSnapshot?.city || "City",
+    roomName: record.roomSnapshot?.name || "Room",
+    customerName: record.primaryGuest?.name || "Customer",
+    phone: record.primaryGuest?.phone || "",
+    email: record.primaryGuest?.email || null,
+    checkIn: record.stay?.checkIn || null,
+    checkOut: record.stay?.checkOut || null,
+    rooms: record.roomSnapshot?.quantity || 1,
+    adults: record.stay?.adults || 2,
+    children: record.stay?.children || 0,
+    totalAmount: record.priceSnapshot?.total || 0,
+    advanceAmount: record.priceSnapshot?.advanceDue || 0,
+    notes: record.preferences?.notes || "",
+  });
 }
 
 export function loadHotelBooking(bookingNumber: string): HotelBookingRecord | null {

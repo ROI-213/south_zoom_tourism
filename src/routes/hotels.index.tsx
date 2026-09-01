@@ -18,7 +18,6 @@ import { HotelCategoryGrid } from "@/components/hotels/hotel-category-grid";
 import { HotelCard } from "@/components/hotels/hotel-card";
 import { RoomCard } from "@/components/hotels/room-card";
 import { HotelResults } from "@/components/hotels/hotel-results";
-import { HotelDestinationsStrip } from "@/components/hotels/hotel-destinations-strip";
 import {
   HotelProcessSection,
   HotelTrustSection,
@@ -32,7 +31,6 @@ import {
   getHotelRooms,
   getVisibleCategories,
   getVisibleFaqs,
-  getVisibleHotelDestinations,
   getVisibleProcessSteps,
   getVisibleTrustPoints,
   hotelsBannerBlock,
@@ -43,8 +41,12 @@ import {
   isValidISODate,
   searchHotels,
   todayISO,
+  mapDbHotelToHotelRecord,
+  mapDbRoomToRoomRecord,
+  setDynamicHotelsAndRooms,
   type HotelSearchParams,
 } from "@/content/hotels";
+import { fetchLiveHotels } from "@/lib/hotel-service";
 
 type HotelsSearch = {
   destination?: string;
@@ -118,13 +120,32 @@ export const Route = createFileRoute("/hotels/")({
 
 function HotelsPage() {
   const search = Route.useSearch();
+  const [dataVersion, setDataVersion] = useState(0);
+
+  useEffect(() => {
+    async function loadDynamicHotels() {
+      try {
+        const live = await fetchLiveHotels();
+        if (live && live.length > 0) {
+          const mappedHotels = live.map((h, i) => mapDbHotelToHotelRecord(h, i));
+          const mappedRooms = live.flatMap((h) =>
+            (h.hotel_rooms || []).map((r, ri) => mapDbRoomToRoomRecord(r, ri))
+          );
+          setDynamicHotelsAndRooms(mappedHotels, mappedRooms);
+          setDataVersion((v) => v + 1);
+        }
+      } catch (err) {
+        console.error("Error fetching dynamic hotels:", err);
+      }
+    }
+    loadDynamicHotels();
+  }, []);
 
   const categories = useMemo(() => getVisibleCategories(), []);
-  const destinations = useMemo(() => getVisibleHotelDestinations(), []);
   const faqs = useMemo(() => getVisibleFaqs(), []);
   const trust = useMemo(() => getVisibleTrustPoints(), []);
   const steps = useMemo(() => getVisibleProcessSteps(), []);
-  const featuredRooms = useMemo(() => getFeaturedRooms(6), []);
+  const featuredRooms = useMemo(() => getFeaturedRooms(6), [dataVersion]);
 
   const activeCategory = search.category;
   const featuredHotels = useMemo(() => {
@@ -132,7 +153,7 @@ function HotelsPage() {
     if (!activeCategory) return list;
     const inCategory = list.filter((h) => h.categorySlug === activeCategory);
     return inCategory.length > 0 ? inCategory : list;
-  }, [activeCategory]);
+  }, [activeCategory, dataVersion]);
 
   const today = todayISO();
   const params: HotelSearchParams = {
@@ -293,21 +314,6 @@ function HotelsPage() {
               ))}
             </ul>
           )}
-        </section>
-
-        {/* Popular destinations ------------------------------------ */}
-        <section className="bg-muted/40 py-12 sm:py-16">
-          <div className="mx-auto max-w-7xl px-4">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Popular hotel destinations
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Cities where we hold year-round room blocks.
-            </p>
-            <div className="mt-6">
-              <HotelDestinationsStrip items={destinations} />
-            </div>
-          </div>
         </section>
 
         {/* Trust --------------------------------------------------- */}

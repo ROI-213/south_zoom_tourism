@@ -80,8 +80,8 @@ const commonProcess = [
 const commonTerms = [
   "Quoted fares include fuel, driver charges and vehicle maintenance unless stated otherwise.",
   "Tolls, parking, permits and state entry fees are billed at actuals and shown in the quote.",
-  "Night allowance applies for driving between 10:00 PM and 6:00 AM.",
-  "Vehicle bookings can be cancelled free of charge up to 24 hours before pickup.",
+  "Night allowance applies for driving between 9:30 PM and 5:30 AM.",
+  "Vehicle bookings can be cancelled free of charge up to 2 hours before pickup.",
   "GST is applicable as per prevailing rates and appears on every invoice.",
 ];
 

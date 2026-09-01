@@ -26,17 +26,17 @@ export function ValueCards({
     <section className={tinted ? "bg-secondary/40 py-14 sm:py-20" : "py-14 sm:py-20"}>
       <div className="mx-auto max-w-7xl px-4">
         <AboutHeading heading={heading} subheading={subheading} />
-        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-2.5 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {list.map((item, i) => {
             const Icon = (Icons[item.icon as IconName] ?? Icons.Circle) as Icons.LucideIcon;
             return (
               <Reveal as="li" key={item.id} delay={i * 50} className="min-w-0">
-                <div className="h-full rounded-xl border border-border bg-card p-5">
-                  <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
+                <div className="h-full rounded-xl border border-border bg-card p-3 sm:p-5">
+                  <span className="grid h-8 w-8 sm:h-10 sm:w-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                   </span>
-                  <h3 className="mt-4 text-base font-bold">{item.title}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{item.description}</p>
+                  <h3 className="mt-2.5 sm:mt-4 text-xs sm:text-base font-bold truncate">{item.title}</h3>
+                  <p className="mt-1 sm:mt-1.5 text-[10px] sm:text-sm text-muted-foreground line-clamp-3 sm:line-clamp-none">{item.description}</p>
                 </div>
               </Reveal>
             );

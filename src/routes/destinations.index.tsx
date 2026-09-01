@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { SlidersHorizontal, MapPinOff } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { KarnatakaSlider } from "@/components/home/karnataka-slider";
 import { PageBanner } from "@/components/common/page-banner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -12,7 +13,6 @@ import {
   DestinationFilters,
   popularityOptions,
 } from "@/components/destinations/destination-filters";
-import { FeaturedStrip } from "@/components/destinations/featured-strip";
 import { CustomTripCta } from "@/components/destinations/custom-trip-cta";
 import { ActiveFilterChips, type Chip } from "@/components/fleet/active-filter-chips";
 import {
@@ -21,13 +21,14 @@ import {
   destinationsIntroBlock,
   destinationsPerPage,
   filterDestinations,
-  getFeaturedDestinations,
-  getPopularDestinations,
   getPublishedDestinations,
   getTripTypeLabel,
+  setDynamicDestinations,
+  mapDbDestinationToRecord,
   type DestinationFilterState,
   type DestinationSortValue,
 } from "@/content/destinations";
+import supabase from "@/lib/supabase";
 
 type DestinationSearch = {
   q?: string;
@@ -114,6 +115,23 @@ export const Route = createFileRoute("/destinations/")({
 import { DestinationSelector } from "@/components/destinations/destination-selector";
 
 function DestinationsPage() {
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase.from('destinations').select('*').order('name');
+        if (!error && data && data.length > 0) {
+          const mapped = (data as any[]).map(mapDbDestinationToRecord);
+          setDynamicDestinations(mapped);
+          setDataLoaded(true);
+        }
+      } catch (err) {
+        console.error('Error fetching destinations:', err);
+      }
+    })();
+  }, []);
+
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/destinations/" });
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -155,8 +173,6 @@ function DestinationsPage() {
 
   const results = useMemo(() => filterDestinations(filters, sort), [filters, sort]);
   const visible = results.slice(0, shown);
-  const featured = getFeaturedDestinations();
-  const popular = getPopularDestinations();
 
   const chips: Chip[] = [
     ...(filters.query
@@ -334,21 +350,10 @@ function DestinationsPage() {
             </section>
           </div>
 
-          <FeaturedStrip
-            id="featured-destinations"
-            heading="Featured destinations"
-            description="Hand-picked places our team is booking the most this season."
-            destinations={featured}
-          />
-          <FeaturedStrip
-            id="popular-destinations"
-            heading="Popular right now"
-            description="Quick weekend escapes and darshan trips with the shortest lead times."
-            destinations={popular}
-          />
-
           <CustomTripCta />
         </div>
+
+        <KarnatakaSlider />
       </main>
       <Footer />
     </div>

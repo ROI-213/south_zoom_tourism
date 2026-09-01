@@ -24,6 +24,9 @@ import pkgNavagraha from "@/assets/pkg-navagraha.png";
 import tourNavagraha from "@/assets/tour-navagraha.png";
 import tourTirupati from "@/assets/tour-tirupati.png";
 import tourCoorg from "@/assets/tour-coorg.png";
+import destGoa from "@/assets/destinations/dest-goa.jpg";
+import destHampi from "@/assets/destinations/dest_hampi_1786683714278.jpg";
+import { resolvePackageImage } from "@/lib/image-map";
 
 export type PackageCategory = {
   id: string;
@@ -31,6 +34,12 @@ export type PackageCategory = {
   label: string;
   order: number;
   visible: boolean;
+};
+
+// Dynamic cache for admin-managed packages
+export let dynamicPackageRecords: TourPackageRecord[] = [];
+export const setDynamicPackages = (packages: TourPackageRecord[]) => {
+  dynamicPackageRecords = packages;
 };
 
 export type PriceBasis = "per-person" | "per-group" | "starting";
@@ -259,8 +268,8 @@ export const tourPackageRecords: TourPackageRecord[] = [
     availableFrom: "2026-01-01",
     availableTo: "2026-05-31",
     soldOut: true,
-    image: heroHotels,
-    imageAlt: "Palm-lined beach shack on the North Goa coastline",
+    image: destGoa,
+    imageAlt: "Tropical palm beach with turquoise sea on the North Goa coastline",
     order: 5,
     published: true,
     featured: false,
@@ -326,8 +335,8 @@ export const tourPackageRecords: TourPackageRecord[] = [
     availableFrom: "2026-06-01",
     availableTo: "2026-12-31",
     soldOut: false,
-    image: servicesBanner,
-    imageAlt: "Stone chariot at the Vittala temple complex in Hampi",
+    image: destHampi,
+    imageAlt: "Ancient stone chariot at the Vittala temple complex at sunset in Hampi",
     order: 7,
     published: true,
     featured: false,
@@ -431,6 +440,9 @@ export type PackageSortValue = (typeof packageSortOptions)[number]["value"];
 export const packagesPerPage = 6;
 
 export function getPublishedPackages(): TourPackageRecord[] {
+  if (dynamicPackageRecords.length) {
+    return dynamicPackageRecords.filter((p) => p.published);
+  }
   return tourPackageRecords.filter((p) => p.published);
 }
 
@@ -477,4 +489,46 @@ export function isPackageAvailableOn(pkg: TourPackageRecord, date: string): bool
   if (pkg.soldOut) return false;
   if (!date) return true;
   return date >= pkg.availableFrom && date <= pkg.availableTo;
+}
+
+/** Map a Supabase `tour_packages` row to the front-end TourPackageRecord shape. */
+export function mapDbPackageToRecord(row: any, index: number = 0): TourPackageRecord {
+  return {
+    id: row.id ?? `tp-${index}`,
+    slug: row.slug ?? "",
+    title: row.title ?? "",
+    state: row.state ?? "",
+    destination: row.destination ?? row.category ?? "",
+    categorySlugs: Array.isArray(row.category_slugs)
+      ? row.category_slugs
+      : row.category
+        ? [row.category.toLowerCase().replace(/\s+/g, "-")]
+        : [],
+    nights: row.nights ?? 0,
+    days: row.days ?? (row.nights ? row.nights + 1 : 0),
+    startingCity: row.starting_city ?? "",
+    price: row.price_from ?? row.price ?? 0,
+    priceBasis: (row.price_basis as PriceBasis) ?? "per-person",
+    showPrice: row.show_price !== false,
+    hotelCategory: row.hotel_category ?? "3 Star",
+    vehicleCategory: row.vehicle_category ?? "Sedan",
+    includesHotel: row.includes_hotel !== false,
+    includesVehicle: row.includes_vehicle !== false,
+    maxTravellers: row.max_travellers ?? 20,
+    itinerarySummary: Array.isArray(row.highlights)
+      ? row.highlights
+      : Array.isArray(row.itinerary_summary)
+        ? row.itinerary_summary
+        : [],
+    badges: Array.isArray(row.badges) ? row.badges : [],
+    availableFrom: row.available_from ?? "2024-01-01",
+    availableTo: row.available_to ?? "2030-12-31",
+    soldOut: row.sold_out ?? false,
+    image: resolvePackageImage(row.main_image ?? row.image, `${row.slug} ${row.title} ${row.category}`),
+    imageAlt: row.image_alt ?? row.title ?? "",
+    order: row.display_order ?? index + 1,
+    published: row.active !== false,
+    featured: row.featured ?? false,
+    bestSeller: row.best_seller ?? false,
+  };
 }

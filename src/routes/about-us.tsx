@@ -90,6 +90,25 @@ function AboutUsPage() {
           />
         ) : null}
         <AboutOverview />
+
+        {/* MSME Registration Banner */}
+        <section className="bg-primary/5 border-y border-primary/15 py-5">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="flex flex-col items-center gap-1 text-center sm:flex-row sm:justify-center sm:gap-4 sm:text-left">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0">
+                  ✓
+                </span>
+                <span className="text-base font-bold text-foreground">South Zoom Tourism</span>
+              </div>
+              <span className="hidden sm:block text-muted-foreground">|</span>
+              <span className="text-sm text-muted-foreground font-medium">
+                Govt. Registered MSME Enterprise &nbsp;|&nbsp; URN: UDYAM-KR-03-0750906
+              </span>
+            </div>
+          </div>
+        </section>
+
         <AboutTimeline />
         <MissionVision />
         <ValueCards

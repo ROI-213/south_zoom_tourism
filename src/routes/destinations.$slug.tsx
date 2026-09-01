@@ -21,6 +21,7 @@ import {
 } from "@/components/destinations/destination-info-panels";
 import { DestinationGallery } from "@/components/destinations/destination-gallery";
 import { DestinationFaqs } from "@/components/destinations/destination-faqs";
+import { DestinationPolicies } from "@/components/destinations/destination-policies";
 import { DestinationEnquiryForm } from "@/components/destinations/destination-enquiry-form";
 import { NearbyDestinations } from "@/components/destinations/nearby-destinations";
 import {
@@ -376,6 +377,19 @@ function DestinationDetailPage() {
                 </div>
               </>
             )}
+          </section>
+
+          {/* Trip Inclusions, Exclusions & Fleet Policies */}
+          <section aria-labelledby="dest-policies-heading" className="mt-12">
+            <SectionHeading id="dest-policies-heading">
+              Inclusions, Exclusions & Fleet Policies for {destination.name}
+            </SectionHeading>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Clear, transparent pricing standards, vehicle inclusions and travel policies covering your journey to {destination.name}.
+            </p>
+            <div className="mt-5">
+              <DestinationPolicies destinationName={destination.name} />
+            </div>
           </section>
 
           {/* Services */}

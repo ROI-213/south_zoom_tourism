@@ -5,8 +5,8 @@ import { AppLink } from "@/components/common/app-link";
 export function Footer() {
   return (
     <footer className="mt-16 border-t border-border bg-secondary/60">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-2 lg:grid-cols-4">
-        <div className="min-w-0">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-2 lg:grid-cols-5">
+        <div className="min-w-0 lg:col-span-1">
           <div className="flex items-center gap-2">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
               <Compass className="h-5 w-5" aria-hidden="true" />
@@ -29,43 +29,54 @@ export function Footer() {
           </div>
         </div>
 
-        {footerContent.columns.map((col) => (
-          <nav key={col.title} aria-label={col.title} className="min-w-0">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-              {col.title}
-            </h3>
-            <ul className="mt-4 space-y-2.5">
-              {col.links.map((link) => (
-                <li key={link.label}>
-                  <AppLink
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary"
-                  >
-                    {link.label}
-                  </AppLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        ))}
+        {/* Navigation Columns (3 sections side-by-side on mobile, expanding into grid on desktop) */}
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-6 md:contents">
+          {footerContent.columns.map((col) => (
+            <nav key={col.title} aria-label={col.title} className="min-w-0">
+              <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                {col.title}
+              </h3>
+              <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-2.5">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <AppLink
+                      href={link.href}
+                      className="text-xs sm:text-sm text-muted-foreground hover:text-primary transition-colors block truncate"
+                    >
+                      {link.label}
+                    </AppLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+        </div>
 
+        {/* Contact & Head Office Column (Positioned in 5th column alongside Support) */}
         <div className="min-w-0 lg:col-span-1">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Contact & Head Office</h3>
-          <ul className="mt-4 space-y-3 text-xs sm:text-sm text-muted-foreground">
+          <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+            Contact & Head Office
+          </h3>
+          <ul className="mt-3 sm:mt-4 space-y-2.5 text-xs sm:text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
               <span>
-                <strong className="text-foreground">📞 Call:</strong>{" "}
+                <strong className="text-foreground">Call:</strong>{" "}
                 <a href={`tel:${company.phoneRaw}`} className="hover:text-primary font-medium">
                   {company.phone}
                 </a>
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-emerald-600 font-bold shrink-0">WA:</span>
+              <span className="text-emerald-600 font-bold shrink-0 text-xs">WA:</span>
               <span>
                 <strong className="text-foreground">WhatsApp:</strong>{" "}
-                <a href={`https://wa.me/${company.whatsappRaw}`} target="_blank" rel="noreferrer" className="hover:text-primary font-medium">
+                <a
+                  href={`https://wa.me/${company.whatsappRaw}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-primary font-medium"
+                >
                   {company.whatsapp}
                 </a>
               </span>
@@ -73,7 +84,7 @@ export function Footer() {
             <li className="flex items-start gap-2">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
               <span>
-                <strong className="text-foreground">📍 Head Office:</strong> Bangalore in Karnataka
+                <strong className="text-foreground">Head Office:</strong> Bangalore in Karnataka
               </span>
             </li>
             <li className="border-t border-border/60 pt-2 text-xs">
@@ -81,7 +92,7 @@ export function Footer() {
               <span>Karnataka, Tamilnadu, Kerala, Andhra Pradesh, Goa, Puducherry</span>
             </li>
             <li className="border-t border-border/60 pt-2 text-xs">
-              <strong className="text-foreground block mb-0.5">📍 Visit Us:</strong>
+              <strong className="text-foreground block mb-0.5">Visit Us:</strong>
               <span>{company.address}</span>
             </li>
           </ul>

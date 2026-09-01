@@ -26,12 +26,17 @@ import roomOotyDeluxe from "@/assets/rooms/room-ooty-deluxe.jpg";
 import roomChennaiExec from "@/assets/rooms/room-chennai-executive.jpg";
 import roomAlleppeyCottage from "@/assets/rooms/room-alleppey-cottage.jpg";
 import roomMaduraiFamily from "@/assets/rooms/room-madurai-family.jpg";
+import roomCoorgPlanter from "@/assets/rooms/room-coorg-planter.jpg";
+import roomMunnarDeluxe from "@/assets/rooms/room-munnar-deluxe.jpg";
 import destOoty from "@/assets/destinations/dest-ooty-new.png";
 import destMunnar from "@/assets/destinations/dest-munnar-new.png";
 import destKodaikanal from "@/assets/destinations/dest-kodai-new.png";
 import destPondicherry from "@/assets/destinations/dest-pondy-new.png";
 import destMadurai from "@/assets/destinations/dest-madurai-new.png";
 import destAlleppey from "@/assets/destinations/dest-alleppey-new.png";
+import destCoorg from "@/assets/destinations/dest-coorg.jpg";
+import destHampi from "@/assets/destinations/dest_hampi_1786683714278.jpg";
+import destGokarna from "@/assets/destinations/dest_gokarna_1786683734925.jpg";
 import destChennai from "@/assets/destinations/dest-chennai.jpg";
 import destGoa from "@/assets/destinations/dest-goa.jpg";
 
@@ -58,8 +63,10 @@ export type SectionMeta = {
 export const company = {
   name: "South Zoom Tourism",
   tagline: "Bengaluru's Premier South India Travel & Cab Desk",
-  phone: "+91 8884015512",
-  phoneRaw: "+918884015512",
+  msmeRegistration: "Govt. Registered MSME Enterprise | URN: UDYAM-KR-03-0750906",
+  msmeUrn: "UDYAM-KR-03-0750906",
+  phone: "+91 6366357757",
+  phoneRaw: "+916366357757",
   whatsapp: "+91 6366357757",
   whatsappRaw: "916366357757",
   email: "bookings@southzoomtourism.com",
@@ -224,8 +231,16 @@ export const heroSlides: HeroSlide[] = [
 /* ------------------------------------------------------------------ */
 
 export const searchOptions = {
-  tripTypes: ["One Way", "Round Trip", "Local (8hr/80km)", "Airport Transfer"],
-  vehicleTypes: ["Any", "Sedan", "SUV", "Innova Crysta", "Tempo Traveller", "Mini Bus"],
+  tripTypes: ["One Way", "Round Trip", "Local (4hr/40km) ₹1200/-", "Local (8hr/80km) ₹2300/-", "Airport Transfer"],
+  vehicleTypes: [
+    "Any (All A/C cabs)",
+    "Hatchback A/C",
+    "Sedan A/C",
+    "SUV A/C",
+    "Innova Crysta A/C",
+    "Tempo Traveller A/C",
+    "Mini Bus A/C",
+  ],
   cities: [
     "Chennai",
     "Coimbatore",
@@ -307,10 +322,14 @@ export const servicesSection = {
 /* Master records (fleet / packages / hotels / destinations)            */
 /* ------------------------------------------------------------------ */
 
-import fleetSedan from "@/assets/fleet-sedan.png";
-import fleetSuv from "@/assets/fleet-suv.png";
-import fleetTempo from "@/assets/fleet-tempo.png";
-import fleetBus from "@/assets/fleet-bus.png";
+import fleetHatchback from "@/assets/fleet-wagonr-ka.jpg";
+import fleetSedan from "@/assets/fleet-dzire-new.png";
+import fleetSmallSuv from "@/assets/fleet-ertiga-new.png";
+import fleetBigSuv from "@/assets/fleet-innova-new.png";
+import fleetTempo from "@/assets/fleet-tempo-new.png";
+import fleetUrbania from "@/assets/fleet-urbania-ka.jpg";
+import fleetBus from "@/assets/fleet-bus-ka.jpg";
+import fleetPremium from "@/assets/fleet-bmw-new.png";
 
 export type Vehicle = {
   id: string;
@@ -325,10 +344,14 @@ export type Vehicle = {
 };
 
 export const vehicles: Vehicle[] = [
-  { id: "v-dzire", name: "Sedan (Dzire / Etios)", category: "Sedan", seats: 4, luggage: 2, ac: true, perKm: 14, image: fleetSedan, alt: "White Sedan tourist cab with yellow South Zoom Tourism board" },
-  { id: "v-crysta", name: "SUV (Innova Crysta / Ertiga)", category: "SUV", seats: 7, luggage: 4, ac: true, perKm: 20, image: fleetSuv, alt: "White SUV tourist cab with yellow South Zoom Tourism board" },
-  { id: "v-tempo", name: "Tempo Traveller (TT)", category: "Tempo Traveller", seats: 12, luggage: 10, ac: true, perKm: 24, image: fleetTempo, alt: "White Tempo Traveller 12-seater with yellow South Zoom Tourism board" },
-  { id: "v-bus", name: "Tourist Bus (27-45 Seater)", category: "Bus", seats: 35, luggage: 25, ac: true, perKm: 38, image: fleetBus, alt: "White Tourist Bus coach with yellow South Zoom Tourism board" },
+  { id: "v-hatchback", name: "Hatchback (WagonR or similar)", category: "Hatchback", seats: 4, luggage: 2, ac: true, perKm: 12, image: fleetHatchback, alt: "White Maruti Suzuki WagonR hatchback cab with KA registered yellow board and SZT sticker" },
+  { id: "v-sedan", name: "Sedan (Swift Dzire or similar)", category: "Sedan", seats: 4, luggage: 3, ac: true, perKm: 14, image: fleetSedan, alt: "White Swift Dzire sedan cab with KA registered yellow board and SZT sticker" },
+  { id: "v-small-suv", name: "Small SUV (Ertiga or similar)", category: "Small SUV", seats: 6, luggage: 4, ac: true, perKm: 18, image: fleetSmallSuv, alt: "White Maruti Ertiga small SUV cab with KA registered yellow board and SZT sticker" },
+  { id: "v-big-suv", name: "Big SUV (Innova Crysta or similar)", category: "Big SUV", seats: 7, luggage: 5, ac: true, perKm: 21, image: fleetBigSuv, alt: "White Toyota Innova Crysta big SUV cab with KA registered yellow board and SZT sticker" },
+  { id: "v-tempo", name: "Tempo Traveller (12-17 Seater)", category: "Tempo Traveller", seats: 12, luggage: 10, ac: true, perKm: 24, image: fleetTempo, alt: "White 12-17 Seater Force Tempo Traveller TT with KA registered yellow board and SZT sticker" },
+  { id: "v-urbania", name: "Force Urbania (10-17 Seater Luxury Van)", category: "Luxury Van", seats: 14, luggage: 12, ac: true, perKm: 28, image: fleetUrbania, alt: "Force Urbania Luxury Van with KA registered yellow board and SZT sticker" },
+  { id: "v-bus", name: "Tourist Bus (27-45 Seater)", category: "Coach Bus", seats: 35, luggage: 25, ac: true, perKm: 38, image: fleetBus, alt: "White Tourist Bus coach with KA registered yellow board and SZT sticker" },
+  { id: "v-premium", name: "Premium (BMW or similar)", category: "Premium", seats: 4, luggage: 3, ac: true, perKm: 45, image: fleetPremium, alt: "White BMW premium luxury sedan with KA registered yellow board and SZT sticker" },
 ];
 
 export type TourPackage = {
@@ -346,10 +369,10 @@ export type TourPackage = {
 
 export const tourPackages: TourPackage[] = [
   { id: "p-ooty", title: "Ooty & Coonoor Escape", destination: "Ooty", category: "Hill Station", nights: 2, days: 3, priceFrom: 8999, image: pkgOoty, alt: "Tea gardens near Ooty", highlights: ["Botanical Garden", "Toy train", "Doddabetta peak"] },
-  { id: "p-munnar", title: "Munnar Tea Trails", destination: "Munnar", category: "Hill Station", nights: 3, days: 4, priceFrom: 12499, image: tourCoorg, alt: "Tea plantations in Munnar with misty hills", highlights: ["Tea museum", "Eravikulam park", "Mattupetty dam"] },
+  { id: "p-munnar", title: "Munnar Tea Trails", destination: "Munnar", category: "Hill Station", nights: 3, days: 4, priceFrom: 12499, image: destMunnar, alt: "Tea plantations in Munnar with misty hills", highlights: ["Tea museum", "Eravikulam park", "Mattupetty dam"] },
   { id: "p-navagraha", title: "Navagraha Temple Circuit", destination: "Kumbakonam", category: "Pilgrimage", nights: 2, days: 3, priceFrom: 7499, image: tourNavagraha, alt: "South Indian temple gopuram with golden light", highlights: ["9 temples", "Guided darshan", "Vegetarian meals"] },
   { id: "p-alleppey", title: "Alleppey Backwater Cruise", destination: "Alleppey", category: "Backwaters", nights: 1, days: 2, priceFrom: 9999, image: pkgAlleppey, alt: "Houseboat on Kerala backwaters", highlights: ["Houseboat stay", "Sunset cruise", "Village walk"] },
-  { id: "p-pondy", title: "Pondicherry Weekend", destination: "Pondicherry", category: "Beach", nights: 1, days: 2, priceFrom: 5999, image: heroHotels, alt: "French quarter street in Pondicherry", highlights: ["White Town", "Auroville", "Promenade beach"] },
+  { id: "p-pondy", title: "Pondicherry Weekend", destination: "Pondicherry", category: "Beach", nights: 1, days: 2, priceFrom: 5999, image: destPondicherry, alt: "French quarter street in Pondicherry", highlights: ["White Town", "Auroville", "Promenade beach"] },
   { id: "p-thanjavur", title: "Tirupati Divine Darshan", destination: "Tirupati", category: "Pilgrimage", nights: 2, days: 3, priceFrom: 8499, image: tourTirupati, alt: "Tirupati Balaji temple at golden hour", highlights: ["Balaji darshan", "Kalyana katta", "Padmavathi temple"] },
 ];
 
@@ -370,6 +393,10 @@ export const hotels: Hotel[] = [
   { id: "h-marina", name: "Marina Grand", city: "Chennai", starRating: 4, roomType: "Executive Room", pricePerNight: 3800, image: roomChennaiExec, alt: "Executive hotel room in Chennai", amenities: ["Airport pickup", "Gym", "Restaurant"] },
   { id: "h-backwater", name: "Backwater Retreat", city: "Alleppey", starRating: 3, roomType: "Lake Facing Cottage", pricePerNight: 3300, image: roomAlleppeyCottage, alt: "Lake facing cottage in Alleppey", amenities: ["Lake view", "Breakfast", "Boat ride"] },
   { id: "h-templestay", name: "Temple Stay Residency", city: "Madurai", starRating: 3, roomType: "Family Room", pricePerNight: 2600, image: roomMaduraiFamily, alt: "Family hotel room in Madurai", amenities: ["Near temple", "Veg restaurant", "Wi-Fi"] },
+  { id: "h-coorg", name: "Coorg Planter's Resort", city: "Coorg", starRating: 4, roomType: "Plantation View Room", pricePerNight: 4500, image: roomCoorgPlanter, alt: "Plantation view room in Coorg", amenities: ["Nature walk", "Free breakfast", "Bonfire"] },
+  { id: "h-bengaluru", name: "Bengaluru Tech Suites", city: "Bengaluru", starRating: 5, roomType: "Executive Suite", pricePerNight: 5200, image: roomChennaiExec, alt: "Executive suite in Bengaluru", amenities: ["Pool", "Gym", "Spa"] },
+  { id: "h-mysuru", name: "Mysuru Heritage Inn", city: "Mysuru", starRating: 4, roomType: "Palace View Room", pricePerNight: 3800, image: roomMaduraiFamily, alt: "Heritage room in Mysuru", amenities: ["Near palace", "Pool", "Restaurant"] },
+  { id: "h-chikmagalur", name: "Chikkamagaluru Coffee Stay", city: "Chikkamagaluru", starRating: 3, roomType: "Deluxe Cottage", pricePerNight: 3100, image: roomMunnarDeluxe, alt: "Deluxe cottage in Chikkamagaluru", amenities: ["Coffee estate", "Trekking", "Campfire"] },
 ];
 
 export type Destination = {
@@ -382,6 +409,10 @@ export type Destination = {
 };
 
 export const destinations: Destination[] = [
+  { id: "d-netravati", name: "Netravati Peak", state: "Karnataka", image: destMunnar, alt: "Lush green rolling hills of Netravati Peak, Karnataka", packageCount: 5 },
+  { id: "d-coorg", name: "Coorg", state: "Karnataka", image: destCoorg, alt: "Mist covered hills and coffee plantations of Coorg, Karnataka", packageCount: 14 },
+  { id: "d-hampi", name: "Hampi", state: "Karnataka", image: destHampi, alt: "Ancient stone chariot and ruins at sunset in Hampi", packageCount: 11 },
+  { id: "d-gokarna", name: "Gokarna", state: "Karnataka", image: destGokarna, alt: "Pristine Om beach coastline in Gokarna", packageCount: 9 },
   { id: "d-ooty", name: "Ooty", state: "Tamil Nadu", image: destOoty, alt: "Rolling Nilgiri hills and tea gardens of Ooty", packageCount: 12 },
   { id: "d-munnar", name: "Munnar", state: "Kerala", image: destMunnar, alt: "Sunrise over the tea plantations and mountain ranges of Munnar, Kerala", packageCount: 9 },
   { id: "d-kodai", name: "Kodaikanal", state: "Tamil Nadu", image: destKodaikanal, alt: "Serene Kodaikanal lake framed by the hills of Tamil Nadu", packageCount: 8 },
@@ -403,7 +434,7 @@ export const featuredFleet = {
     subheading: "Sanitised, insured and driver-ready vehicles.",
     viewAll: { label: "View All Vehicles", href: "/fleet" },
   } satisfies SectionMeta,
-  itemIds: ["v-dzire", "v-crysta", "v-tempo", "v-bus"],
+  itemIds: ["v-sedan", "v-big-suv", "v-tempo", "v-urbania", "v-bus", "v-small-suv"],
 };
 
 export const featuredPackages = {
@@ -427,7 +458,7 @@ export const featuredHotels = {
     subheading: "Partner properties with negotiated rates.",
     viewAll: { label: "View All Hotels", href: "/hotels" },
   } satisfies SectionMeta,
-  itemIds: ["h-hillview", "h-marina", "h-backwater", "h-templestay"],
+  itemIds: ["h-coorg", "h-bengaluru", "h-mysuru", "h-chikmagalur", "h-hillview", "h-marina", "h-backwater", "h-templestay"],
 };
 
 export const destinationsSection = {
@@ -439,7 +470,7 @@ export const destinationsSection = {
     subheading: "Where our travellers are heading right now.",
     viewAll: { label: "Browse Destinations", href: "/destinations" },
   } satisfies SectionMeta,
-  itemIds: ["d-ooty", "d-munnar", "d-kodai", "d-pondy", "d-madurai", "d-alleppey"],
+  itemIds: ["d-netravati", "d-hampi", "d-gokarna", "d-pondy", "d-madurai", "d-alleppey"],
 };
 
 /* ------------------------------------------------------------------ */
@@ -460,7 +491,7 @@ export const whyChooseUs = {
     { id: "w3", icon: "Clock", title: "24×7 support", description: "A real person on call at every hour of your trip." },
     { id: "w4", icon: "Wrench", title: "Maintained fleet", description: "Every vehicle serviced and inspected before dispatch." },
     { id: "w5", icon: "MapPinned", title: "Local expertise", description: "16 years of routes, stays and shortcuts across the south." },
-    { id: "w6", icon: "RefreshCcw", title: "Easy changes", description: "Free date changes up to 24 hours before departure." },
+    { id: "w6", icon: "RefreshCcw", title: "Easy changes", description: "Free date changes up to 2 hours before departure." },
   ],
 };
 
@@ -633,7 +664,7 @@ export const faqSection = {
     { id: "f1", question: "How is the fare calculated for outstation trips?", answer: "Outstation fares use a per-km rate with a daily minimum running distance, plus driver allowance, tolls and state permits. Every component is shown before you confirm." },
     { id: "f2", question: "Can I book a vehicle without paying in advance?", answer: "Yes. Most routes support pay-on-arrival. Peak-season and multi-day bookings need a small advance to block the vehicle." },
     { id: "f3", question: "Do your tour packages include hotels and meals?", answer: "Packages include stays, transfers and listed sightseeing. Meals are included where the itinerary says so — each package page lists inclusions and exclusions." },
-    { id: "f4", question: "What is your cancellation policy?", answer: "Vehicle bookings can be cancelled free up to 24 hours before pickup. Hotel and package cancellation depends on the property or operator policy shown at booking." },
+    { id: "f4", question: "What is your cancellation policy?", answer: "Vehicle bookings can be cancelled free up to 2 hours before pickup. Hotel and package cancellation depends on the property or operator policy shown at booking." },
     { id: "f5", question: "Do you provide GST invoices for corporate travel?", answer: "Yes. Corporate accounts get GST invoices, monthly consolidated billing and a dedicated account manager." },
   ],
 };

@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { SlidersHorizontal } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { KarnatakaSlider } from "@/components/home/karnataka-slider";
 import { PageBanner } from "@/components/common/page-banner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -19,15 +20,18 @@ import {
   getPackageCategoryLabel,
   getPublishedPackages,
   isPackageAvailableOn,
+  mapDbPackageToRecord,
   packageBudgetBounds,
   packageCategories,
   packageSortOptions,
   packagesBannerBlock,
   packagesIntroBlock,
   packagesPerPage,
+  setDynamicPackages,
   type PackageSortValue,
   type TourPackageRecord,
 } from "@/content/tour-packages";
+import supabase from "@/lib/supabase";
 import { company } from "@/content/site";
 
 type PackageSearch = {
@@ -132,6 +136,19 @@ function matchesDuration(pkg: TourPackageRecord, duration: string) {
 
 function TourPackagesPage() {
   const search = Route.useSearch();
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.from('tour_packages').select('*');
+      if (error) {
+        console.error('Error fetching packages', error);
+        return;
+      }
+      const mapped = (data as any[]).map(mapDbPackageToRecord);
+      setDynamicPackages(mapped);
+    })();
+  }, []);
+
   const navigate = useNavigate({ from: "/tour-packages/" });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [enquiry, setEnquiry] = useState<{ open: boolean; slug: string }>({
@@ -520,6 +537,8 @@ function TourPackagesPage() {
             </section>
           </div>
         </div>
+
+        <KarnatakaSlider />
       </main>
       <Footer />
 

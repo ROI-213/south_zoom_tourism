@@ -69,7 +69,7 @@ export const DEFAULT_RATE_CARD_CONFIG: RateCardConfig = {
   local: {
     baseHours: 4,
     baseKm: 40,
-    basePrice: 2200,
+    basePrice: 1200,
     extraKmRate: 18,
     extraHourRate: 200,
     driverAllowance: 400,
@@ -101,7 +101,7 @@ export const DEFAULT_RATE_CARD_CONFIG: RateCardConfig = {
     perDayRate: "Contact for Rate",
     toll: 1000,
     stateTax: 100,
-    driverAllowance: "As applicable",
+    driverAllowance: "Per Day",
     hillCharges: 47,
   },
   disclaimer: {

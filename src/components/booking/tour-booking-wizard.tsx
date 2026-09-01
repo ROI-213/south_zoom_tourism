@@ -1466,6 +1466,11 @@ function StepSubmit({
         </p>
       ) : null}
 
+      <div className="flex flex-wrap items-center justify-between gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-[11px]">
+        <span className="font-bold text-foreground">South Zoom Tourism</span>
+        <span className="text-muted-foreground font-medium">{company.msmeRegistration}</span>
+      </div>
+
       <p className="text-xs text-muted-foreground">
         Prefer chat? You can also send the same details on{" "}
         <a

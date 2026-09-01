@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { Star, Quote, Car, MapPin } from "lucide-react";
-import { testimonialsSection } from "@/content/site";
+import { testimonialsSection as staticTestimonials } from "@/content/site";
 import { SectionHeader, ViewAllMobile } from "@/components/common/section-header";
 import { EmptyState } from "@/components/home/fleet-section";
+import { supabase } from "@/lib/supabase";
 
 /* Unique gradient colors for avatar backgrounds */
 const avatarGradients = [
@@ -18,9 +20,37 @@ const avatarGradients = [
 ];
 
 export function TestimonialsSection() {
-  if (!testimonialsSection.meta.visible) return null;
-  const items = testimonialsSection.items;
-  const slidingItems = [...items, ...items, ...items, ...items];
+  const [items, setItems] = useState<any[]>(staticTestimonials.items);
+
+  useEffect(() => {
+    async function loadLiveTestimonials() {
+      try {
+        const { data, error } = await supabase
+          .from("testimonials")
+          .select("*")
+          .eq("active", true)
+          .order("display_order", { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          const mapped = data.map((t) => ({
+            id: t.id,
+            name: t.customer_name,
+            city: t.city || "Bengaluru",
+            tripType: t.trip_type || "Outstation Trip",
+            rating: t.rating || 5,
+            text: t.text,
+          }));
+          setItems(mapped);
+        }
+      } catch (err) {
+        console.error("Using static testimonials fallback", err);
+      }
+    }
+    loadLiveTestimonials();
+  }, []);
+
+  if (!staticTestimonials.meta.visible) return null;
+  const slidingItems = items.length > 0 ? [...items, ...items, ...items, ...items] : [];
 
   return (
     <section
@@ -31,7 +61,7 @@ export function TestimonialsSection() {
       <div className="pointer-events-none absolute left-1/3 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4">
-        <SectionHeader meta={testimonialsSection.meta} />
+        <SectionHeader meta={staticTestimonials.meta} />
 
         {items.length === 0 ? (
           <EmptyState message="Reviews will appear here soon." />
@@ -46,12 +76,12 @@ export function TestimonialsSection() {
               {slidingItems.map((t, idx) => {
                 const initials = t.name
                   .split(" ")
-                  .map((n) => n[0])
+                  .map((n: string) => n[0])
                   .slice(0, 2)
                   .join("");
                 const gradient = avatarGradients[idx % avatarGradients.length];
-                const tripType = (t as Record<string, unknown>).tripType as string | undefined;
-                const address = (t as Record<string, unknown>).address as string | undefined;
+                const tripType = t.tripType as string | undefined;
+                const address = t.address as string | undefined;
 
                 return (
                   <figure
@@ -114,7 +144,7 @@ export function TestimonialsSection() {
           </div>
         )}
 
-        <ViewAllMobile meta={testimonialsSection.meta} />
+        <ViewAllMobile meta={staticTestimonials.meta} />
       </div>
     </section>
   );

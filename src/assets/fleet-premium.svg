@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="550" viewBox="0 0 800 550" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Clean White Background -->
+  <rect width="800" height="550" fill="#FFFFFF"/>
+  
+  <!-- Subtle floor shadow -->
+  <ellipse cx="400" cy="470" rx="310" ry="25" fill="#000000" fill-opacity="0.06"/>
+
+  <!-- Vehicle Illustration (White Body) -->
+  
+  <path d="M120 370 C140 330 210 290 300 270 L400 190 C470 185 550 190 600 260 L690 330 C730 350 740 390 720 435 L110 435 C90 415 100 385 120 370 Z" fill="#FFFFFF" stroke="#94A3B8" stroke-width="4"/>
+  <path d="M315 275 L405 200 L545 200 L585 275 Z" fill="#0F172A" opacity="0.9"/>
+  <circle cx="200" cy="435" r="45" fill="#0F172A"/>
+  <circle cx="200" cy="435" r="25" fill="#CBD5E1" stroke="#1E293B" stroke-width="4"/>
+  <circle cx="610" cy="435" r="45" fill="#0F172A"/>
+  <circle cx="610" cy="435" r="25" fill="#CBD5E1" stroke="#1E293B" stroke-width="4"/>
+  <rect x="160" y="355" width="480" height="55" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="2"/>
+  <path d="M115 365 L165 355 L160 395 L110 390 Z" fill="#FEF08A" stroke="#CA8A04" stroke-width="2"/>
+  <path d="M695 365 L645 355 L650 395 L700 390 Z" fill="#FEF08A" stroke="#CA8A04" stroke-width="2"/>
+
+
+  <!-- Yellow Commercial Board on Bumper -->
+  <g transform="translate(0, 0)">
+    <rect x="230" y="425" width="340" height="48" rx="6" fill="#FFC72C" stroke="#111827" stroke-width="2.5"/>
+    <rect x="234" y="429" width="332" height="40" rx="4" fill="none" stroke="#111827" stroke-width="1" stroke-dasharray="4 2"/>
+    <text x="400" y="455" text-anchor="middle" fill="#000000" font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="18" letter-spacing="1.5">SOUTH ZOOM TOURISM</text>
+  </g>
+</svg>

@@ -3,14 +3,58 @@ import type { CarouselApi } from "@/components/ui/carousel";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { heroSlides } from "@/content/site";
+import { heroSlides as staticHeroSlides } from "@/content/site";
 import { AppLink } from "@/components/common/app-link";
+import { supabase } from "@/lib/supabase";
+import { resolveHeroImage } from "@/lib/image-map";
 
 export function HeroSlider() {
-  const slides = heroSlides.filter((s) => s.visible).sort((a, b) => a.order - b.order);
+  const [slides, setSlides] = useState<any[]>(() =>
+    staticHeroSlides.filter((s) => s.visible).sort((a, b) => a.order - b.order)
+  );
   const [api, setApi] = useState<CarouselApi>();
   const [selected, setSelected] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    async function loadLiveHeroSlides() {
+      try {
+        const { data, error } = await supabase
+          .from("hero_slides")
+          .select("*")
+          .eq("active", true)
+          .order("display_order", { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          const mapped = data.map((s) => ({
+            id: s.id,
+            order: s.display_order,
+            visible: s.active,
+            badge: s.badge || undefined,
+            heading: s.heading,
+            description: s.description || "",
+            imageDesktop: resolveHeroImage(s.image_desktop),
+            imageMobile: resolveHeroImage(s.image_mobile || s.image_desktop),
+            alt: s.heading,
+            primaryCta: {
+              label: s.primary_cta_label || "Book Now",
+              href: s.primary_cta_href || "/fleet",
+              variant: "primary",
+            },
+            secondaryCta: {
+              label: "Talk to a Planner",
+              href: "/contact-us",
+              variant: "secondary",
+            },
+          }));
+          setSlides(mapped);
+        }
+      } catch (err) {
+        console.error("Using static hero slides fallback", err);
+      }
+    }
+    loadLiveHeroSlides();
+  }, []);
 
   useEffect(() => {
     if (!api) return;

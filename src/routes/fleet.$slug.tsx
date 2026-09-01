@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import * as Icons from "lucide-react";
-import { Check, MessageCircle, Phone, CalendarCheck, ArrowLeft } from "lucide-react";
+import { Check, MessageCircle, Phone, CalendarCheck, ArrowLeft, Calculator, ShieldAlert, Sparkles } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -12,7 +12,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { VehicleGallery } from "@/components/fleet/vehicle-gallery";
 import { VehiclePricing } from "@/components/fleet/vehicle-pricing";
 import { VehicleBookingForm } from "@/components/fleet/vehicle-booking-form";
-import { BookingPoliciesCard } from "@/components/common/booking-policies";
+import { AutoFareCalculatorModal } from "@/components/fleet/auto-fare-calculator-modal";
+import { getFleetFareConfig, type FleetFareConfig } from "@/content/fleet-pricing";
 import {
   getPublishedVehicles,
   getVehicleBySlug,
@@ -32,7 +33,32 @@ import { company, waLink } from "@/content/site";
 type IconName = keyof typeof Icons;
 type LoaderData = { vehicle: FleetVehicle; detail?: VehicleDetail };
 
+type VehicleDetailSearch = {
+  pickup?: string;
+  destination?: string;
+  pickupCity?: string;
+  dropCity?: string;
+  pickupDate?: string;
+  pickupTime?: string;
+  tripType?: string;
+  fare?: string;
+  advance?: string;
+  autoOpenBooking?: string;
+};
+
 export const Route = createFileRoute("/fleet/$slug")({
+  validateSearch: (search: Record<string, unknown>): VehicleDetailSearch => ({
+    pickup: typeof search.pickup === "string" ? search.pickup : undefined,
+    destination: typeof search.destination === "string" ? search.destination : undefined,
+    pickupCity: typeof search.pickupCity === "string" ? search.pickupCity : undefined,
+    dropCity: typeof search.dropCity === "string" ? search.dropCity : undefined,
+    pickupDate: typeof search.pickupDate === "string" ? search.pickupDate : undefined,
+    pickupTime: typeof search.pickupTime === "string" ? search.pickupTime : undefined,
+    tripType: typeof search.tripType === "string" ? search.tripType : undefined,
+    fare: typeof search.fare === "string" ? search.fare : undefined,
+    advance: typeof search.advance === "string" ? search.advance : undefined,
+    autoOpenBooking: typeof search.autoOpenBooking === "string" ? search.autoOpenBooking : undefined,
+  }),
   loader: ({ params }): LoaderData => {
     const vehicle = getVehicleBySlug(params.slug);
     if (!vehicle) throw notFound();
@@ -137,8 +163,31 @@ function VehicleFallback({ title, message }: { title: string; message: string })
 }
 
 function VehicleDetailPage() {
-  const { vehicle, detail } = Route.useLoaderData() as LoaderData;
+  const search = Route.useSearch();
+  const { vehicle: initialVehicle, detail: initialDetail } = Route.useLoaderData() as LoaderData;
+  const [vehicle, setVehicle] = useState<FleetVehicle>(initialVehicle);
+  const [detail, setDetail] = useState<VehicleDetail | undefined>(initialDetail);
   const [bookingRef, setBookingRef] = useState(0);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [fareConfig, setFareConfig] = useState<FleetFareConfig>(() => getFleetFareConfig(initialVehicle.id));
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      const updated = getVehicleBySlug(initialVehicle.slug);
+      if (updated) setVehicle(updated);
+      setDetail(getVehicleDetail(initialVehicle.slug));
+      setFareConfig(getFleetFareConfig(initialVehicle.id));
+    };
+    window.addEventListener("fleetDataUpdated", handleUpdate);
+    window.addEventListener("vehicleDetailUpdated", handleUpdate);
+    window.addEventListener("fleetFareSettingsUpdated", handleUpdate);
+    return () => {
+      window.removeEventListener("fleetDataUpdated", handleUpdate);
+      window.removeEventListener("vehicleDetailUpdated", handleUpdate);
+      window.removeEventListener("fleetFareSettingsUpdated", handleUpdate);
+    };
+  }, [initialVehicle.slug, initialVehicle.id]);
+
   const gallery = detail ? getGallery(detail) : [];
   const features = detail ? getVisibleFeatures(detail) : [];
   const related = getRelatedVehicles(vehicle, getPublishedVehicles());
@@ -153,7 +202,6 @@ function VehicleDetailPage() {
     { label: "Passengers", value: `${vehicle.seats}` },
     { label: "Luggage", value: `${vehicle.luggage} bags` },
     { label: "Air conditioning", value: vehicle.ac ? "AC" : "Non-AC" },
-    { label: "Fuel", value: vehicle.fuel ?? "On request" },
     ...(detail?.specs ?? []),
   ];
 
@@ -173,15 +221,31 @@ function VehicleDetailPage() {
 
           <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="min-w-0">
+              {/* Always show the correctly resolved vehicle image as the primary photo */}
               <div className="overflow-hidden rounded-xl border border-border">
                 <img
                   src={vehicle.image}
-                  alt={vehicle.imageAlt}
+                  alt={vehicle.imageAlt || vehicle.name}
                   width={1200}
                   height={750}
                   className="aspect-[16/10] w-full object-cover"
                 />
               </div>
+
+              {/* Additional gallery images from DB (if any) shown below as thumbnails */}
+              {gallery.length > 1 && (
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {gallery.slice(0, 4).map((img) => (
+                    <div key={img.id} className="overflow-hidden rounded-lg border border-border">
+                      <img
+                        src={img.url}
+                        alt={img.alt}
+                        className="aspect-[4/3] w-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <header className="mt-6">
                 <div className="flex flex-wrap items-center gap-2">
@@ -201,9 +265,49 @@ function VehicleDetailPage() {
                     {detail.summary}
                   </p>
                 ) : null}
-                <p className="mt-4 text-base font-bold text-primary">
-                  Starting {vehicle.priceFromLabel}
-                </p>
+
+                {/* Auto Fare Calculator Hero Card */}
+                <div className="mt-6 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-background p-5 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+                        <Sparkles className="h-3.5 w-3.5" /> Configured Route Tariffs
+                      </span>
+                      <div className="mt-2 flex flex-wrap items-baseline gap-4">
+                        <div>
+                          <span className="text-xs text-muted-foreground block font-medium">One Way Tariff</span>
+                          <span className="text-xl sm:text-2xl font-extrabold text-foreground">
+                            ₹{fareConfig.oneWayRatePerKm}
+                            <span className="text-xs font-normal text-muted-foreground"> / km</span>
+                          </span>
+                          <span className="text-[10px] text-muted-foreground block">
+                            (Min {fareConfig.oneWayMinimumKm} km)
+                          </span>
+                        </div>
+                        <div className="h-8 w-[1px] bg-border hidden sm:block" />
+                        <div>
+                          <span className="text-xs text-muted-foreground block font-medium">Round Trip Tariff</span>
+                          <span className="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                            ₹{fareConfig.roundTripRatePerKm}
+                            <span className="text-xs font-normal text-muted-foreground"> / km</span>
+                          </span>
+                          <span className="text-[10px] text-muted-foreground block">
+                            (Min {fareConfig.roundTripMinimumKmPerDay} km/day)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      size="lg"
+                      onClick={() => setShowCalculator(true)}
+                      className="font-bold gap-2 self-start sm:self-center shadow-md bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                      <Calculator className="h-4 w-4" /> Calculate Exact Fare
+                    </Button>
+                  </div>
+                </div>
               </header>
 
               <section className="mt-8" aria-labelledby="specs-heading">
@@ -246,7 +350,7 @@ function VehicleDetailPage() {
                 </section>
               ) : null}
 
-              {vehicle.features.length > 0 ? (
+              {vehicle.features && vehicle.features.length > 0 ? (
                 <section className="mt-8" aria-labelledby="highlights-heading">
                   <h2 id="highlights-heading" className="text-lg font-bold sm:text-xl">
                     Highlights
@@ -264,29 +368,66 @@ function VehicleDetailPage() {
 
               {detail ? (
                 <section className="mt-8" aria-labelledby="rates-heading">
-                  <h2 id="rates-heading" className="text-lg font-bold sm:text-xl">
-                    Rates
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Fuel, driver charges and maintenance are included. Anything billed at actuals is
-                    shown before you confirm.
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 id="rates-heading" className="text-lg font-bold sm:text-xl">
+                        Rates & Standard Packages
+                      </h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Fuel, driver charges and maintenance are included. Anything billed at actuals is
+                        shown before you confirm.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCalculator(true)}
+                      className="hidden sm:flex text-xs font-semibold gap-1.5 border-primary text-primary hover:bg-primary/10"
+                    >
+                      <Calculator className="h-3.5 w-3.5" /> Open Auto Calculator
+                    </Button>
+                  </div>
                   <div className="mt-4">
                     <VehiclePricing detail={detail} />
                   </div>
                 </section>
               ) : null}
 
-              <section className="mt-8" aria-labelledby="policies-heading">
-                <BookingPoliciesCard />
-              </section>
+              {detail?.policies && detail.policies.length > 0 ? (
+                <section className="mt-8" aria-labelledby="policies-heading">
+                  <h2 id="policies-heading" className="text-lg font-bold sm:text-xl">
+                    Rental Policies & Guidelines
+                  </h2>
+                  <ul className="mt-3 space-y-2.5">
+                    {detail.policies.map((policy, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary/80" aria-hidden="true" />
+                        <span className="leading-snug">{policy}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
 
               <section id="booking" className="mt-10 scroll-mt-24 lg:hidden" aria-labelledby="booking-heading-mobile">
                 <h2 id="booking-heading-mobile" className="text-lg font-bold sm:text-xl">
                   Book this vehicle
                 </h2>
                 <div className="mt-4 rounded-xl border border-border bg-card p-5">
-                  <VehicleBookingForm key={bookingRef} idPrefix="mbk" vehicle={vehicle} detail={detail} />
+                  <VehicleBookingForm
+                    key={bookingRef}
+                    idPrefix="mbk"
+                    vehicle={vehicle}
+                    detail={detail}
+                    prefillPickup={search.pickup || search.pickupCity}
+                    prefillDestination={search.destination || search.dropCity}
+                    prefillDate={search.pickupDate}
+                    prefillTime={search.pickupTime}
+                    prefillTripType={search.tripType}
+                    prefillFare={search.fare ? Number(search.fare) : undefined}
+                    prefillAdvance={search.advance ? Number(search.advance) : undefined}
+                  />
                 </div>
               </section>
 
@@ -341,12 +482,33 @@ function VehicleDetailPage() {
 
             <aside className="hidden lg:block">
               <div className="sticky top-24 rounded-xl border border-border bg-card p-5">
-                <h2 className="text-base font-bold">Book the {vehicle.name}</h2>
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-base font-bold">Book the {vehicle.name}</h2>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCalculator(true)}
+                    className="text-xs text-primary font-bold hover:bg-primary/10 gap-1 h-7 px-2"
+                  >
+                    <Calculator className="h-3 w-3" /> Auto Calculator
+                  </Button>
+                </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Send a request and we confirm availability before anything is final.
+                  Send a request or calculate an instant route fare.
                 </p>
                 <div className="mt-4">
-                  <VehicleBookingForm vehicle={vehicle} detail={detail} />
+                  <VehicleBookingForm
+                    vehicle={vehicle}
+                    detail={detail}
+                    prefillPickup={search.pickup || search.pickupCity}
+                    prefillDestination={search.destination || search.dropCity}
+                    prefillDate={search.pickupDate}
+                    prefillTime={search.pickupTime}
+                    prefillTripType={search.tripType}
+                    prefillFare={search.fare ? Number(search.fare) : undefined}
+                    prefillAdvance={search.advance ? Number(search.advance) : undefined}
+                  />
                 </div>
               </div>
             </aside>
@@ -374,12 +536,24 @@ function VehicleDetailPage() {
               WhatsApp
             </a>
           </Button>
-          <Button size="sm" className="flex-1" type="button" onClick={scrollToBooking}>
-            <CalendarCheck className="h-4 w-4" aria-hidden="true" />
-            Book
+          <Button
+            size="sm"
+            className="flex-1 font-bold gap-1"
+            type="button"
+            onClick={() => setShowCalculator(true)}
+          >
+            <Calculator className="h-4 w-4" aria-hidden="true" />
+            Fare Calc
           </Button>
         </div>
       </div>
+
+      {/* Auto Fare Calculator Modal */}
+      <AutoFareCalculatorModal
+        open={showCalculator}
+        onOpenChange={setShowCalculator}
+        initialVehicle={vehicle}
+      />
 
       <Footer />
       <Toaster />

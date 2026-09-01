@@ -65,7 +65,7 @@ export const contactSettings = {
   businessHours: [
     { id: "bh1", days: "Monday – Sunday", hours: "24 Hours Service Desk", order: 1, published: true },
     { id: "bh2", days: "WhatsApp Assistance", hours: "+91 6366357757", order: 2, published: true },
-    { id: "bh3", days: "Call Support", hours: "+91 8884015512", order: 3, published: true },
+    { id: "bh3", days: "Call Support", hours: "+91 6366357757", order: 3, published: true },
   ],
 };
 

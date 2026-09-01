@@ -29,21 +29,27 @@ export function AboutSection() {
             {aboutSection.meta.subheading}
           </p>
 
-          <dl className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {aboutSection.stats.map((stat) => (
-              <div key={stat.id} className="rounded-xl border border-border bg-card p-4">
-                <dt className="sr-only">{stat.label}</dt>
-                <dd>
+          {/* Continuously Sliding Stats Carousel */}
+          <div className="relative mt-8 overflow-hidden rounded-2xl border border-border/80 bg-muted/20 py-2.5 sm:py-4 shadow-inner">
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-8 sm:w-16 bg-gradient-to-r from-background to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-8 sm:w-16 bg-gradient-to-l from-background to-transparent" />
+
+            <div className="flex w-max gap-3 sm:gap-5 animate-continuous-slide">
+              {[...aboutSection.stats, ...aboutSection.stats].map((stat, idx) => (
+                <div
+                  key={`${stat.id}-${idx}`}
+                  className="w-[160px] sm:w-[200px] shrink-0 rounded-xl border border-border/80 bg-card p-3 sm:p-4 shadow-sm text-center"
+                >
                   <CountUp
                     value={stat.value}
                     suffix={stat.suffix}
-                    className="block text-2xl font-extrabold tracking-tight text-primary"
+                    className="block text-2xl sm:text-3xl font-extrabold tracking-tight text-primary"
                   />
-                  <span className="mt-1 block text-xs text-muted-foreground">{stat.label}</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
+                  <span className="mt-1 block text-xs sm:text-sm font-medium text-muted-foreground truncate">{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <Button asChild size="lg" className="mt-8">
             <AppLink href={aboutSection.cta.href}>{aboutSection.cta.label}</AppLink>

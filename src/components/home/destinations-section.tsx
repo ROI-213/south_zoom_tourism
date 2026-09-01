@@ -1,15 +1,43 @@
+import { useState, useEffect } from "react";
 import { ArrowRight, MapPin, Sparkles } from "lucide-react";
 import { destinations, destinationsSection } from "@/content/site";
 import { SectionHeader, ViewAllMobile } from "@/components/common/section-header";
 import { AppLink } from "@/components/common/app-link";
 import { EmptyState } from "@/components/home/fleet-section";
+import supabase from "@/lib/supabase";
 
 export function DestinationsSection() {
+  const [liveDests, setLiveDests] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase.from('destinations').select('*').order('name');
+        if (!error && data && data.length > 0) {
+          const mapped = data.map((d: any) => ({
+            id: d.slug || d.id,
+            name: d.name,
+            state: d.state,
+            image: d.image_url || 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=800&q=80',
+            alt: `${d.name}, ${d.state}`,
+            packageCount: 2,
+            featured: d.featured,
+          }));
+          setLiveDests(mapped);
+        }
+      } catch (e) {
+        console.error('Failed to load destinations:', e);
+      }
+    })();
+  }, []);
+
   if (!destinationsSection.meta.visible) return null;
 
-  const items = destinationsSection.itemIds
+  const defaultItems = destinationsSection.itemIds
     .map((id) => destinations.find((d) => d.id === id))
     .filter((d): d is (typeof destinations)[number] => Boolean(d));
+
+  const items = liveDests.length > 0 ? liveDests : defaultItems;
 
   const featuredLarge = items[0];
   const topTwo = items.slice(1, 3);
@@ -81,14 +109,14 @@ export function DestinationsSection() {
             ) : null}
 
             {/* Right Side: 2 Images Above & 3 Images Below */}
-            <div className="flex flex-col gap-5 lg:col-span-3">
+            <div className="flex flex-col gap-3 sm:gap-5 lg:col-span-3">
               {/* Top Row: 2 Images Above */}
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-5">
                 {topTwo.map((d) => (
                   <AppLink
                     key={d.id}
                     href="/destinations"
-                    className="group relative flex min-h-[200px] flex-col justify-end overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl sm:min-h-[220px]"
+                    className="group relative flex min-h-[140px] sm:min-h-[220px] flex-col justify-end overflow-hidden rounded-xl sm:rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl"
                   >
                     <img
                       src={d.image}
@@ -100,16 +128,16 @@ export function DestinationsSection() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-                    <div className="relative z-10 p-5">
-                      <span className="text-[11px] font-semibold text-white/80">{d.state}</span>
-                      <h4 className="text-lg font-bold text-white transition-colors group-hover:text-primary">
+                    <div className="relative z-10 p-2.5 sm:p-5">
+                      <span className="text-[9px] sm:text-[11px] font-semibold text-white/80 truncate block">{d.state}</span>
+                      <h4 className="text-xs sm:text-lg font-bold text-white transition-colors group-hover:text-primary truncate">
                         {d.name}
                       </h4>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="rounded-full bg-black/40 px-2.5 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-md">
-                          {d.packageCount} packages
+                      <div className="mt-1 sm:mt-2 flex items-center justify-between">
+                        <span className="rounded-full bg-black/40 px-1.5 sm:px-2.5 py-0.5 text-[8px] sm:text-[11px] font-medium text-white/90 backdrop-blur-md truncate">
+                          {d.packageCount} pkgs
                         </span>
-                        <ArrowRight className="h-4 w-4 text-white opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1" />
+                        <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-white opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1" />
                       </div>
                     </div>
                   </AppLink>
@@ -117,12 +145,12 @@ export function DestinationsSection() {
               </div>
 
               {/* Bottom Row: 3 Images Below */}
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-5">
                 {bottomThree.map((d) => (
                   <AppLink
                     key={d.id}
                     href="/destinations"
-                    className="group relative flex min-h-[190px] flex-col justify-end overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl sm:min-h-[210px]"
+                    className="group relative flex min-h-[120px] sm:min-h-[210px] flex-col justify-end overflow-hidden rounded-xl sm:rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl"
                   >
                     <img
                       src={d.image}
@@ -134,16 +162,16 @@ export function DestinationsSection() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-                    <div className="relative z-10 p-4">
-                      <span className="text-[11px] font-semibold text-white/80">{d.state}</span>
-                      <h4 className="text-base font-bold text-white transition-colors group-hover:text-primary">
+                    <div className="relative z-10 p-2 sm:p-4">
+                      <span className="text-[8px] sm:text-[11px] font-semibold text-white/80 truncate block">{d.state}</span>
+                      <h4 className="text-[11px] sm:text-base font-bold text-white transition-colors group-hover:text-primary truncate">
                         {d.name}
                       </h4>
-                      <div className="mt-1.5 flex items-center justify-between">
-                        <span className="rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-md">
-                          {d.packageCount} packages
+                      <div className="mt-1 sm:mt-1.5 flex items-center justify-between">
+                        <span className="rounded-full bg-black/40 px-1 sm:px-2 py-0.5 text-[7px] sm:text-[10px] font-medium text-white/90 backdrop-blur-md truncate">
+                          {d.packageCount} pkgs
                         </span>
-                        <ArrowRight className="h-3.5 w-3.5 text-white opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1" />
+                        <ArrowRight className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 text-white opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1" />
                       </div>
                     </div>
                   </AppLink>

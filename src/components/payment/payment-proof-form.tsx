@@ -26,10 +26,10 @@ import {
   savePaymentSubmission,
   screenshotStoragePath,
   todayISO,
-  validateBookingLink,
   type PaymentScreenshotRef,
   type PaymentSubmissionRecord,
 } from "@/content/payment";
+import { company } from "@/content/site";
 
 const maxBytes = paymentSettings.upload.maxMb * 1024 * 1024;
 
@@ -59,6 +59,8 @@ const schema = z.object({
     .min(4, "Enter the UTR / transaction ID from your payment app.")
     .max(40, "Transaction ID is too long."),
   method: z.string().min(1, "Select how you paid."),
+  passengers: z.string().optional(),
+  travelDate: z.string().optional(),
   remarks: z.string().trim().max(500, "Please keep remarks under 500 characters."),
 });
 
@@ -95,6 +97,8 @@ export function PaymentProofForm({
       paidOn: todayISO(),
       transactionId: "",
       method: paymentMethodOptions[0].id,
+      passengers: "",
+      travelDate: "",
       remarks: "",
     },
   });
@@ -271,6 +275,27 @@ export function PaymentProofForm({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Number of passengers */}
+          <div className="min-w-0 space-y-1.5">
+            <Label htmlFor="pay-passengers">Number of passengers <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <Select onValueChange={(v) => setValue("passengers", v, { shouldValidate: true })}>
+              <SelectTrigger id="pay-passengers" aria-label="Number of passengers">
+                <SelectValue placeholder="Select passengers" />
+              </SelectTrigger>
+              <SelectContent>
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} {n === 1 ? "Passenger" : "Passengers"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Travel / trip date */}
+          <div className="min-w-0 space-y-1.5">
+            <Label htmlFor="pay-travel-date">Travel / trip date <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <Input id="pay-travel-date" type="date" {...register("travelDate")} />
+          </div>
         </div>
 
         <div className="min-w-0 space-y-1.5">
@@ -329,11 +354,16 @@ export function PaymentProofForm({
 
         <div className="flex items-start gap-2 rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-          <p>
-            Submitting this form records a payment claim only. Your booking stays unpaid until our
-            team verifies the transaction with the bank (usually within{" "}
-            {paymentSettings.verificationSlaHours} working hours, {paymentSettings.deskHours}).
-          </p>
+          <div className="space-y-1">
+            <p>
+              Submitting this form records a payment claim only. Your booking stays unpaid until our
+              team verifies the transaction with the bank (usually within{" "}
+              {paymentSettings.verificationSlaHours} working hours, {paymentSettings.deskHours}).
+            </p>
+            <p className="font-semibold text-foreground text-[11px] pt-1 border-t border-border/60">
+              {company.name} · {company.msmeRegistration}
+            </p>
+          </div>
         </div>
 
         <Button type="submit" className="w-full" disabled={formState.isSubmitting}>

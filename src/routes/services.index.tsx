@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { TopBar } from "@/components/layout/top-bar";
 import { Navbar } from "@/components/layout/navbar";
@@ -20,9 +20,12 @@ import {
   servicesFaqBlock,
   servicesIntroBlock,
   servicesSeo,
+  setDynamicServices,
+  mapDbServiceToRecord,
   type Service,
 } from "@/content/services";
 import { company } from "@/content/site";
+import supabase from "@/lib/supabase";
 
 type ServicesSearch = { category: string };
 
@@ -94,9 +97,25 @@ export const Route = createFileRoute("/services/")({
 function ServicesPage() {
   const { category } = Route.useSearch();
   const navigate = useNavigate();
+  const [servicesList, setServicesList] = useState<Service[]>(() => getPublishedServices());
 
-  const allServices = useMemo(() => getPublishedServices(), []);
-  const categories = useMemo(() => getVisibleCategories(), []);
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error } = await supabase.from('services').select('*').eq('active', true).order('display_order');
+        if (!error && data && data.length > 0) {
+          const mapped = data.map(mapDbServiceToRecord);
+          setDynamicServices(mapped);
+          setServicesList(mapped);
+        }
+      } catch (err) {
+        console.error('Error fetching services:', err);
+      }
+    })();
+  }, []);
+
+  const allServices = servicesList;
+  const categories = useMemo(() => getVisibleCategories(), [servicesList]);
   const activeCategory = categories.some((c) => c.slug === category) ? category : "all";
 
   const counts = useMemo(() => {

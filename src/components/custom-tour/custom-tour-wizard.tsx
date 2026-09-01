@@ -2,6 +2,7 @@ import { recordEnquiryForTracking } from "@/content/booking-status";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, MessageCircle, Save } from "lucide-react";
+import { syncEnquiryToSupabase } from "@/lib/booking-sync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -228,6 +229,17 @@ export function CustomTourWizard() {
       name: payload.name,
       phone: payload.phone,
       email: payload.email ?? "",
+    });
+
+    // Persist directly into Supabase backend database for admin & operations
+    syncEnquiryToSupabase({
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email,
+      serviceType: 'Custom Tour Planning',
+      travelDate: payload.start_date || null,
+      message: `Stops: ${payload.stops.map((s) => s.destination_slug ?? "").filter(Boolean).join(" → ") || "Custom"} | Days: ${payload.days} | Guests: ${payload.adults}A, ${payload.children}C | Hotel: ${payload.hotel_category} | Vehicle: ${payload.vehicle_category}`,
+      reference: ref,
     });
 
     window.setTimeout(() => {

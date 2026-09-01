@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Logo Placement Tool</title>
+    <style>
+        body { font-family: system-ui; padding: 20px; }
+        .car-container { position: relative; display: inline-block; margin-bottom: 20px; border: 1px solid #ccc; cursor: crosshair; }
+        .car-img { display: block; max-width: 1024px; }
+        .logo-preview { position: absolute; pointer-events: none; border: 2px dashed red; box-shadow: 0 0 5px red; }
+    </style>
+</head>
+<body>
+    <h1>Logo Placement Tool</h1>
+    <p>Click on the image where the CENTER of the logo should be placed. The exact Left and Top coordinates will be shown.</p>
+    
+    <h2>Sedan (Swift Dzire)</h2>
+    <div class="car-container" onclick="handleClick(event, this, 'Sedan')">
+        <img class="car-img" src="/src/assets/fleet_sedan_yellow_board_1786680814709.jpg" alt="Sedan">
+    </div>
+
+    <h2>Small SUV (Ertiga)</h2>
+    <div class="car-container" onclick="handleClick(event, this, 'Ertiga')">
+        <img class="car-img" src="/src/assets/fleet_ertiga_yellow_board_1786680959170.jpg" alt="Ertiga">
+    </div>
+
+    <h2>Big SUV (Innova Crysta)</h2>
+    <div class="car-container" onclick="handleClick(event, this, 'Innova')">
+        <img class="car-img" src="/src/assets/fleet_innova_yellow_board_1786681018168.jpg" alt="Innova">
+    </div>
+
+    <script>
+        function handleClick(event, container, carName) {
+            const rect = container.getBoundingClientRect();
+            // Calculate coordinates relative to the image natural size
+            const img = container.querySelector('img');
+            const scaleX = img.naturalWidth / img.width;
+            const scaleY = img.naturalHeight / img.height;
+            
+            const x = Math.round((event.clientX - rect.left) * scaleX);
+            const y = Math.round((event.clientY - rect.top) * scaleY);
+            
+            // Assume logo width is ~110px. Top Left is center - half width
+            const logoWidth = 110;
+            const left = Math.round(x - (logoWidth / 2));
+            const top = Math.round(y - (logoWidth / 2)); // rough square assumption
+            
+            alert(`${carName} Coordinates:\nLeft: ${left}\nTop: ${top}\n\nPlease copy these and send them to me!`);
+            
+            // Preview
+            let preview = container.querySelector('.logo-preview');
+            if (!preview) {
+                preview = document.createElement('div');
+                preview.className = 'logo-preview';
+                container.appendChild(preview);
+            }
+            // scale back to visual size
+            preview.style.width = (logoWidth / scaleX) + 'px';
+            preview.style.height = (logoWidth / scaleY) + 'px';
+            preview.style.left = (event.clientX - rect.left - (logoWidth / scaleX / 2)) + 'px';
+            preview.style.top = (event.clientY - rect.top - (logoWidth / scaleY / 2)) + 'px';
+        }
+    </script>
+</body>
+</html>

@@ -108,6 +108,17 @@ export function BookingPoliciesCard({
             Customers are responsible for their own belongings. The company is not responsible for any loss or damage.
           </p>
         </div>
+
+        {/* Policy 5: Trip Cancellation Policy */}
+        <div className="flex items-start gap-2.5 rounded-xl bg-muted/30 p-3 border border-border/40">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground mt-0.5">5</span>
+          <div>
+            <p className="font-semibold text-foreground">Trip Cancellation Policy:</p>
+            <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+              Cancellations made up to <strong>2 hours</strong> prior to the journey are eligible for a full refund. Last-minute cancellations may be subject to a cancellation fee.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

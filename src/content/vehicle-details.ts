@@ -16,6 +16,14 @@ import heroFleet from "@/assets/hero-fleet.jpg";
 import heroTours from "@/assets/hero-tours.jpg";
 import serviceCorporate from "@/assets/service-corporate-new.png";
 import serviceGroup from "@/assets/service-group.png";
+import interiorInnovaSeats from "@/assets/interior-innova-seats.jpg";
+import interiorTempoSeats from "@/assets/interior-tempo-seats.jpg";
+import interiorUrbaniaSeats from "@/assets/interior-urbania-seats.svg";
+import interiorBusSeats from "@/assets/interior-bus-seats.jpg";
+import fleetBigSuv from "@/assets/fleet-innova-new.png";
+import fleetTempo from "@/assets/fleet-tempo-new.png";
+import fleetUrbania from "@/assets/fleet-urbania-ka.jpg";
+import fleetBus from "@/assets/fleet-bus-ka.jpg";
 import { getVehicleBySlug, type FleetVehicle } from "@/content/fleet";
 
 export type GalleryKind = "exterior" | "interior" | "seating" | "luggage";
@@ -91,7 +99,7 @@ function basePricing(slug: string, perKm: number, showAll = true): VehiclePriceL
     {
       group: "local",
       label: "8 hrs / 80 km package",
-      value: `₹${perKm * 160}`,
+      value: `₹2300`,
       note: "City limits, fuel and driver included",
       visible: true,
       enquiryLabel: "Contact for price",
@@ -99,7 +107,7 @@ function basePricing(slug: string, perKm: number, showAll = true): VehiclePriceL
     {
       group: "local",
       label: "4 hrs / 40 km package",
-      value: `₹${perKm * 90}`,
+      value: `₹1200`,
       note: "Half-day city use",
       visible: true,
       enquiryLabel: "Contact for price",
@@ -143,14 +151,14 @@ function basePricing(slug: string, perKm: number, showAll = true): VehiclePriceL
     },
     {
       group: "outstation",
-      label: "Driver allowance (per night)",
-      value: `₹${perKm >= 24 ? 800 : 500}`,
+      label: "Driver allowance (per day)",
+      value: `₹${perKm >= 24 ? 800 : 500} / day`,
       visible: true,
       enquiryLabel: "Contact for price",
     },
     {
       group: "outstation",
-      label: "Night charges (11 PM – 6 AM)",
+      label: "Night charges (9:30 PM – 5:30 AM)",
       value: `₹${perKm >= 24 ? 600 : 400}`,
       visible: true,
       enquiryLabel: "Contact for price",
@@ -194,7 +202,7 @@ function basePricing(slug: string, perKm: number, showAll = true): VehiclePriceL
 const commonPolicies = [
   "Rates include fuel, driver charges, vehicle maintenance and insurance.",
   "Tolls, permits, parking and state entry taxes are billed at actuals with receipts.",
-  "Cancellations more than 24 hours before pickup are free of charge.",
+  "Cancellations more than 2 hours before pickup are free of charge.",
   "The vehicle is sanitised and inspected before every dispatch.",
   "Smoking and alcohol consumption inside the vehicle are not permitted.",
 ];
@@ -284,7 +292,7 @@ export const vehicleDetails: VehicleDetail[] = [
   ),
   makeDetail(
     "maruti-ertiga",
-    "A three-row MPV for families and small groups — six seats, a roof carrier on request and CNG running costs that keep longer itineraries affordable.",
+    "A three-row MPV for families and small groups — six seats, a roof carrier on request and efficient running costs that keep longer itineraries affordable.",
     [
       { url: heroTours, alt: "Maruti Ertiga MPV parked near a hill station viewpoint", kind: "exterior" },
       { url: heroFleet, alt: "Maruti Ertiga cabin with the second-row seats", kind: "interior" },
@@ -296,15 +304,15 @@ export const vehicleDetails: VehicleDetail[] = [
       { label: "Rows", value: "3" },
       { label: "Best for", value: "Family trips and small groups" },
     ],
-    basePricing("maruti-ertiga", 17),
+    basePricing("maruti-ertiga", 18),
   ),
   makeDetail(
     "innova-crysta",
     "The benchmark for multi-day South India tours: seven seats, genuine luggage room, captain-seat option and a ride quality that holds up over ghat roads.",
     [
-      { url: heroTours, alt: "Toyota Innova Crysta on a mountain road at sunrise", kind: "exterior" },
-      { url: serviceCorporate, alt: "Innova Crysta interior with captain seats", kind: "interior" },
-      { url: heroFleet, alt: "Second and third row seating inside the vehicle", kind: "seating" },
+      { url: fleetBigSuv, alt: "White Toyota Innova Crysta big SUV with KA yellow board & SZT sticker", kind: "exterior" },
+      { url: interiorInnovaSeats, alt: "Executive plush leatherette captain seats in the Innova Crysta", kind: "seating" },
+      { url: interiorInnovaSeats, alt: "Innova Crysta executive cabin with ambient roof lighting", kind: "interior" },
       { url: heroFleet, alt: "Rear luggage area of the Innova Crysta", kind: "luggage" },
     ],
     standardFeatures,
@@ -312,7 +320,7 @@ export const vehicleDetails: VehicleDetail[] = [
       { label: "Rows", value: "3" },
       { label: "Best for", value: "Multi-day tour packages" },
     ],
-    basePricing("innova-crysta", 20),
+    basePricing("innova-crysta", 21),
     [{ from: "2026-08-12", to: "2026-08-16", reason: "Held for a confirmed group tour" }],
   ),
   makeDetail(
@@ -320,8 +328,8 @@ export const vehicleDetails: VehicleDetail[] = [
     "Executive travel with ottoman captain seats and hybrid refinement — the vehicle we send when the guest list includes clients or visiting leadership.",
     [
       { url: serviceCorporate, alt: "Executive MPV used for corporate airport and employee transport", kind: "exterior" },
-      { url: heroTours, alt: "Hycross cabin with ambient lighting and ottoman seats", kind: "interior" },
-      { url: heroFleet, alt: "Reclining captain seats inside the vehicle", kind: "seating" },
+      { url: interiorInnovaSeats, alt: "Hycross cabin with ambient lighting and ottoman seats", kind: "interior" },
+      { url: interiorInnovaSeats, alt: "Reclining captain seats inside the vehicle", kind: "seating" },
       { url: heroFleet, alt: "Boot space of the Innova Hycross with executive luggage", kind: "luggage" },
     ],
     [...standardFeatures, ["Ottoman captain seats", "Armchair"], ["Ambient cabin lighting", "Lightbulb"]],
@@ -336,9 +344,9 @@ export const vehicleDetails: VehicleDetail[] = [
     "tempo-traveller-12",
     "Twelve push-back seats with standing headroom and a dedicated luggage carrier — the workhorse for temple circuits and office offsites.",
     [
-      { url: serviceGroup, alt: "Twelve-seater tempo traveller with passengers boarding", kind: "exterior" },
-      { url: heroTours, alt: "Push-back seating inside the 12-seater tempo traveller", kind: "seating" },
-      { url: serviceGroup, alt: "Rear luggage space in the tempo traveller", kind: "luggage" },
+      { url: fleetTempo, alt: "Twelve-seater Force Tempo Traveller TT with KA yellow board & SZT sticker", kind: "exterior" },
+      { url: interiorTempoSeats, alt: "2×1 Push-back luxury recliner seating inside Tempo Traveller", kind: "seating" },
+      { url: interiorTempoSeats, alt: "High-roof interior with center aisle and ambient lighting", kind: "interior" },
       { url: serviceGroup, alt: "Rear luggage carrier of the tempo traveller loaded with bags", kind: "luggage" },
     ],
     largeVehicleFeatures,
@@ -349,12 +357,29 @@ export const vehicleDetails: VehicleDetail[] = [
     basePricing("tempo-traveller-12", 24),
   ),
   makeDetail(
-    "tempo-traveller-17",
-    "A non-AC seventeen seater for pilgrimage routes and budget group travel, with a high roof and generous luggage space.",
+    "force-urbania",
+    "Fourteen individual luxury push-back recliner seats with aircraft-style ambient lighting, personal AC vents and panoramic windows — the premier choice for VIP group travel.",
     [
-      { url: serviceGroup, alt: "Seventeen-seater tempo traveller parked at a temple town", kind: "exterior" },
-      { url: heroFleet, alt: "High-roof interior of the seventeen-seater tempo traveller", kind: "interior" },
-      { url: heroTours, alt: "Seating rows inside the seventeen-seater tempo traveller", kind: "seating" },
+      { url: fleetUrbania, alt: "Force Urbania Luxury Van with KA yellow board & SZT sticker", kind: "exterior" },
+      { url: interiorUrbaniaSeats, alt: "Plush diamond-quilted luxury recliner seats in Force Urbania", kind: "seating" },
+      { url: interiorUrbaniaSeats, alt: "Aircraft-style luxury cabin and ambient LED roof strip", kind: "interior" },
+      { url: serviceGroup, alt: "Dedicated rear luggage bay for group baggage", kind: "luggage" },
+    ],
+    largeVehicleFeatures,
+    [
+      { label: "Seat layout", value: "Individual luxury recliners" },
+      { label: "Air conditioning", value: "Dual-zone individual vents" },
+      { label: "Best for", value: "Executive corporate & VIP tours" },
+    ],
+    basePricing("force-urbania", 28),
+  ),
+  makeDetail(
+    "tempo-traveller-17",
+    "A seventeen seater for pilgrimage routes and group travel, with a high roof and generous luggage space.",
+    [
+      { url: fleetTempo, alt: "Seventeen-seater Force Tempo Traveller with KA yellow board & SZT sticker", kind: "exterior" },
+      { url: interiorTempoSeats, alt: "Push-back seating rows inside the seventeen-seater tempo traveller", kind: "seating" },
+      { url: interiorTempoSeats, alt: "High-roof interior of the seventeen-seater tempo traveller", kind: "interior" },
       { url: serviceGroup, alt: "Luggage stacked in the rear of the seventeen seater", kind: "luggage" },
     ],
     [
@@ -366,8 +391,8 @@ export const vehicleDetails: VehicleDetail[] = [
       ["Overhead luggage racks", "Luggage"],
     ],
     [
-      { label: "Air conditioning", value: "Non-AC" },
-      { label: "Best for", value: "Pilgrimage and budget groups" },
+      { label: "Air conditioning", value: "AC" },
+      { label: "Best for", value: "Pilgrimage and group travel" },
     ],
     basePricing("tempo-traveller-17", 26),
   ),
@@ -375,9 +400,9 @@ export const vehicleDetails: VehicleDetail[] = [
     "mini-bus-27",
     "Twenty-seven seats with a PA system and a co-driver on long routes — sized for weddings, college trips and corporate movements.",
     [
-      { url: serviceGroup, alt: "Twenty-seven seater mini bus parked in a company yard", kind: "exterior" },
-      { url: heroFleet, alt: "Interior aisle of the twenty-seven seater mini bus", kind: "interior" },
-      { url: serviceGroup, alt: "Passenger seating rows inside the mini bus", kind: "seating" },
+      { url: fleetBus, alt: "Twenty-seven seater tourist bus coach with KA yellow board & SZT sticker", kind: "exterior" },
+      { url: interiorBusSeats, alt: "2×2 High-back pushback coach seating with armrests", kind: "seating" },
+      { url: interiorBusSeats, alt: "Spacious AC coach interior with overhead parcel racks", kind: "interior" },
       { url: serviceGroup, alt: "Luggage hold of the mini bus with group baggage", kind: "luggage" },
     ],
     largeVehicleFeatures,
@@ -391,9 +416,9 @@ export const vehicleDetails: VehicleDetail[] = [
     "coach-45",
     "A forty-five seat air-conditioned coach with reclining seats and a full-width luggage hold for the largest movements we handle.",
     [
-      { url: serviceGroup, alt: "Forty-five seater air-conditioned coach for group travel", kind: "exterior" },
-      { url: heroFleet, alt: "Interior of the forty-five seater coach looking down the aisle", kind: "interior" },
-      { url: serviceGroup, alt: "Reclining seat rows inside the coach", kind: "seating" },
+      { url: fleetBus, alt: "Forty-five seater air-conditioned coach with KA yellow board & SZT sticker", kind: "exterior" },
+      { url: interiorBusSeats, alt: "2×2 Reclining coach seat rows inside the luxury bus", kind: "seating" },
+      { url: interiorBusSeats, alt: "Interior of the forty-five seater coach looking down the aisle", kind: "interior" },
       { url: heroTours, alt: "Side luggage hold of the coach being loaded", kind: "luggage" },
     ],
     largeVehicleFeatures,
@@ -402,13 +427,120 @@ export const vehicleDetails: VehicleDetail[] = [
       { label: "Best for", value: "Large group movements" },
     ],
     basePricing("coach-45", 52),
-    basePricing("coach-45", 52),
     [{ from: "2026-07-27", to: "2026-08-02", reason: "Fully booked — school excursion" }],
   ),
 ];
 
+const STORAGE_KEY_VEHICLE_DETAILS = "szt_vehicle_details_overrides_v1";
+
+const isBrowser = () => typeof window !== "undefined";
+
+export function getVehicleDetailOverrides(): Record<string, VehicleDetail> {
+  if (!isBrowser()) return {};
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY_VEHICLE_DETAILS);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.error("Failed to read vehicle detail overrides:", e);
+    return {};
+  }
+}
+
+export function saveVehicleDetail(slug: string, detail: VehicleDetail): void {
+  if (!isBrowser()) return;
+  try {
+    const overrides = getVehicleDetailOverrides();
+    overrides[slug] = { ...detail, vehicleSlug: slug };
+    window.localStorage.setItem(STORAGE_KEY_VEHICLE_DETAILS, JSON.stringify(overrides));
+    window.dispatchEvent(new CustomEvent("vehicleDetailUpdated", { detail: { slug } }));
+  } catch (e) {
+    console.error("Failed to save vehicle detail:", e);
+  }
+}
+
+export function resetVehicleDetail(slug: string): void {
+  if (!isBrowser()) return;
+  try {
+    const overrides = getVehicleDetailOverrides();
+    delete overrides[slug];
+    window.localStorage.setItem(STORAGE_KEY_VEHICLE_DETAILS, JSON.stringify(overrides));
+    window.dispatchEvent(new CustomEvent("vehicleDetailUpdated", { detail: { slug } }));
+  } catch (e) {
+    console.error("Failed to reset vehicle detail:", e);
+  }
+}
+
+export function createDefaultVehicleDetail(vehicle: FleetVehicle): VehicleDetail {
+  const perKm = vehicle.pricePerKm || 14;
+  const standardFeatures: [string, string][] = [
+    ["Chauffeur driven", "UserCheck"],
+    ["GPS tracking", "ShieldCheck"],
+    ["Mobile charging point", "Zap"],
+    ["First aid kit", "HeartPulse"],
+    ["Air conditioning", "Wind"],
+    ["Ample luggage space", "Briefcase"],
+  ];
+
+  return {
+    vehicleSlug: vehicle.slug,
+    summary: `${vehicle.name} (${vehicle.brand} ${vehicle.model}) available for local city rides, outstation trips, and airport transfers with verified professional chauffeurs.`,
+    gallery: [
+      {
+        id: `${vehicle.slug}-img-1`,
+        url: vehicle.image,
+        alt: `${vehicle.name} exterior view`,
+        kind: "exterior",
+        order: 1,
+      },
+    ],
+    features: featuresFor(vehicle.slug, standardFeatures),
+    specs: [
+      { label: "Fuel Type", value: vehicle.fuel || "Petrol / Diesel" },
+      { label: "Transmission", value: "Manual / Automatic" },
+      { label: "Seating Capacity", value: `${vehicle.seats} Passengers + 1 Driver` },
+      { label: "Luggage Capacity", value: `${vehicle.luggage} Standard Bags` },
+    ],
+    pricing: basePricing(vehicle.slug, perKm),
+    policies: [...commonPolicies],
+    dateBlocks: [],
+  };
+}
+
 export function getVehicleDetail(slug: string): VehicleDetail | undefined {
-  return vehicleDetails.find((detail) => detail.vehicleSlug === slug);
+  // 1. Check localStorage overrides
+  const overrides = getVehicleDetailOverrides();
+  if (overrides[slug]) {
+    return overrides[slug];
+  }
+
+  // 2. Direct match in hardcoded vehicleDetails
+  let detail = vehicleDetails.find((d) => d.vehicleSlug === slug);
+  if (detail) return detail;
+
+  // 3. Alias map: fleet.ts slug → vehicle-details.ts slug
+  const slugAliases: Record<string, string> = {
+    "hatchback-wagonr": "maruti-swift",
+  };
+  const aliased = slugAliases[slug];
+  if (aliased) {
+    if (overrides[aliased]) return overrides[aliased];
+    detail = vehicleDetails.find((d) => d.vehicleSlug === aliased);
+    if (detail) return detail;
+  }
+
+  // 4. If vehicle exists in fleet list, generate default detail
+  const vehicle = getVehicleBySlug(slug);
+  if (vehicle) {
+    return createDefaultVehicleDetail(vehicle);
+  }
+
+  return undefined;
+}
+
+export function resolveVehicleWithDetail(slug: string) {
+  const vehicle = getVehicleBySlug(slug);
+  if (!vehicle) return undefined;
+  return { vehicle, detail: getVehicleDetail(slug) };
 }
 
 export function getVisibleFeatures(detail: VehicleDetail): VehicleFeature[] {
@@ -490,8 +622,3 @@ export function getRelatedVehicles(vehicle: FleetVehicle, pool: FleetVehicle[], 
     .map((entry) => entry.candidate);
 }
 
-export function resolveVehicleWithDetail(slug: string) {
-  const vehicle = getVehicleBySlug(slug);
-  if (!vehicle) return undefined;
-  return { vehicle, detail: getVehicleDetail(slug) };
-}

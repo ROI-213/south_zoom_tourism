@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { HelpCircle, PhoneCall, MessageCircle, Sparkles, CheckCircle2 } from "lucide-react";
-import { faqSection, waLink, company } from "@/content/site";
+import { faqSection as staticFaqs, waLink, company } from "@/content/site";
 import { SectionHeader, ViewAllMobile } from "@/components/common/section-header";
 import { EmptyState } from "@/components/home/fleet-section";
 import {
@@ -9,10 +10,40 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 export function FaqSection() {
-  if (!faqSection.meta.visible) return null;
-  const items = faqSection.items;
+  const [items, setItems] = useState<any[]>(staticFaqs.items);
+  const [phone, setPhone] = useState(company.phone);
+
+  useEffect(() => {
+    async function loadLiveFaqs() {
+      try {
+        const [faqRes, settingsRes] = await Promise.all([
+          supabase.from("faqs").select("*").eq("active", true).order("display_order", { ascending: true }),
+          supabase.from("website_settings").select("value").eq("key", "contact_settings").single(),
+        ]);
+
+        if (!faqRes.error && faqRes.data && faqRes.data.length > 0) {
+          const mapped = faqRes.data.map((f) => ({
+            id: f.id,
+            question: f.question,
+            answer: f.answer,
+          }));
+          setItems(mapped);
+        }
+
+        if (settingsRes.data?.value?.phone) {
+          setPhone(settingsRes.data.value.phone);
+        }
+      } catch (err) {
+        console.error("Using static FAQs fallback", err);
+      }
+    }
+    loadLiveFaqs();
+  }, []);
+
+  if (!staticFaqs.meta.visible) return null;
 
   return (
     <section
@@ -23,7 +54,7 @@ export function FaqSection() {
       <div className="pointer-events-none absolute left-1/3 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-4">
-        <SectionHeader meta={faqSection.meta} />
+        <SectionHeader meta={staticFaqs.meta} />
 
         {items.length === 0 ? (
           <EmptyState message="FAQs will appear here soon." />
@@ -48,7 +79,7 @@ export function FaqSection() {
 
                 <div className="mt-6 space-y-3">
                   <a
-                    href={`tel:${company.phone}`}
+                    href={`tel:${phone}`}
                     className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/20 p-3 transition-colors hover:border-primary/50 hover:bg-card"
                   >
                     <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
@@ -56,7 +87,7 @@ export function FaqSection() {
                     </span>
                     <div>
                       <span className="block text-[11px] text-muted-foreground">Call Us Directly</span>
-                      <span className="text-xs font-bold text-foreground">{company.phone}</span>
+                      <span className="text-xs font-bold text-foreground">{phone}</span>
                     </div>
                   </a>
 
@@ -108,7 +139,7 @@ export function FaqSection() {
           </div>
         )}
 
-        <ViewAllMobile meta={faqSection.meta} />
+        <ViewAllMobile meta={staticFaqs.meta} />
       </div>
     </section>
   );

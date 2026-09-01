@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { Clock, MapPin, Calculator, Plus, Minus, Info, ShieldAlert, CheckCircle2, ArrowRight, Settings } from "lucide-react";
+import { Clock, MapPin, Calculator, Plus, Minus, Info, ShieldAlert, CheckCircle2, ArrowRight, Settings, Sparkles, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getRateCardConfig, calculateLocalTripFare, type RateCardConfig } from "@/content/rate-card";
 import { AdminRateManagementDialog } from "@/components/admin/rate-management-dialog";
+import { AdminFleetFareManagementDialog } from "@/components/admin/fleet-fare-management";
+import { AutoFareCalculatorModal } from "@/components/fleet/auto-fare-calculator-modal";
 import { BookingPoliciesCard } from "@/components/common/booking-policies";
 
 export function RateCardSection() {
   const [config, setConfig] = useState<RateCardConfig>(getRateCardConfig());
   const [adminOpen, setAdminOpen] = useState(false);
+  const [fleetAdminOpen, setFleetAdminOpen] = useState(false);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [calculatorTripType, setCalculatorTripType] = useState<"one-way" | "round-trip">("one-way");
 
   // Local calculator state
   const [calcHours, setCalcHours] = useState(4);
@@ -40,16 +45,20 @@ export function RateCardSection() {
           </p>
         </div>
 
-        {/* Admin Rate Edit Button Trigger */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setAdminOpen(true)}
-          className="self-start sm:self-auto gap-2 text-xs font-semibold border-dashed text-muted-foreground hover:text-primary"
-        >
-          <Settings className="h-3.5 w-3.5" />
-          Edit Rate Cards (Admin)
-        </Button>
+        {/* Action Trigger */}
+        <div className="flex items-center self-start sm:self-auto shrink-0">
+          <Button
+            size="default"
+            onClick={() => {
+              setCalculatorTripType("one-way");
+              setCalculatorOpen(true);
+            }}
+            className="font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-xs sm:text-sm h-10 px-5 rounded-xl transition-transform active:scale-95"
+          >
+            <Calculator className="h-4 w-4" />
+            Auto Fare Calculator
+          </Button>
+        </div>
       </div>
 
       {/* Main Rate Card Tabs */}
@@ -380,11 +389,17 @@ export function RateCardSection() {
                 </ul>
               </div>
 
-              <div className="mt-8 pt-4 border-t border-border">
-                <Button asChild size="lg" className="w-full font-bold">
-                  <Link to="/contact-us" search={{ intent: "booking", tripType: "one-way" }}>
-                    Get One-Way Quote →
-                  </Link>
+              <div className="mt-8 pt-4 border-t border-border flex gap-2">
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() => {
+                    setCalculatorTripType("one-way");
+                    setCalculatorOpen(true);
+                  }}
+                  className="w-full font-bold gap-1.5"
+                >
+                  <Calculator className="h-4 w-4" /> Calculate One-Way Fare →
                 </Button>
               </div>
             </div>
@@ -422,7 +437,7 @@ export function RateCardSection() {
                   </li>
                   <li className="flex justify-between pt-3">
                     <span className="text-muted-foreground font-medium">Driver Allowance</span>
-                    <span className="font-bold text-muted-foreground">{config.outstationRoundTrip.driverAllowance}</span>
+                    <span className="font-bold text-foreground">{config.outstationRoundTrip.driverAllowance || "Per Day"}</span>
                   </li>
                   <li className="flex justify-between pt-3">
                     <span className="text-muted-foreground font-medium">Hill Charges</span>
@@ -431,11 +446,18 @@ export function RateCardSection() {
                 </ul>
               </div>
 
-              <div className="mt-8 pt-4 border-t border-border">
-                <Button asChild size="lg" variant="outline" className="w-full font-bold border-primary text-primary hover:bg-primary hover:text-white">
-                  <Link to="/contact-us" search={{ intent: "booking", tripType: "round-trip" }}>
-                    Get Round Trip Quote →
-                  </Link>
+              <div className="mt-8 pt-4 border-t border-border flex gap-2">
+                <Button
+                  type="button"
+                  size="lg"
+                  variant="outline"
+                  onClick={() => {
+                    setCalculatorTripType("round-trip");
+                    setCalculatorOpen(true);
+                  }}
+                  className="w-full font-bold border-primary text-primary hover:bg-primary hover:text-white gap-1.5"
+                >
+                  <Calculator className="h-4 w-4" /> Calculate Round-Trip Fare →
                 </Button>
               </div>
             </div>
@@ -460,11 +482,24 @@ export function RateCardSection() {
         </ul>
       </div>
 
-      {/* Admin Rate Edit Modal */}
+      {/* Admin Local Rate Edit Modal */}
       <AdminRateManagementDialog
         open={adminOpen}
         onOpenChange={setAdminOpen}
         onSave={() => setConfig(getRateCardConfig())}
+      />
+
+      {/* Admin Fleet Fare Settings & History Modal */}
+      <AdminFleetFareManagementDialog
+        open={fleetAdminOpen}
+        onOpenChange={setFleetAdminOpen}
+      />
+
+      {/* Auto Fare Calculator Modal */}
+      <AutoFareCalculatorModal
+        open={calculatorOpen}
+        onOpenChange={setCalculatorOpen}
+        initialTripType={calculatorTripType}
       />
     </section>
   );
