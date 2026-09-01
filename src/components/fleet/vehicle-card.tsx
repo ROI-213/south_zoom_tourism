@@ -84,38 +84,26 @@ export function VehicleCard({
             ) : null}
           </ul>
 
-          <div className="mt-2.5 sm:mt-4 flex flex-col gap-1.5 pt-1">
+          <div className="mt-2.5 sm:mt-4 flex gap-1.5 pt-1">
             <Button
               type="button"
               size="sm"
-              variant="outline"
               onClick={() => setShowCalculator(true)}
-              className="h-7 sm:h-8 w-full text-[10px] sm:text-xs font-semibold gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
+              className="h-8 flex-1 text-xs font-bold px-2 sm:px-3 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-transform active:scale-95"
             >
-              <Calculator className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
-              Fair
+              Book Now
             </Button>
-            <div className="flex gap-1.5">
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => setShowCalculator(true)}
-                className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3"
+            <Button asChild size="sm" variant="outline" className="h-8 flex-1 text-xs font-semibold px-2 sm:px-3 border-emerald-600/30 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400">
+              <a
+                href={waLink(
+                  `Hi South Zoom Tourism, I'd like a quote for the ${vehicle.name} (${getVehicleCategoryLabel(vehicle.categorySlug)}, ${vehicle.seats} seats, ₹${displayRate}/km).`,
+                )}
+                target="_blank"
+                rel="noreferrer noopener"
               >
-                Book
-              </Button>
-              <Button asChild size="sm" variant="outline" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
-                <a
-                  href={waLink(
-                    `Hi South Zoom Tourism, I'd like a quote for the ${vehicle.name} (${getVehicleCategoryLabel(vehicle.categorySlug)}, ${vehicle.seats} seats, ₹${displayRate}/km).`,
-                  )}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  WhatsApp
-                </a>
-              </Button>
-            </div>
+                WhatsApp
+              </a>
+            </Button>
           </div>
         </div>
       </article>
