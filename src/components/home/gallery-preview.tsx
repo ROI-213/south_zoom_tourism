@@ -15,14 +15,16 @@ import destBengaluru from "@/assets/destinations/dest-bengaluru-new.jpg";
 import destMunnar from "@/assets/destinations/dest-munnar-new.png";
 import destAlleppey from "@/assets/destinations/dest-alleppey-new.png";
 import destKodaikanal from "@/assets/destinations/dest-kodai-new.png";
-import destGoa from "@/assets/destinations/dest-goa.jpg";
 import destMadurai from "@/assets/destinations/dest-madurai-new.png";
 import destOoty from "@/assets/destinations/dest-ooty-new.png";
 import destChennai from "@/assets/destinations/dest-chennai.jpg";
 import destPondicherry from "@/assets/destinations/dest-pondy-new.png";
 import destTirupati from "@/assets/destinations/dest-tirupati-new.png";
+import destWayanad from "@/assets/destinations/dest-wayanad.jpg";
 
 type GalleryItem = { id: string; image: string; title: string; location: string; alt: string; span: string };
+
+const ALLOWED_STATES = ["Karnataka", "Kerala", "Tamil Nadu", "Andhra Pradesh", "Puducherry"];
 
 const defaultStateGalleries: Record<string, GalleryItem[]> = {
   "Karnataka": [
@@ -33,41 +35,48 @@ const defaultStateGalleries: Record<string, GalleryItem[]> = {
     { id: "ka5", image: destBadami, title: "Ancient Rock Cuts", location: "Badami Caves", alt: "Badami cave temples by the lake", span: "col-span-1 md:col-span-1 md:row-span-1" },
   ],
   "Kerala": [
-    { id: "kl1", image: destMunnar, title: "Tea Gardens", location: "Munnar", alt: "Munnar tea estates", span: "col-span-1 md:col-span-2 md:row-span-2" },
+    { id: "kl1", image: destMunnar, title: "Misty Tea Gardens", location: "Munnar", alt: "Munnar tea estates", span: "col-span-1 md:col-span-2 md:row-span-2" },
     { id: "kl2", image: destAlleppey, title: "Backwaters Cruise", location: "Alleppey", alt: "Alleppey backwaters", span: "col-span-1 md:col-span-1 md:row-span-1" },
-    { id: "kl3", image: destKodaikanal, title: "Wayanad Hills", location: "Wayanad", alt: "Wayanad landscape", span: "col-span-1 md:col-span-1 md:row-span-1" },
-    { id: "kl4", image: destGoa, title: "Kovalam Beach", location: "Kovalam", alt: "Kovalam beach", span: "col-span-1 md:col-span-1 md:row-span-1" },
-    { id: "kl5", image: destCoorg, title: "Thekkady Wildlife", location: "Thekkady", alt: "Thekkady forest", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "kl3", image: destWayanad, title: "Emerald Rainforests", location: "Wayanad", alt: "Wayanad landscape", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "kl4", image: destCoorg, title: "Spice Hills & Forests", location: "Thekkady", alt: "Thekkady forest", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "kl5", image: destJogFalls, title: "Misty Waterfalls", location: "Athirappilly", alt: "Athirappilly waterfalls", span: "col-span-1 md:col-span-1 md:row-span-1" },
   ],
   "Tamil Nadu": [
     { id: "tn1", image: destMadurai, title: "Meenakshi Temple", location: "Madurai", alt: "Meenakshi temple", span: "col-span-1 md:col-span-2 md:row-span-2" },
     { id: "tn2", image: destOoty, title: "Nilgiri Railways", location: "Ooty", alt: "Ooty train", span: "col-span-1 md:col-span-1 md:row-span-1" },
     { id: "tn3", image: destChennai, title: "Marina Beach", location: "Chennai", alt: "Chennai beach", span: "col-span-1 md:col-span-1 md:row-span-1" },
     { id: "tn4", image: destKodaikanal, title: "Kodai Lake", location: "Kodaikanal", alt: "Kodaikanal lake", span: "col-span-1 md:col-span-1 md:row-span-1" },
-    { id: "tn5", image: destPondicherry, title: "French Quarter", location: "Pondicherry", alt: "Pondicherry streets", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "tn5", image: destMysuru, title: "Shore Temple", location: "Mahabalipuram", alt: "Mahabalipuram shore temple", span: "col-span-1 md:col-span-1 md:row-span-1" },
   ],
   "Andhra Pradesh": [
     { id: "ap1", image: destTirupati, title: "Tirumala Temple", location: "Tirupati", alt: "Tirupati temple", span: "col-span-1 md:col-span-2 md:row-span-2" },
-    { id: "ap2", image: destGoa, title: "RK Beach", location: "Visakhapatnam", alt: "RK Beach", span: "col-span-1 md:col-span-1 md:row-span-1" },
-    { id: "ap3", image: destMunnar, title: "Araku Valley", location: "Araku", alt: "Araku Valley", span: "col-span-1 md:col-span-1 md:row-span-1" },
-    { id: "ap4", image: destHampi, title: "Borra Caves", location: "Visakhapatnam", alt: "Borra caves", span: "col-span-1 md:col-span-1 md:row-span-1" },
-    { id: "ap5", image: destChennai, title: "Amaravathi", location: "Guntur", alt: "Amaravathi", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "ap2", image: destGokarna, title: "Rushikonda Coast", location: "Visakhapatnam", alt: "RK Beach Visakhapatnam", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "ap3", image: destMunnar, title: "Araku Valley", location: "Araku", alt: "Araku Valley coffee estates", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "ap4", image: destBadami, title: "Borra Caves", location: "Visakhapatnam", alt: "Borra caves limestone formations", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "ap5", image: destHampi, title: "Lepakshi Temple", location: "Anantapur", alt: "Lepakshi Veerabhadra temple", span: "col-span-1 md:col-span-1 md:row-span-1" },
+  ],
+  "Puducherry": [
+    { id: "py1", image: destPondicherry, title: "French Quarter & White Town", location: "Pondicherry", alt: "Pondicherry French Quarter", span: "col-span-1 md:col-span-2 md:row-span-2" },
+    { id: "py2", image: destGokarna, title: "Promenade Beach Boulevard", location: "Pondicherry", alt: "Promenade Beach Pondicherry", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "py3", image: destHampi, title: "Matrimandir Golden Dome", location: "Auroville", alt: "Auroville Matrimandir", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "py4", image: destAlleppey, title: "Paradise Beach Lagoon", location: "Chunnambar", alt: "Paradise Beach Pondicherry", span: "col-span-1 md:col-span-1 md:row-span-1" },
+    { id: "py5", image: destChennai, title: "Heritage Coastal Harbor", location: "Arikamedu", alt: "Arikamedu ancient port", span: "col-span-1 md:col-span-1 md:row-span-1" },
   ],
 };
 
-const lightStates = new Set(["Karnataka", "Kerala", "Tamil Nadu", "Andhra Pradesh"]);
 const bgClasses: Record<string, string> = {
   "Karnataka": "bg-amber-50 text-slate-900",
   "Kerala": "bg-amber-50 text-slate-900",
   "Tamil Nadu": "bg-amber-50 text-slate-900",
   "Andhra Pradesh": "bg-amber-50 text-slate-900",
+  "Puducherry": "bg-amber-50 text-slate-900",
 };
 const defaultBg = "bg-amber-50 text-slate-900";
 
 export function GalleryPreview() {
   const [stateGalleries, setStateGalleries] = useState<Record<string, GalleryItem[]>>(defaultStateGalleries);
-  const states = Object.keys(stateGalleries);
-  const [activeState, setActiveState] = useState(states[0] || "Karnataka");
+  const states = ALLOWED_STATES;
+  const [activeState, setActiveState] = useState("Karnataka");
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -82,17 +91,21 @@ export function GalleryPreview() {
 
         if (!error && data && data.length > 0) {
           const grouped: Record<string, GalleryItem[]> = { ...defaultStateGalleries };
-          data.forEach((item, index) => {
-            const cat = item.category || "Karnataka";
-            if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push({
-              id: item.id,
-              image: item.image_url,
-              title: item.alt_text || "South India Sightseeing",
-              location: cat,
-              alt: item.alt_text || "South Zoom Tour Photo",
-              span: index === 0 ? "col-span-1 md:col-span-2 md:row-span-2" : "col-span-1 md:col-span-1 md:row-span-1",
-            });
+          data.forEach((item) => {
+            const cat = item.category?.trim() || "";
+            if (ALLOWED_STATES.includes(cat)) {
+              if (!grouped[cat]) grouped[cat] = [];
+              if (grouped[cat].length < 5) {
+                grouped[cat].push({
+                  id: item.id,
+                  image: item.image_url,
+                  title: item.alt_text || "South India Sightseeing",
+                  location: cat,
+                  alt: item.alt_text || "South Zoom Tour Photo",
+                  span: grouped[cat].length === 0 ? "col-span-1 md:col-span-2 md:row-span-2" : "col-span-1 md:col-span-1 md:row-span-1",
+                });
+              }
+            }
           });
           setStateGalleries(grouped);
         }
@@ -104,7 +117,7 @@ export function GalleryPreview() {
   }, []);
 
   const sectionBg = bgClasses[activeState] || defaultBg;
-  const isLight = lightStates.has(activeState);
+  const isLight = true;
 
   // Auto rotate states
   useEffect(() => {
