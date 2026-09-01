@@ -1,18 +1,22 @@
-import { Compass, Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { company, footerContent } from "@/content/site";
 import { AppLink } from "@/components/common/app-link";
+import sztLogo from "@/assets/szt-logo.png";
 
 export function Footer() {
   return (
     <footer className="mt-16 border-t border-border bg-secondary/60">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-2 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-1">
-          <div className="flex items-center gap-2">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <Compass className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <span className="text-base font-extrabold tracking-tight">{company.name}</span>
-          </div>
+          <AppLink href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+            <img
+              src={sztLogo}
+              alt={`${company.name} logo`}
+              className="h-10 w-auto object-contain shrink-0"
+              style={{ maxWidth: "120px" }}
+            />
+            <span className="text-base font-extrabold tracking-tight text-foreground">{company.name}</span>
+          </AppLink>
           <p className="mt-4 text-sm text-muted-foreground">{footerContent.about}</p>
           <div className="mt-4 flex flex-wrap gap-3">
             {company.socials.map((s) => (
