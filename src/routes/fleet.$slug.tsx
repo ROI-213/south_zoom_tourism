@@ -268,44 +268,31 @@ function VehicleDetailPage() {
 
                 {/* Auto Fare Calculator Hero Card */}
                 <div className="mt-6 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-background p-5 shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+                    <Sparkles className="h-3.5 w-3.5" /> Configured Route Tariffs
+                  </span>
+                  <div className="mt-3 flex flex-wrap items-baseline gap-6">
                     <div>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
-                        <Sparkles className="h-3.5 w-3.5" /> Configured Route Tariffs
+                      <span className="text-xs text-muted-foreground block font-medium">One Way Tariff</span>
+                      <span className="text-xl sm:text-2xl font-extrabold text-foreground">
+                        ₹{fareConfig.oneWayRatePerKm}
+                        <span className="text-xs font-normal text-muted-foreground"> / km</span>
                       </span>
-                      <div className="mt-2 flex flex-wrap items-baseline gap-4">
-                        <div>
-                          <span className="text-xs text-muted-foreground block font-medium">One Way Tariff</span>
-                          <span className="text-xl sm:text-2xl font-extrabold text-foreground">
-                            ₹{fareConfig.oneWayRatePerKm}
-                            <span className="text-xs font-normal text-muted-foreground"> / km</span>
-                          </span>
-                          <span className="text-[10px] text-muted-foreground block">
-                            (Min {fareConfig.oneWayMinimumKm} km)
-                          </span>
-                        </div>
-                        <div className="h-8 w-[1px] bg-border hidden sm:block" />
-                        <div>
-                          <span className="text-xs text-muted-foreground block font-medium">Round Trip Tariff</span>
-                          <span className="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                            ₹{fareConfig.roundTripRatePerKm}
-                            <span className="text-xs font-normal text-muted-foreground"> / km</span>
-                          </span>
-                          <span className="text-[10px] text-muted-foreground block">
-                            (Min {fareConfig.roundTripMinimumKmPerDay} km/day)
-                          </span>
-                        </div>
-                      </div>
+                      <span className="text-[10px] text-muted-foreground block">
+                        (Min {fareConfig.oneWayMinimumKm} km)
+                      </span>
                     </div>
-
-                    <Button
-                      type="button"
-                      size="lg"
-                      onClick={() => setShowCalculator(true)}
-                      className="font-bold gap-2 self-start sm:self-center shadow-md bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      <Calculator className="h-4 w-4" /> Calculate Exact Fare
-                    </Button>
+                    <div className="h-8 w-[1px] bg-border hidden sm:block" />
+                    <div>
+                      <span className="text-xs text-muted-foreground block font-medium">Round Trip Tariff</span>
+                      <span className="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                        ₹{fareConfig.roundTripRatePerKm}
+                        <span className="text-xs font-normal text-muted-foreground"> / km</span>
+                      </span>
+                      <span className="text-[10px] text-muted-foreground block">
+                        (Min {fareConfig.roundTripMinimumKmPerDay} km/day)
+                      </span>
+                    </div>
                   </div>
                 </div>
               </header>
@@ -368,25 +355,14 @@ function VehicleDetailPage() {
 
               {detail ? (
                 <section className="mt-8" aria-labelledby="rates-heading">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 id="rates-heading" className="text-lg font-bold sm:text-xl">
-                        Rates & Standard Packages
-                      </h2>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Fuel, driver charges and maintenance are included. Anything billed at actuals is
-                        shown before you confirm.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowCalculator(true)}
-                      className="hidden sm:flex text-xs font-semibold gap-1.5 border-primary text-primary hover:bg-primary/10"
-                    >
-                      <Calculator className="h-3.5 w-3.5" /> Open Auto Calculator
-                    </Button>
+                  <div>
+                    <h2 id="rates-heading" className="text-lg font-bold sm:text-xl">
+                      Rates & Standard Packages
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Fuel, driver charges and maintenance are included. Anything billed at actuals is
+                      shown before you confirm.
+                    </p>
                   </div>
                   <div className="mt-4">
                     <VehiclePricing detail={detail} />
