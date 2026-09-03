@@ -18,6 +18,7 @@ import serviceOutstation from "@/assets/service-outstation.png";
 import serviceAirport from "@/assets/service-airport.png";
 import serviceCorporate from "@/assets/service-corporate-new.png";
 import serviceGroup from "@/assets/service-group-new.jpg";
+import servicePilgrimage from "@/assets/service-pilgrimage-new.png";
 import serviceWedding from "@/assets/service-wedding-vip.jpg";
 import serviceHotels from "@/assets/service-hotel-stays.jpg";
 import heroHotels from "@/assets/service-hotel-stays.jpg";
