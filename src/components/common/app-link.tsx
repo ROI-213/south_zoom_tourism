@@ -17,7 +17,7 @@ export function AppLink({
   children: ReactNode;
   ariaLabel?: string;
 }) {
-  const isExternal = /^(https?:|tel:|mailto:)/.test(href);
+  const isExternal = /^(https?:|tel:|mailto:)/.test(href) || href.startsWith("#");
 
   if (isExternal) {
     return (
@@ -36,7 +36,6 @@ export function AppLink({
   return (
     <Link
       to={href as LinkProps["to"]}
-      preload="intent"
       className={className}
       aria-label={ariaLabel}
     >

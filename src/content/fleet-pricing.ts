@@ -372,56 +372,8 @@ let memoryLogs: FareCalculationLog[] = [];
 
 const isBrowser = () => typeof window !== "undefined";
 
-/**
- * Canonical vehicle matcher that resolves any ID, slug, model, or category to its fare config.
- */
-export function matchVehicleToFareConfig(
-  identifier: string | undefined | null,
-  configs: FleetFareConfig[]
-): FleetFareConfig | undefined {
-  if (!identifier || !configs || configs.length === 0) return undefined;
-  const raw = String(identifier).toLowerCase().trim();
-  if (!raw) return undefined;
-
-  // 1. Direct exact match on id, fleetId, vehicleSlug, or vehicleName
-  const direct = configs.find(
-    (c) =>
-      c.id.toLowerCase() === raw ||
-      c.fleetId.toLowerCase() === raw ||
-      c.vehicleSlug.toLowerCase() === raw ||
-      c.vehicleName.toLowerCase() === raw ||
-      `ffc-${c.vehicleSlug}`.toLowerCase() === raw
-  );
-  if (direct) return direct;
-
-  // 2. Canonical keyword matching for South Zoom Tourism's 8 fleets
-  if (raw.includes("wagonr") || raw.includes("wagon-r") || raw.includes("hatchback")) {
-    return configs.find((c) => c.id === "ffc-hatchback" || c.category.toLowerCase().includes("hatchback")) || configs[0];
-  }
-  if (raw.includes("dzire") || raw.includes("etios") || raw.includes("sedan")) {
-    return configs.find((c) => c.id === "ffc-sedan" || c.category.toLowerCase().includes("sedan")) || configs[1];
-  }
-  if (raw.includes("ertiga") || raw.includes("small-suv") || raw.includes("small suv") || raw.includes("6-seater") || raw.includes("6 seater")) {
-    return configs.find((c) => c.id === "ffc-small-suv") || configs[2];
-  }
-  if (raw.includes("innova") || raw.includes("crysta") || raw.includes("big-suv") || raw.includes("big suv") || raw.includes("7-seater") || raw.includes("7 seater")) {
-    return configs.find((c) => c.id === "ffc-big-suv") || configs[3];
-  }
-  if (raw.includes("urbania") || raw.includes("14-seater") || raw.includes("10-seater")) {
-    return configs.find((c) => c.id === "ffc-urbania") || configs[5];
-  }
-  if (raw.includes("tempo") || raw.includes("traveller") || raw.includes("12-seater") || raw.includes("17-seater") || raw.includes("tt")) {
-    return configs.find((c) => c.id === "ffc-tempo") || configs[4];
-  }
-  if (raw.includes("bus") || raw.includes("coach") || raw.includes("27-seater") || raw.includes("35-seater") || raw.includes("45-seater") || raw.includes("50-seater")) {
-    return configs.find((c) => c.id === "ffc-bus") || configs[6];
-  }
-  if (raw.includes("bmw") || raw.includes("mercedes") || raw.includes("audi") || raw.includes("premium") || raw.includes("vip")) {
-    return configs.find((c) => c.id === "ffc-premium") || configs[7];
-  }
-
-  return undefined;
-}
+export { matchVehicleToFareConfig } from "@/lib/fleet-matcher";
+import { matchVehicleToFareConfig } from "@/lib/fleet-matcher";
 
 /**
  * Retrieve current fleet fare configuration.
@@ -487,8 +439,6 @@ export function getFleetFareConfig(fleetIdOrSlug: string, fallbackSlugOrName?: s
   return all[0];
 }
 
-import { getFleetVehicles, saveFleetVehicles } from "@/content/fleet";
-
 /**
  * Update fleet fare settings (Admin function).
  */
@@ -505,25 +455,29 @@ export function saveFleetFareSettings(settings: FleetFareConfig[]): void {
     window.dispatchEvent(new CustomEvent("fleetFareSettingsUpdated", { detail: stamped }));
     window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
 
-    // Synchronize pricePerKm and priceFromLabel across all frontend fleet vehicles using canonical matching
-    const vehicles = getFleetVehicles();
-    let hasChanges = false;
-    const updatedVehicles = vehicles.map((v) => {
-      const match = matchVehicleToFareConfig(v.slug || v.id || v.name, stamped);
-      if (match && match.oneWayRatePerKm) {
-        hasChanges = true;
-        return {
-          ...v,
-          pricePerKm: match.oneWayRatePerKm,
-          priceFromLabel: `₹${match.oneWayRatePerKm} / km`,
-        };
-      }
-      return v;
-    });
+    // Synchronize pricePerKm and priceFromLabel across all frontend fleet vehicles using dynamic import
+    import("@/content/fleet")
+      .then(({ getFleetVehicles, saveFleetVehicles }) => {
+        const vehicles = getFleetVehicles();
+        let hasChanges = false;
+        const updatedVehicles = vehicles.map((v) => {
+          const match = matchVehicleToFareConfig(v.slug || v.id || v.name, stamped);
+          if (match && match.oneWayRatePerKm) {
+            hasChanges = true;
+            return {
+              ...v,
+              pricePerKm: match.oneWayRatePerKm,
+              priceFromLabel: `₹${match.oneWayRatePerKm} / km`,
+            };
+          }
+          return v;
+        });
 
-    if (hasChanges) {
-      saveFleetVehicles(updatedVehicles);
-    }
+        if (hasChanges) {
+          saveFleetVehicles(updatedVehicles);
+        }
+      })
+      .catch(() => {});
   } catch (err) {
     console.error("Failed to save fleet fare settings:", err);
   }

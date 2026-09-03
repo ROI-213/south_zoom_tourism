@@ -25,7 +25,7 @@ import fleetUrbania from "@/assets/fleet-urbania-ka.jpg";
 import fleetBus from "@/assets/fleet-bus-ka.jpg";
 import fleetBmw from "@/assets/fleet-bmw-new.png";
 import { resolveVehicleImage } from "@/lib/image-map";
-import { matchVehicleToFareConfig } from "@/content/fleet-pricing";
+import { matchVehicleToFareConfig } from "@/lib/fleet-matcher";
 
 export type VehicleCategory = {
   id: string;
