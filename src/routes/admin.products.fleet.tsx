@@ -291,13 +291,13 @@ function FleetProductPage() {
           localBasePrice: 2200,
           localBaseHours: 4,
           localBaseKm: 40,
-          localExtraKmRate: 18,
+          localExtraKmRate: field === 'oneWayRatePerKm' ? Number(value) : v.pricePerKm,
           localExtraHourRate: 200,
           localDriverAllowance: 400,
           airportBasePrice: 1100,
           airportBaseHours: 3,
           airportBaseKm: 30,
-          airportExtraKmRate: 28,
+          airportExtraKmRate: field === 'oneWayRatePerKm' ? Number(value) : v.pricePerKm,
           airportExtraHourRate: 200,
         };
         const next = [...prev, newEntry];
@@ -305,9 +305,11 @@ function FleetProductPage() {
         return next;
       }
       const updated = [...prev];
+      const val = typeof value === 'number' ? Number(value) : value;
       updated[idx] = {
         ...updated[idx],
-        [field]: typeof value === 'number' ? Number(value) : value,
+        [field]: val,
+        ...(field === 'oneWayRatePerKm' ? { localExtraKmRate: Number(val), airportExtraKmRate: Number(val) } : {}),
       };
       // Auto-save so user edits immediately persist across frontend even before clicking Save
       saveFleetFareSettings(updated);

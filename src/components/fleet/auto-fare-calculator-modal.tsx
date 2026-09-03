@@ -623,9 +623,7 @@ export function AutoFareCalculatorModal({
                 <div className="text-center px-2 py-1 rounded-lg">
                   <span className="text-[9px] text-muted-foreground block font-medium">Extra/km</span>
                   <span className="text-xs sm:text-sm font-extrabold text-orange-600 dark:text-orange-400">
-                    ₹{tripType === "airport"
-                      ? (currentFareConfig.airportExtraKmRate || currentFareConfig.localExtraKmRate || currentFareConfig.oneWayRatePerKm || 14)
-                      : (currentFareConfig.localExtraKmRate || currentFareConfig.oneWayRatePerKm || 14)}<span className="text-[9px] font-normal">/km</span>
+                    ₹{currentFareConfig.oneWayRatePerKm}<span className="text-[9px] font-normal">/km</span>
                   </span>
                 </div>
               </div>
@@ -737,7 +735,7 @@ export function AutoFareCalculatorModal({
 
               <div className="text-[11px] text-muted-foreground bg-muted/30 p-2.5 rounded-xl flex flex-wrap items-center justify-between gap-2">
                 <span>
-                  Extra KM: <strong className="text-foreground">₹{currentFareConfig.localExtraKmRate || 18}/km</strong>
+                  Extra KM: <strong className="text-foreground">₹{currentFareConfig.oneWayRatePerKm}/km</strong>
                 </span>
                 <span>
                   Extra Hour: <strong className="text-foreground">₹{currentFareConfig.localExtraHourRate || 200}/hr</strong>
@@ -818,7 +816,7 @@ export function AutoFareCalculatorModal({
 
               <div className="text-[11px] text-muted-foreground bg-muted/30 p-2.5 rounded-xl flex flex-wrap items-center justify-between gap-2">
                 <span>Included: <strong className="text-foreground">3 Hours / 30 KM</strong></span>
-                <span>Extra KM: <strong className="text-foreground">₹{currentFareConfig.airportExtraKmRate || 28}/km</strong></span>
+                <span>Extra KM: <strong className="text-foreground">₹{currentFareConfig.oneWayRatePerKm}/km</strong></span>
                 <span>Extra Hour: <strong className="text-foreground">₹{currentFareConfig.airportExtraHourRate || 200}/hr</strong></span>
                 <span>Tolls & Airport Parking: <strong className="text-foreground">Extra at actuals</strong></span>
               </div>

@@ -149,7 +149,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBasePrice: 899,
     airportBaseHours: 3,
     airportBaseKm: 30,
-    airportExtraKmRate: 24,
+    airportExtraKmRate: 12,
     airportExtraHourRate: 180,
   },
   {
@@ -173,13 +173,13 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     localBasePrice: 2200,
     localBaseHours: 4,
     localBaseKm: 40,
-    localExtraKmRate: 18,
+    localExtraKmRate: 14,
     localExtraHourRate: 200,
     localDriverAllowance: 400,
     airportBasePrice: 1100,
     airportBaseHours: 3,
     airportBaseKm: 30,
-    airportExtraKmRate: 28,
+    airportExtraKmRate: 14,
     airportExtraHourRate: 200,
   },
   {
@@ -209,7 +209,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBasePrice: 1400,
     airportBaseHours: 3,
     airportBaseKm: 30,
-    airportExtraKmRate: 28,
+    airportExtraKmRate: 18,
     airportExtraHourRate: 200,
   },
   {
@@ -233,13 +233,13 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     localBasePrice: 3500,
     localBaseHours: 4,
     localBaseKm: 40,
-    localExtraKmRate: 20,
+    localExtraKmRate: 21,
     localExtraHourRate: 250,
     localDriverAllowance: 400,
     airportBasePrice: 1800,
     airportBaseHours: 3,
     airportBaseKm: 30,
-    airportExtraKmRate: 30,
+    airportExtraKmRate: 21,
     airportExtraHourRate: 250,
   },
   {
@@ -269,7 +269,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBasePrice: 2400,
     airportBaseHours: 3,
     airportBaseKm: 30,
-    airportExtraKmRate: 32,
+    airportExtraKmRate: 24,
     airportExtraHourRate: 300,
   },
   {
@@ -299,7 +299,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBasePrice: 3200,
     airportBaseHours: 3,
     airportBaseKm: 30,
-    airportExtraKmRate: 36,
+    airportExtraKmRate: 28,
     airportExtraHourRate: 350,
   },
   {
@@ -329,7 +329,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBasePrice: 4500,
     airportBaseHours: 3,
     airportBaseKm: 30,
-    airportExtraKmRate: 45,
+    airportExtraKmRate: 38,
     airportExtraHourRate: 500,
   },
   {
@@ -397,10 +397,15 @@ export function getFleetFareSettings(): FleetFareConfig[] {
           matchVehicleToFareConfig(p.fleetId || p.vehicleSlug || p.id, [def]) !== undefined
       );
       if (!found) return def;
+
+      const oneWay = typeof found.oneWayRatePerKm === 'number' && found.oneWayRatePerKm > 0 ? found.oneWayRatePerKm : def.oneWayRatePerKm;
+      // Extra KM rate strictly follows the one-way price per km
+      const extraKm = oneWay;
+
       return {
         ...def,
         ...found,
-        oneWayRatePerKm: typeof found.oneWayRatePerKm === 'number' && found.oneWayRatePerKm > 0 ? found.oneWayRatePerKm : def.oneWayRatePerKm,
+        oneWayRatePerKm: oneWay,
         roundTripRatePerKm: typeof found.roundTripRatePerKm === 'number' && found.roundTripRatePerKm > 0 ? found.roundTripRatePerKm : def.roundTripRatePerKm,
         oneWayMinimumKm: typeof found.oneWayMinimumKm === 'number' && found.oneWayMinimumKm > 0 ? found.oneWayMinimumKm : def.oneWayMinimumKm,
         roundTripMinimumKmPerDay: typeof found.roundTripMinimumKmPerDay === 'number' && found.roundTripMinimumKmPerDay > 0 ? found.roundTripMinimumKmPerDay : def.roundTripMinimumKmPerDay,
@@ -409,13 +414,13 @@ export function getFleetFareSettings(): FleetFareConfig[] {
         localBasePrice: typeof found.localBasePrice === 'number' && found.localBasePrice > 0 ? found.localBasePrice : def.localBasePrice,
         localBaseHours: typeof found.localBaseHours === 'number' ? found.localBaseHours : def.localBaseHours,
         localBaseKm: typeof found.localBaseKm === 'number' ? found.localBaseKm : def.localBaseKm,
-        localExtraKmRate: typeof found.localExtraKmRate === 'number' && found.localExtraKmRate > 0 ? found.localExtraKmRate : def.localExtraKmRate,
+        localExtraKmRate: extraKm,
         localExtraHourRate: typeof found.localExtraHourRate === 'number' ? found.localExtraHourRate : def.localExtraHourRate,
         localDriverAllowance: typeof found.localDriverAllowance === 'number' ? found.localDriverAllowance : def.localDriverAllowance,
         airportBasePrice: typeof found.airportBasePrice === 'number' && found.airportBasePrice > 0 ? found.airportBasePrice : def.airportBasePrice,
         airportBaseHours: typeof found.airportBaseHours === 'number' ? found.airportBaseHours : def.airportBaseHours,
         airportBaseKm: typeof found.airportBaseKm === 'number' ? found.airportBaseKm : def.airportBaseKm,
-        airportExtraKmRate: typeof found.airportExtraKmRate === 'number' && found.airportExtraKmRate > 0 ? found.airportExtraKmRate : def.airportExtraKmRate,
+        airportExtraKmRate: extraKm,
         airportExtraHourRate: typeof found.airportExtraHourRate === 'number' ? found.airportExtraHourRate : def.airportExtraHourRate,
       };
     });
@@ -590,7 +595,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
       effectiveTripDistanceKm: pkgKm,
       minimumBillingKm: pkgKm,
       billableDistanceKm: pkgKm,
-      ratePerKm: config.localExtraKmRate || 18,
+      ratePerKm: config.oneWayRatePerKm || config.localExtraKmRate || 14,
       baseFare,
       driverAllowance,
       tollAmount,
@@ -643,7 +648,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
       effectiveTripDistanceKm: pkgKm,
       minimumBillingKm: pkgKm,
       billableDistanceKm: pkgKm,
-      ratePerKm: config.airportExtraKmRate || 28,
+      ratePerKm: config.oneWayRatePerKm || config.airportExtraKmRate || 14,
       baseFare,
       driverAllowance,
       tollAmount,
