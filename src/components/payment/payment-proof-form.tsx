@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { FileCheck2, Loader2, Paperclip, ShieldCheck, Trash2 } from "lucide-react";
+import { AlertCircle, FileCheck2, Loader2, Paperclip, ShieldCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import {
   savePaymentSubmission,
   screenshotStoragePath,
   todayISO,
+  validateBookingLink,
   type PaymentScreenshotRef,
   type PaymentSubmissionRecord,
 } from "@/content/payment";
@@ -140,12 +141,40 @@ export function PaymentProofForm({
     setFile(selected);
   };
 
-  const onSubmit = async (values: Values) => {
-    if (!file) {
-      setFileError("Please attach your payment screenshot or receipt.");
-      return;
-    }
+  const onError = (errors: Record<string, any>) => {
+    const missingLabels: string[] = [];
+    if (errors.customerName) missingLabels.push("Full Name");
+    if (errors.bookingNumber) missingLabels.push("Booking Number");
+    if (errors.phone) missingLabels.push("Phone Number");
+    if (errors.amount) missingLabels.push("Amount Paid");
+    if (errors.paidOn) missingLabels.push("Payment Date");
+    if (errors.transactionId) missingLabels.push("Transaction / UTR ID");
 
+    toast.error("Please fill in the required fields", {
+      description: `Missing: ${missingLabels.slice(0, 3).join(", ")}${
+        missingLabels.length > 3 ? ` and ${missingLabels.length - 3} more` : ""
+      }.`,
+    });
+
+    const fieldOrder = [
+      "pay-name",
+      "pay-booking",
+      "pay-phone",
+      "pay-amount",
+      "pay-date",
+      "pay-txn",
+    ];
+    for (const id of fieldOrder) {
+      const el = document.getElementById(id);
+      if (el && el.getAttribute("aria-invalid") === "true") {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.focus();
+        break;
+      }
+    }
+  };
+
+  const onSubmit = async (values: Values) => {
     const link = validateBookingLink(values.bookingNumber, values.phone);
     if (link.state === "mismatch") {
       setError("phone", {
@@ -166,13 +195,15 @@ export function PaymentProofForm({
     }
 
     const reference = makePaymentReference();
-    const screenshot: PaymentScreenshotRef = {
-      fileName: file.name,
-      mimeType: file.type,
-      sizeBytes: file.size,
-      storagePath: screenshotStoragePath(reference, file.name),
-      dataUrl: await readAsDataUrl(file),
-    };
+    const screenshot: PaymentScreenshotRef | null = file
+      ? {
+          fileName: file.name,
+          mimeType: file.type,
+          sizeBytes: file.size,
+          storagePath: screenshotStoragePath(reference, file.name),
+          dataUrl: await readAsDataUrl(file),
+        }
+      : null;
 
     const now = new Date().toISOString();
     const base: PaymentSubmissionRecord = {
@@ -201,7 +232,9 @@ export function PaymentProofForm({
 
     const record = { ...base, ...queuePaymentNotifications(base) };
     savePaymentSubmission(record);
-    toast.success("Payment proof submitted — pending verification.");
+    toast.success("Payment proof submitted — pending verification.", {
+      description: `Reference: ${record.reference}. Our accounts team will verify shortly.`,
+    });
     onSubmitted(record);
   };
 
@@ -211,22 +244,19 @@ export function PaymentProofForm({
     <Card className="p-5 sm:p-6">
       <h2 className="text-lg font-bold text-foreground">Submit your payment proof</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        All fields are required unless marked optional. We verify against your booking before
-        anything is marked paid.
+        Fields marked with <span className="text-destructive font-bold">*</span> are required. We verify against your booking before anything is marked paid.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit, () => {
-          if (!file) setFileError("Please attach your payment screenshot or receipt.");
-        })} className="mt-5 space-y-4" noValidate>
+      <form onSubmit={handleSubmit(onSubmit, onError)} className="mt-5 space-y-4" noValidate>
         <div className="grid min-w-0 gap-4 sm:grid-cols-2">
           <div className="min-w-0 space-y-1.5">
-            <Label htmlFor="pay-name">Full name</Label>
+            <Label htmlFor="pay-name">Full name <span className="text-destructive">*</span></Label>
             <Input id="pay-name" autoComplete="name" {...register("customerName")} aria-invalid={!!err.customerName} />
             {err.customerName ? <p className="text-xs text-destructive">{err.customerName.message}</p> : null}
           </div>
 
           <div className="min-w-0 space-y-1.5">
-            <Label htmlFor="pay-booking">Booking number</Label>
+            <Label htmlFor="pay-booking">Booking number <span className="text-destructive">*</span></Label>
             <Input
               id="pay-booking"
               placeholder="SZT-HB-260729-1234"
@@ -237,26 +267,26 @@ export function PaymentProofForm({
           </div>
 
           <div className="min-w-0 space-y-1.5">
-            <Label htmlFor="pay-phone">Phone number on the booking</Label>
+            <Label htmlFor="pay-phone">Phone number on the booking <span className="text-destructive">*</span></Label>
             <Input id="pay-phone" inputMode="tel" autoComplete="tel" {...register("phone")} aria-invalid={!!err.phone} />
             {err.phone ? <p className="text-xs text-destructive">{err.phone.message}</p> : null}
           </div>
 
           <div className="min-w-0 space-y-1.5">
-            <Label htmlFor="pay-amount">Amount paid (₹)</Label>
+            <Label htmlFor="pay-amount">Amount paid (₹) <span className="text-destructive">*</span></Label>
             <Input id="pay-amount" inputMode="decimal" {...register("amount")} aria-invalid={!!err.amount} />
             {err.amount ? <p className="text-xs text-destructive">{err.amount.message}</p> : null}
           </div>
 
           <div className="min-w-0 space-y-1.5">
-            <Label htmlFor="pay-date">Payment date</Label>
+            <Label htmlFor="pay-date">Payment date <span className="text-destructive">*</span></Label>
             <Input id="pay-date" type="date" max={todayISO()} {...register("paidOn")} aria-invalid={!!err.paidOn} />
             {err.paidOn ? <p className="text-xs text-destructive">{err.paidOn.message}</p> : null}
           </div>
 
           <div className="min-w-0 space-y-1.5">
-            <Label htmlFor="pay-txn">Transaction / UTR ID</Label>
-            <Input id="pay-txn" {...register("transactionId")} aria-invalid={!!err.transactionId} />
+            <Label htmlFor="pay-txn">Transaction / UTR ID <span className="text-destructive">*</span></Label>
+            <Input id="pay-txn" placeholder="e.g. 423456789012" {...register("transactionId")} aria-invalid={!!err.transactionId} />
             {err.transactionId ? <p className="text-xs text-destructive">{err.transactionId.message}</p> : null}
           </div>
 
@@ -366,7 +396,24 @@ export function PaymentProofForm({
           </div>
         </div>
 
-        <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
+        {Object.keys(err).length > 0 && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 text-xs text-destructive flex items-start gap-2.5">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-destructive" />
+            <div className="space-y-1">
+              <span className="font-bold block">Please fill in the required fields above to submit:</span>
+              <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                {err.customerName && <li>Full Name: {err.customerName.message}</li>}
+                {err.bookingNumber && <li>Booking Number: {err.bookingNumber.message}</li>}
+                {err.phone && <li>Phone Number: {err.phone.message}</li>}
+                {err.amount && <li>Amount: {err.amount.message}</li>}
+                {err.paidOn && <li>Payment Date: {err.paidOn.message}</li>}
+                {err.transactionId && <li>Transaction / UTR ID: {err.transactionId.message}</li>}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        <Button type="submit" className="w-full h-11 text-xs sm:text-sm font-bold shadow-md" disabled={formState.isSubmitting}>
           {formState.isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />

@@ -12,10 +12,12 @@ export function PackageCard({
   pkg,
   priority = false,
   onEnquire,
+  onBook,
 }: {
   pkg: TourPackageRecord;
   priority?: boolean;
   onEnquire: (pkg: TourPackageRecord) => void;
+  onBook?: (pkg: TourPackageRecord) => void;
 }) {
   const price = formatPackagePrice(pkg);
 
@@ -44,7 +46,9 @@ export function PackageCard({
       </div>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <h3 className="text-base font-bold sm:text-lg">{pkg.title}</h3>
+        <Link to="/tour-packages/$slug" params={{ slug: pkg.slug }} preload="intent">
+          <h3 className="text-base font-bold sm:text-lg hover:text-primary transition-colors">{pkg.title}</h3>
+        </Link>
 
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-foreground/90">
           <li className="inline-flex items-center gap-1.5">
@@ -89,7 +93,7 @@ export function PackageCard({
           <ul className="mt-3 grid gap-1 text-xs text-muted-foreground">
             {pkg.itinerarySummary.slice(0, 3).map((line) => (
               <li key={line} className="line-clamp-1">
-                {line}
+                ✓ {line}
               </li>
             ))}
           </ul>
@@ -97,20 +101,34 @@ export function PackageCard({
 
         <div className="mt-auto pt-4">
           <p className="text-sm">
+            <span className="text-xs text-muted-foreground">Starting from</span>
+            <br />
             <span className="text-lg font-bold text-primary">{price.amount}</span>{" "}
             <span className="text-xs text-muted-foreground">{price.basis}</span>
           </p>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/tour-packages/$slug" params={{ slug: pkg.slug }}>
-                View Details
-              </Link>
+            {/* Book button — opens full booking modal pre-filled with this package's destination */}
+            <Button
+              size="sm"
+              type="button"
+              disabled={pkg.soldOut}
+              className="flex-1 min-w-[6rem] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm transition-transform active:scale-95"
+              onClick={() => onBook ? onBook(pkg) : onEnquire(pkg)}
+            >
+              {pkg.soldOut ? "Sold out" : "Book"}
             </Button>
-            <Button size="sm" type="button" onClick={() => onEnquire(pkg)}>
-              {pkg.soldOut ? "Ask for alternatives" : "Enquire Now"}
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              className="flex-1 min-w-[6rem] font-semibold"
+              onClick={() => onEnquire(pkg)}
+            >
+              Enquire
             </Button>
           </div>
+
           {pkg.soldOut ? (
             <p className="mt-2 text-xs text-muted-foreground">
               This departure is fully booked — we'll suggest the closest available dates.

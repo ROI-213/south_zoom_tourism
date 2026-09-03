@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/accordion";
 import { AppLink } from "@/components/common/app-link";
 import { HotelSearchForm } from "@/components/hotels/hotel-search-form";
-import { HotelCategoryGrid } from "@/components/hotels/hotel-category-grid";
 import { HotelCard } from "@/components/hotels/hotel-card";
 import { RoomCard } from "@/components/hotels/room-card";
 import { HotelResults } from "@/components/hotels/hotel-results";
@@ -240,17 +239,6 @@ function HotelsPage() {
         />
 
         {hasQuery ? <HotelResults results={results} params={params} loading={loading} /> : null}
-
-        {/* Categories ---------------------------------------------- */}
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Browse by stay type</h2>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Nine curated categories, from budget rooms near temples to full group accommodation blocks.
-          </p>
-          <div className="mt-6">
-            <HotelCategoryGrid categories={categories} activeSlug={activeCategory} />
-          </div>
-        </section>
 
         {/* Featured hotels ----------------------------------------- */}
         <section className="bg-muted/40 py-12 sm:py-16">

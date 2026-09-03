@@ -8,10 +8,12 @@ import { AppLink } from "@/components/common/app-link";
 import { EmptyState } from "@/components/home/fleet-section";
 import supabase from "@/lib/supabase";
 import { resolvePackageImage } from "@/lib/image-map";
+import { TourPackageBookingModal } from "@/components/packages/tour-package-booking-modal";
 
 export function PackagesSection() {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string; title: string } | null>(null);
   const [livePackages, setLivePackages] = useState<any[]>([]);
+  const [bookingPackage, setBookingPackage] = useState<any | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -135,8 +137,13 @@ export function PackagesSection() {
                   </div>
 
                   <div className="mt-2.5 flex gap-1.5 pt-1">
-                    <Button asChild size="sm" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
-                      <AppLink href="/contact-us">Book</AppLink>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                      onClick={() => setBookingPackage(p)}
+                    >
+                      Book
                     </Button>
                     <Button asChild size="sm" variant="outline" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
                       <a
@@ -183,6 +190,13 @@ export function PackagesSection() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Tour Package Booking Modal (Exact same flow as Fleet) */}
+        <TourPackageBookingModal
+          open={Boolean(bookingPackage)}
+          onOpenChange={(open) => !open && setBookingPackage(null)}
+          packageItem={bookingPackage}
+        />
 
         <ViewAllMobile meta={featuredPackages.meta} />
       </div>

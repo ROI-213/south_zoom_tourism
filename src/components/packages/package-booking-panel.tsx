@@ -1,16 +1,17 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
+import { CheckCircle2, Loader2, TriangleAlert, CreditCard, QrCode, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { company, waLink } from "@/content/site";
+import { upsertRegistryEntry } from "@/content/customer-data";
 import type { TourPackageRecord } from "@/content/tour-packages";
 import {
   estimatePackageTotal,
@@ -74,7 +75,13 @@ export function PackageBookingPanel({
   /** Keeps ids unique when the panel renders twice (desktop + mobile). */
   idPrefix?: string;
 }) {
+  const navigate = useNavigate();
   const [reference, setReference] = useState<string | null>(null);
+  const [luggageCarrier, setLuggageCarrier] = useState(false);
+  const [petTravelling, setPetTravelling] = useState(false);
+  const [newModel, setNewModel] = useState(false);
+  const [spokenLang, setSpokenLang] = useState("");
+
   const departures = [...detail.departures].sort((a, b) => a.date.localeCompare(b.date));
   const hasDepartures = departures.length > 0;
   const openDepartures = departures.filter((d) => !d.soldOut);
@@ -109,6 +116,16 @@ export function PackageBookingPanel({
     [pkg, adults, children, hotel, vehicle],
   );
 
+  const addOnsTotal =
+    (luggageCarrier ? 250 : 0) +
+    (petTravelling ? 900 : 0) +
+    (spokenLang ? 200 : 0) +
+    (newModel ? 200 : 0);
+
+  const finalTotal = estimate.available ? estimate.total + addOnsTotal : 0;
+  const advanceAmount = Math.round(finalTotal * 0.15);
+  const balanceToDriver = finalTotal - advanceAmount;
+
   const departureSoldOut = Boolean(departure?.soldOut);
   const blocked = pkg.soldOut || departureSoldOut;
   const today = new Date().toISOString().slice(0, 10);
@@ -120,8 +137,73 @@ export function PackageBookingPanel({
     `Travel date: ${travelDate || "to be advised"}`,
     hotel ? `Hotel: ${hotel.hotel} — ${hotel.category}, ${hotel.roomType}, ${hotel.mealPlan}` : null,
     vehicle ? `Vehicle: ${vehicle.category}${vehicle.ac ? " (AC)" : ""}, seats ${vehicle.seating}` : null,
-    estimate.available ? `Estimate: ${formatRupees(estimate.total)} (not confirmed)` : "Estimate: on request",
+    luggageCarrier ? "Luggage carrier: +₹250" : null,
+    petTravelling ? "Pet travelling: +₹900" : null,
+    spokenLang ? `Language: ${spokenLang} (+₹200)` : null,
+    estimate.available ? `Total: ${formatRupees(finalTotal)} (15% Advance: ₹${advanceAmount.toLocaleString("en-IN")})` : "Estimate: on request",
   ].filter(Boolean) as string[];
+
+  const handlePayAdvance = form.handleSubmit(async (values) => {
+    if (blocked) return;
+    const ref = makePackageReference(pkg.slug);
+    const notesSummary = [
+      `Package: ${pkg.title}`,
+      `Hotel: ${hotel?.hotel || "Standard"}`,
+      `Vehicle: ${vehicle?.category || "Standard"}`,
+      luggageCarrier ? "Luggage carrier (+₹250)" : null,
+      petTravelling ? "Pet travelling (+₹900)" : null,
+      spokenLang ? `Language: ${spokenLang} (+₹200)` : null,
+      values.request ? `Request: ${values.request}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    upsertRegistryEntry({
+      reference: ref,
+      kind: "tour-package",
+      createdAt: new Date().toISOString(),
+      ownerPhone: values.phone,
+      ownerEmail: values.email || null,
+      ownerName: values.name,
+      customerId: null,
+      linkedAt: null,
+      statusLabel: "awaiting-review",
+      hasInvoice: false,
+      snapshot: {
+        title: pkg.title,
+        subtitle: `${pkg.nights}N/${pkg.days}D · ${pkg.startingCity}`,
+        travelWindow: `${values.travelDate} from ${values.pickup}`,
+        startDate: values.travelDate,
+        guestsLabel: `${values.adults} Adult(s)`,
+        detailRows: [
+          { label: "Tour Package", value: pkg.title },
+          { label: "Pickup", value: values.pickup },
+          { label: "Total Quoted Fare", value: `₹${finalTotal.toLocaleString("en-IN")}` },
+          { label: "15% Advance Paid", value: `₹${advanceAmount.toLocaleString("en-IN")}` },
+          { label: "Balance to driver", value: `₹${balanceToDriver.toLocaleString("en-IN")}` },
+          { label: "Options", value: notesSummary },
+        ],
+        total: finalTotal,
+        productHref: `/tour-packages/${pkg.slug}`,
+      },
+    });
+
+    navigate({
+      to: "/qr-payment",
+      search: {
+        booking: ref,
+        amount: String(advanceAmount),
+        total: String(finalTotal),
+        balance: String(balanceToDriver),
+        name: values.name,
+        phone: values.phone,
+      },
+    });
+
+    toast.success("Proceeding to 15% Advance Payment", {
+      description: `Paying ₹${advanceAmount.toLocaleString("en-IN")} advance for ${pkg.title}.`,
+    });
+  });
 
   const onSubmit = async (values: BookingValues) => {
     if (blocked) return;
@@ -321,11 +403,88 @@ export function PackageBookingPanel({
 
         <div className="grid min-w-0 gap-1.5">
           <Label htmlFor={fid("request")}>Special requests (optional)</Label>
-          <Textarea id={fid("request")} rows={3} {...form.register("request")} />
+          <Textarea id={fid("request")} rows={2} {...form.register("request")} />
           {form.formState.errors.request ? (
             <p className="text-xs text-destructive">{form.formState.errors.request.message}</p>
           ) : null}
         </div>
+
+        {/* Special Request Add-ons Section (Requested by User) */}
+        <div className="rounded-xl border border-border bg-card p-3 space-y-2.5 text-xs">
+          <div className="flex items-center justify-between border-b border-border/60 pb-1.5">
+            <span className="font-bold text-foreground flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" /> Choosing / Selection Add-ons
+            </span>
+            <span className="text-[11px] font-bold text-primary">
+              +₹{addOnsTotal}
+            </span>
+          </div>
+
+          <div className="grid gap-2">
+            <label className="flex items-center gap-2 cursor-pointer select-none rounded-lg border border-border/60 p-2 hover:bg-muted/30">
+              <input
+                type="checkbox"
+                checked={luggageCarrier}
+                onChange={(e) => setLuggageCarrier(e.target.checked)}
+                className="h-4 w-4 rounded accent-primary cursor-pointer"
+              />
+              <div>
+                <span className="font-semibold block">Luggage carrier required</span>
+                <span className="text-[10px] text-muted-foreground">+₹250/- (Safe roof-top luggage carrier)</span>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none rounded-lg border border-border/60 p-2 hover:bg-muted/30">
+              <input
+                type="checkbox"
+                checked={petTravelling}
+                onChange={(e) => setPetTravelling(e.target.checked)}
+                className="h-4 w-4 rounded accent-primary cursor-pointer"
+              />
+              <div>
+                <span className="font-semibold block">Pet travelling</span>
+                <span className="text-[10px] text-muted-foreground">+₹900/- (Pet friendly vehicle cleaning)</span>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none rounded-lg border border-border/60 p-2 hover:bg-muted/30">
+              <input
+                type="checkbox"
+                checked={newModel}
+                onChange={(e) => setNewModel(e.target.checked)}
+                className="h-4 w-4 rounded accent-primary cursor-pointer"
+              />
+              <div>
+                <span className="font-semibold block">2023+ Model Vehicle</span>
+                <span className="text-[10px] text-muted-foreground">+₹200/- (Latest model guarantee)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* 15% Advance Payment Box */}
+        {estimate.available && (
+          <div className="rounded-xl border border-primary/40 bg-primary/5 p-3 space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-primary flex items-center gap-1.5">
+                <CreditCard className="h-4 w-4" /> 15% Advance Booking Option
+              </span>
+              <Badge className="bg-primary text-primary-foreground text-[10px]">
+                Pay 15% to Block
+              </Badge>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-card p-2 rounded-lg border border-border">
+                <span className="text-[10px] text-muted-foreground block">15% Advance:</span>
+                <span className="font-bold text-primary text-sm">₹{advanceAmount.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="bg-card p-2 rounded-lg border border-border">
+                <span className="text-[10px] text-muted-foreground block">Balance (On Trip):</span>
+                <span className="font-bold text-foreground text-sm">₹{balanceToDriver.toLocaleString("en-IN")}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
           <p className="font-medium text-foreground">Selections sent with this request</p>
@@ -336,7 +495,19 @@ export function PackageBookingPanel({
           </ul>
         </div>
 
-        <Button type="submit" disabled={form.formState.isSubmitting || blocked}>
+        {estimate.available && (
+          <Button
+            type="button"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-md gap-2 h-11"
+            disabled={form.formState.isSubmitting || blocked}
+            onClick={handlePayAdvance}
+          >
+            <QrCode className="h-4 w-4" />
+            Pay 15% Advance (₹{advanceAmount.toLocaleString("en-IN")}) Online
+          </Button>
+        )}
+
+        <Button type="submit" variant="outline" disabled={form.formState.isSubmitting || blocked}>
           {form.formState.isSubmitting ? (
             <>
               <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Sending
@@ -344,7 +515,7 @@ export function PackageBookingPanel({
           ) : blocked ? (
             "Booking closed for this departure"
           ) : (
-            "Request this package"
+            "Request this package (Pay Later)"
           )}
         </Button>
 

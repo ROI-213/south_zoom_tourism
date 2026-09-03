@@ -17,10 +17,10 @@ import serviceLocalTaxi from "@/assets/service-local-taxi.png";
 import serviceOutstation from "@/assets/service-outstation.png";
 import serviceAirport from "@/assets/service-airport.png";
 import serviceCorporate from "@/assets/service-corporate-new.png";
-import serviceGroup from "@/assets/service-group.png";
-import servicePilgrimage from "@/assets/service-pilgrimage-new.png";
-import serviceWedding from "@/assets/service-wedding-new.png";
-import heroHotels from "@/assets/hero-hotels.jpg";
+import serviceGroup from "@/assets/service-group-new.jpg";
+import serviceWedding from "@/assets/service-wedding-vip.jpg";
+import serviceHotels from "@/assets/service-hotel-stays.jpg";
+import heroHotels from "@/assets/service-hotel-stays.jpg";
 import pkgOoty from "@/assets/pkg-ooty.png";
 import destBengaluru from "@/assets/destinations/dest-bengaluru-new.jpg";
 import team1 from "@/assets/team-1.jpg";
@@ -59,20 +59,54 @@ export const setDynamicServices = (items: Service[]) => {
 };
 
 export function mapDbServiceToRecord(row: any, index: number = 0): Service {
-  const existing = services.find((s) => s.slug === row.slug || s.title.toLowerCase() === (row.name || '').toLowerCase());
+  const rowSlug = (row.slug || '').toLowerCase();
+  const rowName = (row.name || '').toLowerCase();
+
+  const existing = services.find((s) => {
+    const sSlug = s.slug.toLowerCase();
+    const sTitle = s.title.toLowerCase();
+    return (
+      sSlug === rowSlug ||
+      sTitle === rowName ||
+      (rowSlug.includes('wedding') && sSlug.includes('wedding')) ||
+      (rowSlug.includes('hotel') && sSlug.includes('hotel')) ||
+      (rowSlug.includes('outstation') && sSlug.includes('outstation')) ||
+      (rowSlug.includes('airport') && sSlug.includes('airport')) ||
+      (rowSlug.includes('corporate') && sSlug.includes('corporate')) ||
+      (rowSlug.includes('group') && sSlug.includes('group')) ||
+      (rowSlug.includes('pilgrim') && sSlug.includes('pilgrim')) ||
+      (rowSlug.includes('local') && sSlug.includes('local'))
+    );
+  });
+
+  const isWedding = rowSlug.includes('wedding') || rowName.includes('wedding');
+  const isHotel = rowSlug.includes('hotel') || rowName.includes('hotel') || rowSlug.includes('stay');
+
+  const defaultImage = isWedding
+    ? serviceWedding
+    : isHotel
+    ? serviceHotels
+    : existing?.image || services[index % services.length]?.image;
+
+  const defaultPrice = isWedding
+    ? '₹4,200 / day'
+    : isHotel
+    ? '₹1,800 / night'
+    : existing?.priceFrom || '₹14 / km';
+
   return {
     id: row.id || existing?.id || `srv-${index}`,
     slug: row.slug || existing?.slug || (row.name || '').toLowerCase().replace(/\s+/g, '-'),
-    categorySlug: existing?.categorySlug || 'cabs',
+    categorySlug: isHotel ? 'stays' : isWedding ? 'business' : existing?.categorySlug || 'cabs',
     title: row.name || existing?.title || '',
-    icon: row.icon || existing?.icon || 'Car',
+    icon: isHotel ? 'BedDouble' : isWedding ? 'HeartHandshake' : row.icon || existing?.icon || 'Car',
     shortDescription: row.short_description || existing?.shortDescription || '',
     detailDescription: row.full_description || existing?.detailDescription || row.short_description || '',
-    image: row.main_image || existing?.image || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
+    image: row.main_image || defaultImage,
     imageAlt: row.name || existing?.imageAlt || '',
-    features: existing?.features || ['Verified Chauffeurs', 'Transparent Pricing', '24x7 Support'],
-    benefits: existing?.benefits || ['No surge pricing', 'Clean vehicles', 'GST Invoices'],
-    priceFrom: existing?.priceFrom || 'From ₹14 / km',
+    features: existing?.features || (isHotel ? ['Inspected Partner Resorts', 'Budget to 5-Star Stays', 'Verified Cleanliness'] : isWedding ? ['Decorated Bridal Cars', 'Mercedes, BMW & Audi', 'Uniformed Chauffeurs'] : ['Verified Chauffeurs', 'Transparent Pricing', '24x7 Support']),
+    benefits: existing?.benefits || (isHotel ? ['Negotiated Partner Rates', 'Free Cancellation Options', 'Instant Confirmation'] : isWedding ? ['Uniformed Chauffeurs', 'Punctual VIP Arrivals', 'Full Day Wedding Hire'] : ['No surge pricing', 'Clean vehicles', 'GST Invoices']),
+    priceFrom: defaultPrice,
     showPricing: true,
     order: row.display_order || existing?.order || index + 1,
     published: row.active !== false,
@@ -104,7 +138,7 @@ export const services: Service[] = [
     imageAlt: "White sedan local city taxi with verified chauffeur",
     features: ["4h / 8h / 12h packages", "Hatchback to SUV", "Waiting time included"],
     benefits: ["No surge pricing", "Same driver all day", "Pay after the trip"],
-    priceFrom: "₹1,400 / 4 hrs",
+    priceFrom: "₹1,800 / 4 hrs",
     showPricing: true,
     order: 1,
     published: true,
@@ -119,12 +153,12 @@ export const services: Service[] = [
     shortDescription:
       "One-way drops and round trips anywhere in South India on a transparent per-kilometre rate.",
     detailDescription:
-      "Round trips bill a 250 km daily minimum; one-way drops bill only the distance you travel. Tolls, permits and driver bata are itemised in the quote before you confirm, so the final invoice matches the estimate.",
+      "Round trips bill a 300 km daily minimum; one-way drops bill only the distance you travel with a 150 km minimum. Tolls, permits and driver bata are itemised in the quote before you confirm, so the final invoice matches the estimate.",
     image: serviceOutstation,
     imageAlt: "Outstation journey across scenic South India highway routes",
     features: ["One-way and round trip", "Per-km published rates", "Multi-day itineraries"],
     benefits: ["Tolls and permits itemised", "Night driving allowance shown upfront", "Route-experienced drivers"],
-    priceFrom: "₹14 / km",
+    priceFrom: "₹12 / km",
     showPricing: true,
     order: 2,
     published: true,
@@ -144,7 +178,7 @@ export const services: Service[] = [
     imageAlt: "Airport transfer taxi pickup outside modern international terminal",
     features: ["Flight tracking", "60 min free waiting", "Meet and greet option"],
     benefits: ["Fixed fare, no meter", "24×7 including red-eye flights", "Luggage-sized vehicles"],
-    priceFrom: "₹899 per transfer",
+    priceFrom: "₹950 per transfer",
     showPricing: true,
     order: 3,
     published: true,
@@ -164,7 +198,8 @@ export const services: Service[] = [
     imageAlt: "Toyota Innova Crysta executive MPV used for corporate and employee transport",
     features: ["Monthly consolidated billing", "GST invoices", "Dedicated account manager"],
     benefits: ["Verified chauffeurs", "Duty slips and trip reports", "Locked contract rates"],
-    showPricing: false,
+    priceFrom: "₹14 / km",
+    showPricing: true,
     order: 4,
     published: true,
     featured: true,
@@ -203,7 +238,8 @@ export const services: Service[] = [
     imageAlt: "Pilgrims walking towards a South Indian temple gopuram at sunrise",
     features: ["Darshan-aware itineraries", "Temple-adjacent stays", "Local guide assistance"],
     benefits: ["Elder-friendly pacing", "Early morning departures", "Vegetarian meal stops"],
-    showPricing: false,
+    priceFrom: "₹14 / km",
+    showPricing: true,
     order: 6,
     published: true,
     featured: true,
@@ -222,7 +258,8 @@ export const services: Service[] = [
     imageAlt: "White wedding car decorated with marigold garlands outside a function hall",
     features: ["Decorated bridal car", "Guest shuttle loops", "On-site coordinator"],
     benefits: ["Standby vehicles", "Multi-day single invoice", "Uniformed drivers"],
-    showPricing: false,
+    priceFrom: "₹4,200 / day",
+    showPricing: true,
     order: 7,
     published: true,
     featured: false,
@@ -261,7 +298,8 @@ export const services: Service[] = [
     imageAlt: "Customized holiday tour planning in scenic South India destinations",
     features: ["Day-by-day itinerary", "Unlimited revisions", "Itemised quote"],
     benefits: ["Built around your budget", "Realistic drive times", "Quote valid 7 days"],
-    showPricing: false,
+    priceFrom: "₹14 / km",
+    showPricing: true,
     order: 9,
     published: true,
     featured: false,

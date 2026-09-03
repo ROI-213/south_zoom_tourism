@@ -59,6 +59,7 @@ export function Navbar() {
             <Link
               key={item.to}
               to={item.to}
+              preload="intent"
               activeOptions={{ exact: item.to === "/" }}
               activeProps={{
                 className: "text-primary font-bold after:opacity-100 after:scale-x-100",
@@ -126,6 +127,7 @@ export function Navbar() {
                   <Link
                     key={item.to}
                     to={item.to}
+                    preload="intent"
                     onClick={() => setOpen(false)}
                     activeOptions={{ exact: item.to === "/" }}
                     activeProps={{

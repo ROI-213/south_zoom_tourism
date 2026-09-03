@@ -1,6 +1,7 @@
 import heroFleet from '@/assets/hero-fleet.jpg';
 import heroTours from '@/assets/hero-tours.jpg';
 import heroHotels from '@/assets/hero-hotels.jpg';
+import heroAirport from '@/assets/hero-airport.jpg';
 import aboutBanner from '@/assets/about-banner.jpg';
 import servicesBanner from '@/assets/services-banner.jpg';
 
@@ -41,15 +42,36 @@ export const originalHeroPresets = [
   { label: 'Original Services Banner', value: servicesBanner, filename: 'services-banner.jpg' },
 ];
 
-export function resolveHeroImage(src?: string): string {
+export function resolveHeroImage(src?: string, heading?: string): string {
+  const h = (heading || '').toLowerCase();
+  const s = (src || '').toLowerCase();
+
+  // If the slide is about Airport transfers -> use Kempegowda Airport white cab image
+  if (h.includes('airport') || h.includes('transfer') || h.includes('flight track') || s.includes('airport')) {
+    return heroAirport;
+  }
+  // If the slide is about Car rentals / Cabs / Fleet -> use the new Bengaluru Vidhana Soudha white fleet image
+  if (h.includes('car') || h.includes('cab') || h.includes('rental') || h.includes('fleet') || s.includes('fleet') || s.includes('car')) {
+    return heroFleet;
+  }
+  // If the slide is about Tour packages -> use Karnataka Western Ghats & Mysore white cab image
+  if (h.includes('tour') || h.includes('package') || s.includes('tour') || s.includes('package')) {
+    return heroTours;
+  }
+  // If the slide is about Hotels -> use Karnataka luxury resort with white sedan image
+  if (h.includes('hotel') || h.includes('resort') || h.includes('stay') || s.includes('hotel')) {
+    return heroHotels;
+  }
+
   if (!src) return heroFleet;
   if (src.startsWith('data:')) return src;
+  if (src.includes('hero-airport')) return heroAirport;
   if (src.includes('hero-fleet')) return heroFleet;
   if (src.includes('hero-tours')) return heroTours;
   if (src.includes('hero-hotels')) return heroHotels;
   if (src.includes('about-banner')) return aboutBanner;
   if (src.includes('services-banner')) return servicesBanner;
-  return src;
+  return heroFleet;
 }
 
 /**

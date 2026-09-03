@@ -25,7 +25,6 @@ const navGroups: NavGroup[] = [
       { label: 'Enquiries', path: '/admin/operations/enquiries', icon: MessageSquare },
       { label: 'Customers', path: '/admin/operations/customers', icon: Users },
       { label: 'Drivers', path: '/admin/operations/drivers', icon: UserCheck },
-      { label: 'Vehicles', path: '/admin/operations/vehicles', icon: Car },
       { label: 'Routes', path: '/admin/operations/routes', icon: MapPin },
       { label: 'Payments', path: '/admin/operations/payments', icon: CreditCard },
     ],
@@ -89,8 +88,9 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   const Icon = item.icon;
 
   return (
-    <a
-      href={item.path}
+    <Link
+      to={item.path as any}
+      preload="intent"
       onClick={onClick}
       className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
         isActive
@@ -103,7 +103,7 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
       {item.badge && (
         <Badge className="ml-auto bg-orange-100 text-orange-700 text-xs px-1.5 py-0">{item.badge}</Badge>
       )}
-    </a>
+    </Link>
   );
 }
 

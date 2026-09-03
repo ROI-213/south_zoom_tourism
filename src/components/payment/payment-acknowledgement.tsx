@@ -1,9 +1,16 @@
-import { Clock, Download, MessageCircle, Phone } from "lucide-react";
+import { useState } from "react";
+import { Clock, Download, Loader2, MessageCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { downloadPdf } from "@/lib/simple-pdf";
-import { acknowledgementFileName, buildAcknowledgementLines } from "@/content/payment-documents";
+import { downloadPdf, logoToJpegDataUrl } from "@/lib/simple-pdf";
+import sztLogo from "@/assets/szt-logo.png";
+import {
+  acknowledgementFileName,
+  buildAcknowledgementLines,
+  resolveBookingBalance,
+  standardPaymentTerms,
+} from "@/content/payment-documents";
 import {
   formatPaidOn,
   inr,
@@ -27,16 +34,42 @@ export function PaymentAcknowledgement({
   record: PaymentSubmissionRecord;
   onSubmitAnother: () => void;
 }) {
+  const [downloading, setDownloading] = useState(false);
   const status = paymentStatusMeta[record.status];
+  const balanceInfo = resolveBookingBalance(record);
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const logoData = await logoToJpegDataUrl(sztLogo || "/szt-logo.png", 220);
+      downloadPdf(
+        buildAcknowledgementLines(record),
+        acknowledgementFileName(record),
+        `Payment acknowledgement ${record.reference}`,
+        logoData,
+      );
+    } catch {
+      downloadPdf(
+        buildAcknowledgementLines(record),
+        acknowledgementFileName(record),
+        `Payment acknowledgement ${record.reference}`,
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <Card className="p-5 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Payment proof received</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Keep this reference for any follow-up.
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
+        <div className="flex items-center gap-3">
+          <img src={sztLogo} alt="South Zoom Tourism" className="h-10 w-auto object-contain rounded-md" />
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Payment proof received</h2>
+            <p className="text-xs text-muted-foreground">
+              Keep this reference for any follow-up.
+            </p>
+          </div>
         </div>
         <Badge variant="outline" className={toneClass[status.tone]}>
           {status.label}
@@ -53,9 +86,28 @@ export function PaymentAcknowledgement({
           <dd className="font-mono text-sm font-semibold text-foreground">{record.bookingNumber}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Amount declared</dt>
-          <dd className="text-sm font-semibold text-foreground">{inr(record.amount)}</dd>
+          <dt className="text-xs uppercase tracking-wide text-muted-foreground">Amount declared (Paid)</dt>
+          <dd className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{inr(record.amount)}</dd>
         </div>
+        {balanceInfo.totalFare != null && (
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Total booking fare</dt>
+            <dd className="text-sm font-bold text-foreground">{inr(balanceInfo.totalFare)}</dd>
+          </div>
+        )}
+        {balanceInfo.pendingBalance != null && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 sm:col-span-2">
+            <dt className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+              Pending balance amount (Pay to driver / hotel)
+            </dt>
+            <dd className="text-lg font-extrabold text-amber-800 dark:text-amber-200 mt-0.5 flex flex-wrap items-center gap-2">
+              <span>{inr(balanceInfo.pendingBalance)}</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                (Remaining balance to be paid directly during your journey)
+              </span>
+            </dd>
+          </div>
+        )}
         <div>
           <dt className="text-xs uppercase tracking-wide text-muted-foreground">Paid on</dt>
           <dd className="text-sm font-semibold text-foreground">{formatPaidOn(record.paidOn)}</dd>
@@ -81,19 +133,38 @@ export function PaymentAcknowledgement({
         </p>
       </div>
 
+      <details className="mt-4 rounded-lg border border-border/80 bg-muted/30 p-3 text-xs text-muted-foreground group">
+        <summary className="cursor-pointer font-semibold text-foreground flex items-center justify-between list-none select-none">
+          <span className="flex items-center gap-2">
+            <span>📋</span>
+            <span>Terms & Conditions for Booking & Payments</span>
+          </span>
+          <span className="text-[11px] text-primary font-medium group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <ul className="mt-2.5 list-decimal list-inside space-y-1 text-[11px] leading-relaxed border-t border-border/60 pt-2 text-foreground/85">
+          {standardPaymentTerms.map((term, i) => (
+            <li key={i}>{term}</li>
+          ))}
+        </ul>
+      </details>
+
       <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Button
           type="button"
-          onClick={() =>
-            downloadPdf(
-              buildAcknowledgementLines(record),
-              acknowledgementFileName(record),
-              `Payment acknowledgement ${record.reference}`,
-            )
-          }
+          disabled={downloading}
+          onClick={handleDownload}
         >
-          <Download className="mr-2 h-4 w-4" aria-hidden="true" />
-          Download acknowledgement
+          {downloading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              Generating PDF…
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+              Download acknowledgement
+            </>
+          )}
         </Button>
         <Button asChild variant="outline">
           <a href={waLink(paymentWhatsAppMessage(record))} target="_blank" rel="noreferrer">

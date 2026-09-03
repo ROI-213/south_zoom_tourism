@@ -65,6 +65,7 @@ import {
   getFleetFareSettings,
   saveFleetFareSettings,
   resetFleetFareSettings,
+  matchVehicleToFareConfig,
   type FleetFareConfig,
 } from '@/content/fleet-pricing';
 import {
@@ -287,14 +288,29 @@ function FleetProductPage() {
           stateTaxMode: 'extra',
           isActive: true,
           displayOrder: v.order || 99,
+          localBasePrice: 2200,
+          localBaseHours: 4,
+          localBaseKm: 40,
+          localExtraKmRate: 18,
+          localExtraHourRate: 200,
+          localDriverAllowance: 400,
+          airportBasePrice: 1100,
+          airportBaseHours: 3,
+          airportBaseKm: 30,
+          airportExtraKmRate: 28,
+          airportExtraHourRate: 200,
         };
-        return [...prev, newEntry];
+        const next = [...prev, newEntry];
+        saveFleetFareSettings(next);
+        return next;
       }
       const updated = [...prev];
       updated[idx] = {
         ...updated[idx],
         [field]: typeof value === 'number' ? Number(value) : value,
       };
+      // Auto-save so user edits immediately persist across frontend even before clicking Save
+      saveFleetFareSettings(updated);
       return updated;
     });
   }
@@ -303,9 +319,25 @@ function FleetProductPage() {
     setIsSavingPrices(true);
     try {
       saveFleetFareSettings(fareSettings);
+
+      // Also synchronize vehicle pricePerKm & priceFromLabel in fleet vehicles list
+      const vehicles = getFleetVehicles();
+      const updatedVehicles = vehicles.map((v) => {
+        const match = matchVehicleToFareConfig(v.slug || v.id || v.name, fareSettings);
+        if (match && match.oneWayRatePerKm) {
+          return {
+            ...v,
+            pricePerKm: match.oneWayRatePerKm,
+            priceFromLabel: `₹${match.oneWayRatePerKm} / km`,
+          };
+        }
+        return v;
+      });
+      saveFleetVehicles(updatedVehicles);
+
       loadFleetAndPrices();
       toast.success('All Fleet Prices Saved Successfully!', {
-        description: 'One-way and round-trip rates updated across frontend fleet cards & fare calculator.',
+        description: 'Rates immediately updated across all frontend cards, calculator & booking forms.',
       });
     } catch (err) {
       toast.error('Failed to save fleet prices');
@@ -460,6 +492,25 @@ function FleetProductPage() {
         priceFromLabel: priceLabel,
         features,
       });
+
+      // Also sync to fareSettings so All Fleet Pricing tab stays identical
+      setFareSettings((prev) => {
+        const matched = matchVehicleToFareConfig(form.slug || editId || form.name, prev);
+        const idx = matched ? prev.findIndex((f) => f.id === matched.id) : -1;
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = {
+            ...updated[idx],
+            oneWayRatePerKm: form.pricePerKm,
+            vehicleName: form.name,
+            category: form.categorySlug,
+          };
+          saveFleetFareSettings(updated);
+          return updated;
+        }
+        return prev;
+      });
+
       toast.success('Vehicle updated successfully');
     } else {
       const id = `fv-${Date.now()}`;
@@ -475,7 +526,7 @@ function FleetProductPage() {
       toast.success('Vehicle added successfully');
     }
     setDialogOpen(false);
-    loadFleet();
+    loadFleetAndPrices();
   }
 
   function handleDelete(id: string) {
@@ -890,7 +941,10 @@ function FleetProductPage() {
                         <th className="text-left px-3 py-3.5 min-w-[110px]">One Way Min KM</th>
                         <th className="text-left px-3 py-3.5 min-w-[120px]">Round Min KM/Day</th>
                         <th className="text-left px-3 py-3.5 min-w-[120px]">Driver Bata (₹/Day)</th>
-                        <th className="text-center px-3 py-3.5 min-w-[90px]">Active</th>
+                        <th className="text-left px-3 py-3.5 min-w-[130px] bg-amber-50/70 text-amber-900 border-l border-amber-200">Local Base (4h/40k)</th>
+                        <th className="text-left px-3 py-3.5 min-w-[110px] bg-amber-50/70 text-amber-900">Local Ex KM</th>
+                        <th className="text-left px-3 py-3.5 min-w-[130px] bg-blue-50/70 text-blue-900 border-l border-blue-200">Airport Base (3h/30k)</th>
+                        <th className="text-center px-3 py-3.5 min-w-[80px]">Active</th>
                         <th className="text-left px-4 py-3.5 hidden xl:table-cell">Minimum Estimated Tariff</th>
                       </tr>
                     </thead>
@@ -1010,6 +1064,55 @@ function FleetProductPage() {
                                     handleFareRateChange(fleet.fleetId, 'oneWayDriverAllowance', val);
                                   }}
                                   className="h-9 pl-6 pr-2 text-xs font-semibold text-gray-800 w-full"
+                                />
+                              </div>
+                            </td>
+
+                            {/* Local Base Price */}
+                            <td className="px-3 py-3.5 bg-amber-50/30 border-l border-amber-200">
+                              <div className="relative flex items-center">
+                                <span className="absolute left-2.5 text-xs font-bold text-amber-700">₹</span>
+                                <Input
+                                  type="number"
+                                  min={100}
+                                  value={fleet.localBasePrice ?? 2200}
+                                  onChange={(e) =>
+                                    handleFareRateChange(fleet.fleetId, 'localBasePrice', Number(e.target.value))
+                                  }
+                                  className="h-9 pl-6 pr-2 text-xs font-extrabold text-amber-800 border-amber-300 focus-visible:ring-amber-200 w-full"
+                                />
+                              </div>
+                            </td>
+
+                            {/* Local Extra KM Rate */}
+                            <td className="px-3 py-3.5 bg-amber-50/30">
+                              <div className="relative flex items-center">
+                                <span className="absolute left-2.5 text-xs font-bold text-amber-700">₹</span>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  value={fleet.localExtraKmRate ?? 18}
+                                  onChange={(e) =>
+                                    handleFareRateChange(fleet.fleetId, 'localExtraKmRate', Number(e.target.value))
+                                  }
+                                  className="h-9 pl-6 pr-7 text-xs font-semibold text-gray-800 w-full"
+                                />
+                                <span className="absolute right-2 text-[10px] text-gray-400">/km</span>
+                              </div>
+                            </td>
+
+                            {/* Airport Base Price */}
+                            <td className="px-3 py-3.5 bg-blue-50/30 border-l border-blue-200">
+                              <div className="relative flex items-center">
+                                <span className="absolute left-2.5 text-xs font-bold text-blue-700">₹</span>
+                                <Input
+                                  type="number"
+                                  min={100}
+                                  value={fleet.airportBasePrice ?? 1100}
+                                  onChange={(e) =>
+                                    handleFareRateChange(fleet.fleetId, 'airportBasePrice', Number(e.target.value))
+                                  }
+                                  className="h-9 pl-6 pr-2 text-xs font-extrabold text-blue-800 border-blue-300 focus-visible:ring-blue-200 w-full"
                                 />
                               </div>
                             </td>

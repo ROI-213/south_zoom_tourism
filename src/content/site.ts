@@ -10,6 +10,7 @@
 import heroFleet from "@/assets/hero-fleet.jpg";
 import heroTours from "@/assets/hero-tours.jpg";
 import heroHotels from "@/assets/hero-hotels.jpg";
+import heroAirport from "@/assets/hero-airport.jpg";
 import serviceGroup from "@/assets/service-group.png";
 import carDzire from "@/assets/car-dzire.png";
 import carInnova from "@/assets/car-innova.png";
@@ -173,14 +174,14 @@ export const heroSlides: HeroSlide[] = [
     order: 4,
     visible: true,
     badge: "Flight tracking included",
-    heading: "Airport transfers, always on time",
+    heading: "Punctual airport transfers with flight tracking",
     description:
-      "Fixed-fare pickups and drops for every South Indian airport, with 60 minutes of complimentary waiting.",
-    imageDesktop: heroFleet,
-    imageMobile: heroFleet,
-    alt: "Airport transfer car ready for pickup on a highway",
-    primaryCta: { label: "Book Transfer", href: "/fleet", variant: "primary" },
-    secondaryCta: { label: "Get a Quote", href: "/contact-us", variant: "secondary" },
+      "Fixed-fare pickups and drops for BLR, MAA, CJB and COK airports with 60 minutes complimentary waiting and terminal meet-and-greet.",
+    imageDesktop: heroAirport,
+    imageMobile: heroAirport,
+    alt: "White Toyota Innova and Maruti Dzire cabs lined up at Kempegowda International Airport Bengaluru with a professional chauffeur holding nameplate",
+    primaryCta: { label: "Book Airport Cab", href: "/fleet", variant: "primary" },
+    secondaryCta: { label: "Talk to a Planner", href: "/contact-us", variant: "secondary" },
   },
   {
     id: "corporate",

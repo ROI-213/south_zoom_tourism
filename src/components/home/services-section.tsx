@@ -8,10 +8,10 @@ import serviceLocalTaxi from "@/assets/service-local-taxi.png";
 import serviceOutstation from "@/assets/service-outstation.png";
 import serviceAirport from "@/assets/service-airport.png";
 import serviceCorporateNew from "@/assets/service-corporate-new.png";
-import serviceGroup from "@/assets/service-group.png";
+import serviceGroup from "@/assets/service-group-new.jpg";
 import servicePilgrimageNew from "@/assets/service-pilgrimage-new.png";
-import serviceWeddingNew from "@/assets/service-wedding-new.png";
-import heroHotels from "@/assets/hero-hotels.jpg";
+import serviceWeddingVip from "@/assets/service-wedding-vip.jpg";
+import serviceHotelStays from "@/assets/service-hotel-stays.jpg";
 import heroFleet from "@/assets/hero-fleet.jpg";
 import pkgOoty from "@/assets/pkg-ooty.png";
 import tourCoorg from "@/assets/tour-coorg.png";
@@ -25,9 +25,9 @@ const serviceImages: Record<string, { image: string; tag?: string }> = {
   "corporate": { image: serviceCorporateNew, tag: "GST Invoices" },
   "group": { image: serviceGroup, tag: "12 to 50 Seats" },
   "packages": { image: pkgOoty, tag: "Curated Stays" },
-  "hotels": { image: heroHotels, tag: "From ₹1,800 / night" },
+  "hotels": { image: serviceHotelStays, tag: "From ₹1,800 / night" },
   "pilgrimage": { image: servicePilgrimageNew, tag: "Temple Circuits" },
-  "wedding": { image: serviceWeddingNew, tag: "Event Fleets" },
+  "wedding": { image: serviceWeddingVip, tag: "VIP & Wedding Cars" },
   "custom": { image: tourCoorg, tag: "Tailored Quote" },
 };
 

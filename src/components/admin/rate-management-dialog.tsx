@@ -80,6 +80,40 @@ export function AdminRateManagementDialog({
             </div>
           </div>
 
+          {/* Airport Transfer Rates */}
+          <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+            <h4 className="font-bold text-sm text-primary">Airport Transfer Rates</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="font-semibold block mb-1">Base Price (3h / 30km) (₹)</label>
+                <input
+                  type="number"
+                  value={config.airport?.basePrice ?? 1100}
+                  onChange={(e) => setConfig({ ...config, airport: { ...(config.airport || {}), basePrice: Number(e.target.value), baseHours: 3, baseKm: 30, tollPolicy: "Extra at actuals", parkingPolicy: "Extra at actuals", extraKmRate: config.airport?.extraKmRate ?? 28, extraHourRate: config.airport?.extraHourRate ?? 200 } })}
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs"
+                />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Extra KM Rate (₹)</label>
+                <input
+                  type="number"
+                  value={config.airport?.extraKmRate ?? 28}
+                  onChange={(e) => setConfig({ ...config, airport: { ...(config.airport || {}), extraKmRate: Number(e.target.value), basePrice: config.airport?.basePrice ?? 1100, baseHours: 3, baseKm: 30, tollPolicy: "Extra at actuals", parkingPolicy: "Extra at actuals", extraHourRate: config.airport?.extraHourRate ?? 200 } })}
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs"
+                />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1">Extra Hour Rate (₹)</label>
+                <input
+                  type="number"
+                  value={config.airport?.extraHourRate ?? 200}
+                  onChange={(e) => setConfig({ ...config, airport: { ...(config.airport || {}), extraHourRate: Number(e.target.value), basePrice: config.airport?.basePrice ?? 1100, baseHours: 3, baseKm: 30, tollPolicy: "Extra at actuals", parkingPolicy: "Extra at actuals", extraKmRate: config.airport?.extraKmRate ?? 28 } })}
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Outstation One-Way */}
           <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
             <h4 className="font-bold text-sm text-primary">Outstation One-Way Rates</h4>

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -182,9 +182,9 @@ function AdminDashboard() {
       <Card>
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base font-semibold">Recent Bookings</CardTitle>
-          <a href="/admin/operations/bookings" className="text-sm text-orange-500 hover:underline flex items-center gap-1">
+          <Link to="/admin/operations/bookings" preload="intent" className="text-sm text-orange-500 hover:underline flex items-center gap-1">
             View all <ArrowRight size={14} />
-          </a>
+          </Link>
         </CardHeader>
         <CardContent className="p-0">
           {recentBookings.length === 0 ? (

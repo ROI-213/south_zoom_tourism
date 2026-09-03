@@ -210,10 +210,10 @@ export function buildPdf(
       `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources << /Font << /F1 ${f1Id} 0 R /F2 ${f2Id} 0 R >> ${xObjRef} >> /Contents ${contentId} 0 R >>`,
     );
 
-    // For first page only, draw logo at top-right
+    // For first page only, draw logo at top-left
     let logoOp: string | undefined;
     if (i === 0 && hasLogo && imgObjId) {
-      const x = PAGE_W - MARGIN - LOGO_W_PT;
+      const x = MARGIN;
       const y = PAGE_H - MARGIN - logoH_pt;
       logoOp = `q ${LOGO_W_PT} 0 0 ${logoH_pt} ${x.toFixed(2)} ${y.toFixed(2)} cm /Logo Do Q`;
     }

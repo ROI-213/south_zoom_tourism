@@ -43,7 +43,15 @@ export type ServiceModule = {
   options: { id: string; label: string; detail: string }[];
 };
 
-export type PricingRow = { id: string; label: string; unit: string; price?: string; note?: string };
+export type PricingRow = {
+  id: string;
+  label: string;
+  unit: string;
+  price?: string;
+  note?: string;
+  vehicleSlug?: string;
+  tripType?: "one-way" | "round-trip" | "local" | "airport";
+};
 
 export type ServiceDetail = {
   serviceId: string;
@@ -100,19 +108,24 @@ const details: Record<string, Partial<ServiceDetail>> = {
         title: "Hourly & full-day packages",
         description: "Pick the slab that fits your day — extra hours and kilometres are billed at the published rate.",
         options: [
-          { id: "o1", label: "4 hours / 40 km", detail: "Short city errands, a shopping run or a half-day of meetings." },
-          { id: "o2", label: "8 hours / 80 km", detail: "A full working day or a city sightseeing loop with the same driver." },
-          { id: "o3", label: "12 hours / 120 km", detail: "Long days, multi-stop family functions and late returns." },
+          { id: "o1", label: "4 hours / 40 km", detail: "Short city errands, shopping run, clinic visit or a half-day of meetings." },
+          { id: "o2", label: "8 hours / 80 km", detail: "A full working day or city sightseeing loop with dedicated chauffeur." },
+          { id: "o3", label: "12 hours / 120 km", detail: "Long days, multi-stop family functions, shopping tours and late returns." },
         ],
       },
     ],
     pricing: {
       showRates: true,
-      note: "City rates for Chennai. Rates for other cities are shared on enquiry.",
+      note: "Quoted packages include fuel and driver charges. Extra hours and extra kilometres billed at published rates.",
       rows: [
-        { id: "pr1", label: "Hatchback — 4h / 40 km", unit: "package", price: "₹1,400", note: "₹180 per extra hour" },
-        { id: "pr2", label: "Sedan — 8h / 80 km", unit: "package", price: "₹2,600", note: "₹13 per extra km" },
-        { id: "pr3", label: "SUV — 12h / 120 km", unit: "package", price: "₹4,600", note: "₹18 per extra km" },
+        { id: "pr1", label: "Hatchback (WagonR) — 4h / 40 km", unit: "package", price: "₹1,800", note: "₹12 per extra km · ₹180 per extra hour", vehicleSlug: "hatchback-wagonr", tripType: "local" },
+        { id: "pr2", label: "Sedan (Swift Dzire) — 4h / 40 km", unit: "package", price: "₹2,200", note: "₹14 per extra km · ₹200 per extra hour", vehicleSlug: "maruti-dzire", tripType: "local" },
+        { id: "pr3", label: "Small SUV (Ertiga) — 4h / 40 km", unit: "package", price: "₹2,800", note: "₹18 per extra km · ₹200 per extra hour", vehicleSlug: "maruti-ertiga", tripType: "local" },
+        { id: "pr4", label: "Big SUV (Innova Crysta) — 4h / 40 km", unit: "package", price: "₹3,500", note: "₹21 per extra km · ₹250 per extra hour", vehicleSlug: "innova-crysta", tripType: "local" },
+        { id: "pr5", label: "Sedan (Swift Dzire) — 8h / 80 km", unit: "package", price: "₹2,800", note: "₹14 per extra km · ₹200 per extra hour", vehicleSlug: "maruti-dzire", tripType: "local" },
+        { id: "pr6", label: "Small SUV (Ertiga) — 8h / 80 km", unit: "package", price: "₹3,500", note: "₹18 per extra km · ₹200 per extra hour", vehicleSlug: "maruti-ertiga", tripType: "local" },
+        { id: "pr7", label: "Big SUV (Innova Crysta) — 8h / 80 km", unit: "package", price: "₹4,200", note: "₹21 per extra km · ₹250 per extra hour", vehicleSlug: "innova-crysta", tripType: "local" },
+        { id: "pr8", label: "Tempo Traveller (12-17s) — 8h / 80 km", unit: "package", price: "₹5,500", note: "₹24 per extra km · ₹300 per extra hour", vehicleSlug: "tempo-traveller-12", tripType: "local" },
       ],
     },
     gallery: [commonGallery[0], commonGallery[1], commonGallery[3]],
@@ -123,19 +136,23 @@ const details: Record<string, Partial<ServiceDetail>> = {
         id: "m-trip-type",
         title: "Trip types",
         options: [
-          { id: "o1", label: "One-way drop", detail: "Pay only for the distance you travel, with a fixed minimum of 130 km." },
-          { id: "o2", label: "Round trip", detail: "250 km daily minimum, same driver and vehicle for the whole journey." },
-          { id: "o3", label: "Multi-city itinerary", detail: "Several stops across states with permits and night halts arranged by us." },
+          { id: "o1", label: "One-way drop", detail: "Pay only for the distance you travel with flat 150 km minimum billing." },
+          { id: "o2", label: "Round trip", detail: "300 km daily minimum with verified chauffeur and clean vehicle for the entire tour." },
+          { id: "o3", label: "Multi-city itinerary", detail: "Several stops across states with permits, night halts and route assistance." },
         ],
       },
     ],
     pricing: {
       showRates: true,
-      note: "Driver bata of ₹400 per day and ₹300 night allowance apply on outstation journeys.",
+      note: "One-Way min: 150 km. Round-Trip min: 300 km/day. Driver allowance: ₹300–₹400/day. Tolls & interstate permits at actuals.",
       rows: [
-        { id: "pr1", label: "Sedan", unit: "per km", price: "₹14" },
-        { id: "pr2", label: "SUV (6–7 seats)", unit: "per km", price: "₹19" },
-        { id: "pr3", label: "Tempo traveller", unit: "per km", price: "₹24" },
+        { id: "pr1", label: "Hatchback (WagonR / Celerio)", unit: "per km", price: "₹12", note: "One-Way: ₹12/km · Round-Trip: ₹11/km (300 km/day min)", vehicleSlug: "hatchback-wagonr", tripType: "one-way" },
+        { id: "pr2", label: "Sedan (Swift Dzire / Etios)", unit: "per km", price: "₹14", note: "One-Way: ₹14/km · Round-Trip: ₹13/km (300 km/day min)", vehicleSlug: "maruti-dzire", tripType: "one-way" },
+        { id: "pr3", label: "Small SUV (Maruti Ertiga — 6 seats)", unit: "per km", price: "₹18", note: "One-Way: ₹18/km · Round-Trip: ₹16/km (300 km/day min)", vehicleSlug: "maruti-ertiga", tripType: "one-way" },
+        { id: "pr4", label: "Big SUV (Innova Crysta — 7 seats)", unit: "per km", price: "₹21", note: "One-Way: ₹21/km · Round-Trip: ₹19/km (300 km/day min)", vehicleSlug: "innova-crysta", tripType: "one-way" },
+        { id: "pr5", label: "Tempo Traveller (12–17 seats)", unit: "per km", price: "₹24", note: "Round-Trip: ₹24/km · 300 km/day min · Push-back AC seats", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
+        { id: "pr6", label: "Mini Bus (21–27 seats)", unit: "per km", price: "₹38", note: "Outstation group tours, family outings & weddings", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
+        { id: "pr7", label: "Luxury Coach (35–50 seats)", unit: "per km", price: "₹52", note: "Long distance journeys with air suspension & co-driver", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
       ],
     },
     gallery: [commonGallery[0], { id: "g-t", image: heroTours, alt: "Highway drive between South Indian hill stations" }, commonGallery[1]],
@@ -146,19 +163,21 @@ const details: Record<string, Partial<ServiceDetail>> = {
         id: "m-transfer",
         title: "Pickup & drop options",
         options: [
-          { id: "o1", label: "Arrival pickup", detail: "Flight tracked live, 60 minutes free waiting and a name board on request." },
-          { id: "o2", label: "Departure drop", detail: "Pickup timed to your check-in cut-off with a live driver location link." },
-          { id: "o3", label: "Flight details capture", detail: "Share flight number and terminal in the enquiry so delays adjust automatically." },
+          { id: "o1", label: "Arrival pickup", detail: "Flight tracked live, 60 minutes complimentary waiting and terminal name board on request." },
+          { id: "o2", label: "Departure drop", detail: "Timed accurately to your check-in schedule with live driver location update." },
+          { id: "o3", label: "Flight details capture", detail: "Share flight number & terminal in the booking for automatic delay tracking." },
         ],
       },
     ],
     pricing: {
       showRates: true,
-      note: "Fixed fares within city limits. Airport parking and toll charged at actuals.",
+      note: "Fixed transparent fares with 60 minutes complimentary waiting and verified chauffeurs. Airport parking and toll charged at actuals.",
       rows: [
-        { id: "pr1", label: "Sedan transfer", unit: "per trip", price: "₹899" },
-        { id: "pr2", label: "SUV transfer", unit: "per trip", price: "₹1,499" },
-        { id: "pr3", label: "Tempo traveller transfer", unit: "per trip", price: "₹2,900" },
+        { id: "pr0", label: "Hatchback (WagonR / Celerio — 4 seats)", unit: "per trip", price: "₹950", note: "3h / 30km package · Extra km ₹12 · Extra hr ₹150", vehicleSlug: "hatchback-wagonr", tripType: "airport" },
+        { id: "pr1", label: "Sedan (Swift Dzire / Etios — 4 seats)", unit: "per trip", price: "₹1,100", note: "3h / 30km package · Extra km ₹14 · Extra hr ₹180", vehicleSlug: "maruti-dzire", tripType: "airport" },
+        { id: "pr2", label: "Small SUV (Maruti Ertiga — 6 seats)", unit: "per trip", price: "₹1,400", note: "3h / 30km package · Extra km ₹18 · Extra hr ₹200", vehicleSlug: "maruti-ertiga", tripType: "airport" },
+        { id: "pr3", label: "Big SUV (Toyota Innova Crysta — 7 seats)", unit: "per trip", price: "₹1,800", note: "3h / 30km package · Extra km ₹21 · Extra hr ₹250", vehicleSlug: "innova-crysta", tripType: "airport" },
+        { id: "pr4", label: "Tempo Traveller (12–17 seats)", unit: "per trip", price: "₹2,800", note: "Group airport transfer · Extra km ₹24 · Extra hr ₹300", vehicleSlug: "tempo-traveller-12", tripType: "airport" },
       ],
     },
   },
@@ -174,7 +193,16 @@ const details: Record<string, Partial<ServiceDetail>> = {
         ],
       },
     ],
-    pricing: { showRates: false, note: "Corporate rate cards are prepared per contract. Share your monthly volume for a proposal.", rows: [] },
+    pricing: {
+      showRates: true,
+      note: "Corporate rate contracts include GST invoicing and monthly billing credit terms. Select your fleet to calculate fare.",
+      rows: [
+        { id: "pr1", label: "Executive Sedan (Dzire / Etios)", unit: "per km", price: "₹14", note: "Daily: ₹2,200 (4h/40km) · Clean white cabs with AC", vehicleSlug: "maruti-dzire", tripType: "local" },
+        { id: "pr2", label: "Premium MPV (Innova Crysta)", unit: "per km", price: "₹21", note: "Daily: ₹3,500 (4h/40km) · Chauffeur in uniform", vehicleSlug: "innova-crysta", tripType: "local" },
+        { id: "pr3", label: "Employee Shuttle (Tempo Traveller 12-17s)", unit: "per km", price: "₹24", note: "Shift-based fixed routes & monthly contracts", vehicleSlug: "tempo-traveller-12", tripType: "local" },
+        { id: "pr4", label: "Corporate Bus (27–45 seats)", unit: "per km", price: "₹38", note: "Team offsites & conference shuttles", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
+      ],
+    },
     gallery: [{ id: "g-c", image: serviceCorporate, alt: "Toyota Innova Crysta executive MPV for corporate transport" }, commonGallery[1], commonGallery[2]],
   },
   "group-travel": {
@@ -191,11 +219,12 @@ const details: Record<string, Partial<ServiceDetail>> = {
     ],
     pricing: {
       showRates: true,
-      note: "Group rates depend on route and duration; the quote confirms the final figure.",
+      note: "Group fleet comes with commercial yellow-board, push-back seats, luggage carrier and experienced drivers.",
       rows: [
-        { id: "pr1", label: "Tempo traveller", unit: "per km", price: "₹24" },
-        { id: "pr2", label: "Mini bus", unit: "per km", price: "₹38" },
-        { id: "pr3", label: "Coach", unit: "per km", price: "₹52" },
+        { id: "pr1", label: "Tempo Traveller (12-Seater TT)", unit: "per km", price: "₹24", note: "Round-trip min 300 km/day · 2×1 push-back seats", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
+        { id: "pr2", label: "Tempo Traveller (17-Seater TT)", unit: "per km", price: "₹26", note: "Round-trip min 300 km/day · Overhead luggage carrier", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
+        { id: "pr3", label: "Mini Bus (21–27 Seater)", unit: "per km", price: "₹38", note: "Family functions, school excursions and pilgrimages", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
+        { id: "pr4", label: "Deluxe Coach (35–50 Seater)", unit: "per km", price: "₹52", note: "Air suspension, mic system & co-driver on long trips", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
       ],
     },
   },
@@ -211,7 +240,16 @@ const details: Record<string, Partial<ServiceDetail>> = {
         ],
       },
     ],
-    pricing: { showRates: false, note: "Circuit pricing depends on group size, stay category and season.", rows: [] },
+    pricing: {
+      showRates: true,
+      note: "Specially curated temple tours across South India with senior-friendly driving and darshan timings.",
+      rows: [
+        { id: "pr1", label: "Family Sedan (Dzire / Etios — 4 seats)", unit: "per km", price: "₹14", note: "Round-trip min 300 km/day · Clean AC vehicle", vehicleSlug: "maruti-dzire", tripType: "round-trip" },
+        { id: "pr2", label: "Comfort SUV (Ertiga — 6 seats)", unit: "per km", price: "₹18", note: "Round-trip min 300 km/day · Senior-friendly seating", vehicleSlug: "maruti-ertiga", tripType: "round-trip" },
+        { id: "pr3", label: "Premium SUV (Innova Crysta — 7 seats)", unit: "per km", price: "₹21", note: "Smooth ride for elderly on long temple circuits", vehicleSlug: "innova-crysta", tripType: "round-trip" },
+        { id: "pr4", label: "Group Tempo Traveller (12–17 seats)", unit: "per km", price: "₹24", note: "Complete family & group temple pilgrimage", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
+      ],
+    },
     gallery: [{ id: "g-p", image: servicePilgrimage, alt: "Pilgrims walking towards a temple gopuram at sunrise" }, commonGallery[0], commonGallery[2]],
   },
   "wedding-and-events": {
@@ -226,7 +264,16 @@ const details: Record<string, Partial<ServiceDetail>> = {
         ],
       },
     ],
-    pricing: { showRates: false, note: "Wedding fleets are quoted per function plan after a short planning call.", rows: [] },
+    pricing: {
+      showRates: true,
+      note: "Punctual event transportation with decorated bridal cars, guest shuttles and on-site coordination.",
+      rows: [
+        { id: "pr1", label: "Decorated Bridal Sedan (Dzire / Etios)", unit: "per day", price: "₹4,500", note: "Fresh floral decoration & chauffeur in uniform", vehicleSlug: "maruti-dzire", tripType: "local" },
+        { id: "pr2", label: "VIP MPV (Toyota Innova Crysta)", unit: "per day", price: "₹4,200", note: "For groom, bride and VIP guests", vehicleSlug: "innova-crysta", tripType: "local" },
+        { id: "pr3", label: "Guest Shuttle (Tempo Traveller 12-17s)", unit: "per day", price: "₹5,500", note: "Continuous loops between hotel & venue", vehicleSlug: "tempo-traveller-12", tripType: "local" },
+        { id: "pr4", label: "Guest Coach (35-Seater Bus)", unit: "per day", price: "₹12,000", note: "Group pickup and drop for wedding guests", vehicleSlug: "tempo-traveller-12", tripType: "local" },
+      ],
+    },
     gallery: [{ id: "g-w", image: serviceWedding, alt: "White wedding car decorated with marigold garlands" }, commonGallery[0], commonGallery[1]],
   },
   "hotel-and-room-booking": {
@@ -243,11 +290,11 @@ const details: Record<string, Partial<ServiceDetail>> = {
     ],
     pricing: {
       showRates: true,
-      note: "Partner rates vary by season and availability; the quote confirms the live rate.",
+      note: "Partner rates vary by season and availability. No advance payment required for inquiry.",
       rows: [
-        { id: "pr1", label: "Budget room", unit: "per night", price: "₹1,800" },
-        { id: "pr2", label: "3–4 star room", unit: "per night", price: "₹3,200" },
-        { id: "pr3", label: "Resort / cottage", unit: "per night", price: "₹4,500" },
+        { id: "pr1", label: "Budget Hotel Room", unit: "per night", price: "₹1,800", note: "Clean inspected rooms near transit hubs" },
+        { id: "pr2", label: "3–4 Star Deluxe Room", unit: "per night", price: "₹3,200", note: "Complimentary breakfast & premium amenities" },
+        { id: "pr3", label: "Luxury Heritage Resort / Cottage", unit: "per night", price: "₹4,500", note: "Scenic stays in Coorg, Ooty, Munnar & Kabini" },
       ],
     },
     gallery: [{ id: "g-h", image: heroHotels, alt: "Partner hotel room with a balcony overlooking the hills" }, commonGallery[3], commonGallery[2]],
@@ -265,7 +312,16 @@ const details: Record<string, Partial<ServiceDetail>> = {
         ],
       },
     ],
-    pricing: { showRates: false, note: "Custom itineraries are quoted line by line; the quote stays valid for seven days.", rows: [] },
+    pricing: {
+      showRates: true,
+      note: "Tailor-made itineraries with private verified vehicles and drivers for your complete South India trip.",
+      rows: [
+        { id: "pr1", label: "Private Sedan Tour (4 seats)", unit: "per km", price: "₹14", note: "Dzire / Etios · 300 km/day min · Ideal for couples", vehicleSlug: "maruti-dzire", tripType: "round-trip" },
+        { id: "pr2", label: "Private SUV Tour (Ertiga — 6 seats)", unit: "per km", price: "₹18", note: "300 km/day min · Great for hill stations", vehicleSlug: "maruti-ertiga", tripType: "round-trip" },
+        { id: "pr3", label: "Luxury SUV Tour (Innova Crysta — 7 seats)", unit: "per km", price: "₹21", note: "300 km/day min · Maximum long-distance comfort", vehicleSlug: "innova-crysta", tripType: "round-trip" },
+        { id: "pr4", label: "Group Tempo Traveller Tour (12–17 seats)", unit: "per km", price: "₹24", note: "300 km/day min · Family & friend group tours", vehicleSlug: "tempo-traveller-12", tripType: "round-trip" },
+      ],
+    },
   },
   "ticket-booking": {
     modules: [
@@ -279,7 +335,15 @@ const details: Record<string, Partial<ServiceDetail>> = {
         ],
       },
     ],
-    pricing: { showRates: false, note: "A small service fee applies per ticket and is confirmed before booking.", rows: [] },
+    pricing: {
+      showRates: true,
+      note: "Instant ticket assistance with zero cancellation hassle and fast turnaround.",
+      rows: [
+        { id: "pr1", label: "Train & Tatkal Booking Assistance", unit: "per ticket", price: "₹150", note: "IRCTC confirmed ticket service" },
+        { id: "pr2", label: "Flight Ticket Booking & Reschedule", unit: "per passenger", price: "₹250", note: "Domestic flights across all airlines" },
+        { id: "pr3", label: "Interstate Bus & Sleeper Coach", unit: "per seat", price: "₹100", note: "KSRTC, SETC & private Volvo sleepers" },
+      ],
+    },
   },
   "travel-assistance": {
     modules: [
@@ -293,8 +357,14 @@ const details: Record<string, Partial<ServiceDetail>> = {
         ],
       },
     ],
-    pricing: { showRates: false, note: "Assistance is included with every South Zoom booking at no extra cost.", rows: [] },
-    sections: defaultSections.map((s) => (s.key === "pricing" ? { ...s, enabled: false } : s)),
+    pricing: {
+      showRates: true,
+      note: "24x7 control room support, breakdown replacement vehicle and route guidance across South India.",
+      rows: [
+        { id: "pr1", label: "24×7 On-Road Trip Assistance", unit: "per trip", price: "Free", note: "Included with every South Zoom vehicle booking" },
+        { id: "pr2", label: "Standby Vehicle Dispatch Guarantee", unit: "per trip", price: "Included", note: "Replacement car sent from nearest hub if needed" },
+      ],
+    },
   },
 };
 

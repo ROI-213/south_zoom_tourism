@@ -202,7 +202,7 @@ function VehicleDetailPage() {
     { label: "Passengers", value: `${vehicle.seats}` },
     { label: "Luggage", value: `${vehicle.luggage} bags` },
     { label: "Air conditioning", value: vehicle.ac ? "AC" : "Non-AC" },
-    ...(detail?.specs ?? []),
+    ...(detail?.specs ?? []).filter((s) => s.label !== "Air conditioning"),
   ];
 
   return (
@@ -234,7 +234,15 @@ function VehicleDetailPage() {
 
               {/* Additional gallery images from DB (if any) shown below as thumbnails */}
               {gallery.length > 1 && (
-                <div className="mt-3 grid grid-cols-4 gap-2">
+                <div
+                  className={`mt-3 grid gap-2 ${
+                    gallery.length <= 2
+                      ? "grid-cols-2 max-w-sm"
+                      : gallery.length === 3
+                      ? "grid-cols-3 max-w-md"
+                      : "grid-cols-4"
+                  }`}
+                >
                   {gallery.slice(0, 4).map((img) => (
                     <div key={img.id} className="overflow-hidden rounded-lg border border-border">
                       <img

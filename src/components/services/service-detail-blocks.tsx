@@ -1,4 +1,5 @@
-import { Check, Info } from "lucide-react";
+import { Check, Info, Car, Calendar, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -147,45 +148,88 @@ export function ServicePricing({
   note,
   rows,
   onEnquire,
+  onBookRow,
 }: {
   showRates: boolean;
   note: string;
   rows: PricingRow[];
   onEnquire: () => void;
+  onBookRow?: (row: PricingRow) => void;
 }) {
   return (
     <Block id="pricing" title="Pricing">
       {showRates && rows.length > 0 ? (
-        <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
-              <caption className="sr-only">Published rates for this service</caption>
-              <thead className="bg-muted/60 border-b border-border text-foreground font-semibold">
-                <tr>
-                  <th scope="col" className="px-3.5 py-3 sm:px-4 sm:py-3.5 w-1/2">Option</th>
-                  <th scope="col" className="px-3 py-3 sm:px-4 sm:py-3.5 w-1/4">Unit</th>
-                  <th scope="col" className="px-3.5 py-3 sm:px-4 sm:py-3.5 w-1/4 text-right">Rate</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {rows.map((row) => (
-                  <tr key={row.id} className="transition-colors hover:bg-muted/30">
-                    <td className="px-3.5 py-3 sm:px-4 sm:py-3.5 align-top">
-                      <span className="font-semibold text-foreground block">{row.label}</span>
-                      {row.note ? (
-                        <span className="block text-[11px] text-muted-foreground mt-0.5">{row.note}</span>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-3 sm:px-4 sm:py-3.5 text-muted-foreground align-top whitespace-nowrap">
-                      {row.unit}
-                    </td>
-                    <td className="px-3.5 py-3 sm:px-4 sm:py-3.5 font-bold text-primary text-right align-top whitespace-nowrap">
-                      {row.price ?? "On enquiry"}
-                    </td>
+        <div className="space-y-3">
+          <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <caption className="sr-only">Published rates for this service</caption>
+                <thead className="bg-muted/60 border-b border-border text-foreground font-semibold">
+                  <tr>
+                    <th scope="col" className="px-3.5 py-3 sm:px-4 sm:py-3.5 min-w-[140px]">Option</th>
+                    <th scope="col" className="px-3 py-3 sm:px-4 sm:py-3.5 whitespace-nowrap">Unit</th>
+                    <th scope="col" className="px-3.5 py-3 sm:px-4 sm:py-3.5 text-right whitespace-nowrap">Rate</th>
+                    <th scope="col" className="px-3.5 py-3 sm:px-4 sm:py-3.5 text-right whitespace-nowrap">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      onClick={() => (onBookRow ? onBookRow(row) : onEnquire())}
+                      className="group transition-colors hover:bg-muted/40 cursor-pointer"
+                    >
+                      <td className="px-3.5 py-3 sm:px-4 sm:py-3.5 align-middle">
+                        <span className="font-bold text-foreground group-hover:text-primary transition-colors block">
+                          {row.label}
+                        </span>
+                        {row.note ? (
+                          <span className="block text-[11px] text-muted-foreground mt-0.5">{row.note}</span>
+                        ) : null}
+                      </td>
+                      <td className="px-3 py-3 sm:px-4 sm:py-3.5 text-muted-foreground align-middle whitespace-nowrap text-xs">
+                        {row.unit}
+                      </td>
+                      <td className="px-3.5 py-3 sm:px-4 sm:py-3.5 font-extrabold text-primary text-right align-middle whitespace-nowrap text-sm sm:text-base">
+                        {row.price ?? "On enquiry"}
+                      </td>
+                      <td className="px-3.5 py-2.5 sm:px-4 sm:py-3 text-right align-middle whitespace-nowrap">
+                        <Button
+                          size="sm"
+                          type="button"
+                          className="h-7 sm:h-8 px-2.5 sm:px-3.5 text-[11px] sm:text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-transform active:scale-95"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onBookRow) onBookRow(row);
+                            else onEnquire();
+                          }}
+                        >
+                          Book Now
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5">
+            <div className="flex items-center gap-2 text-xs text-foreground">
+              <Car className="h-4 w-4 text-primary shrink-0" />
+              <span className="font-semibold">
+                Click any option or "Book Now" to launch instant vehicle booking with live fare calculation.
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs font-semibold shrink-0"
+              onClick={onEnquire}
+            >
+              Custom Route / General Enquiry →
+            </Button>
           </div>
         </div>
       ) : (

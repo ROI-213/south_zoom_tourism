@@ -34,7 +34,12 @@ export function AppLink({
   }
 
   return (
-    <Link to={href as LinkProps["to"]} className={className} aria-label={ariaLabel}>
+    <Link
+      to={href as LinkProps["to"]}
+      preload="intent"
+      className={className}
+      aria-label={ariaLabel}
+    >
       {children}
     </Link>
   );

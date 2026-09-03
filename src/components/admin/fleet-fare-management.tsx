@@ -136,96 +136,203 @@ export function AdminFleetFareManagementDialog({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 text-xs">
-                    {/* One Way Rate */}
+                  <div className="space-y-3">
+                    {/* Outstation Rates Grid */}
                     <div>
-                      <Label className="text-[11px] font-semibold text-primary block mb-1">
-                        One Way (₹/km)
-                      </Label>
-                      <Input
-                        type="number"
-                        value={fleet.oneWayRatePerKm}
-                        onChange={(e) => handleRateChange(idx, "oneWayRatePerKm", Number(e.target.value))}
-                        className="h-8 text-xs font-bold"
-                      />
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                        Outstation Rates (One Way & Round Trip)
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 text-xs">
+                        {/* One Way Rate */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-primary block mb-1">
+                            One Way (₹/km)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.oneWayRatePerKm}
+                            onChange={(e) => handleRateChange(idx, "oneWayRatePerKm", Number(e.target.value))}
+                            className="h-8 text-xs font-bold"
+                          />
+                        </div>
+
+                        {/* One Way Min KM */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            One Way Min KM
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.oneWayMinimumKm}
+                            onChange={(e) => handleRateChange(idx, "oneWayMinimumKm", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        {/* One Way Driver Allowance */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            One Way Bata (₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.oneWayDriverAllowance}
+                            onChange={(e) => handleRateChange(idx, "oneWayDriverAllowance", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        {/* Round Trip Rate */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 block mb-1">
+                            Round (₹/km)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.roundTripRatePerKm}
+                            onChange={(e) => handleRateChange(idx, "roundTripRatePerKm", Number(e.target.value))}
+                            className="h-8 text-xs font-bold"
+                          />
+                        </div>
+
+                        {/* Round Trip Min KM / Day */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            Round Min KM/d
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.roundTripMinimumKmPerDay}
+                            onChange={(e) => handleRateChange(idx, "roundTripMinimumKmPerDay", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        {/* Round Trip Driver Allowance / Day */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            Round Bata/d (₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.roundTripDriverAllowancePerDay}
+                            onChange={(e) => handleRateChange(idx, "roundTripDriverAllowancePerDay", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        {/* GST % */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            GST %
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.gstPercentage}
+                            onChange={(e) => handleRateChange(idx, "gstPercentage", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    {/* One Way Min KM */}
-                    <div>
-                      <Label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                        One Way Min KM
-                      </Label>
-                      <Input
-                        type="number"
-                        value={fleet.oneWayMinimumKm}
-                        onChange={(e) => handleRateChange(idx, "oneWayMinimumKm", Number(e.target.value))}
-                        className="h-8 text-xs"
-                      />
-                    </div>
+                    {/* Local Use & Airport Rates Grid */}
+                    <div className="pt-2 border-t border-border/40 bg-muted/20 p-2.5 rounded-xl">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider block mb-1.5">
+                        Local Rental & Airport Transfer Rates (Admin Locale Price Edit)
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 text-xs">
+                        {/* Local Base Price */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 block mb-1">
+                            Local Base (4h/40k ₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.localBasePrice ?? 2200}
+                            onChange={(e) => handleRateChange(idx, "localBasePrice", Number(e.target.value))}
+                            className="h-8 text-xs font-bold text-amber-700 dark:text-amber-400"
+                          />
+                        </div>
 
-                    {/* One Way Driver Allowance */}
-                    <div>
-                      <Label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                        One Way Driver Bata (₹)
-                      </Label>
-                      <Input
-                        type="number"
-                        value={fleet.oneWayDriverAllowance}
-                        onChange={(e) => handleRateChange(idx, "oneWayDriverAllowance", Number(e.target.value))}
-                        className="h-8 text-xs"
-                      />
-                    </div>
+                        {/* Local Extra KM Rate */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            Local Extra KM (₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.localExtraKmRate ?? 18}
+                            onChange={(e) => handleRateChange(idx, "localExtraKmRate", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
 
-                    {/* Round Trip Rate */}
-                    <div>
-                      <Label className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block mb-1">
-                        Round Trip (₹/km)
-                      </Label>
-                      <Input
-                        type="number"
-                        value={fleet.roundTripRatePerKm}
-                        onChange={(e) => handleRateChange(idx, "roundTripRatePerKm", Number(e.target.value))}
-                        className="h-8 text-xs font-bold"
-                      />
-                    </div>
+                        {/* Local Extra Hour Rate */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            Local Extra Hr (₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.localExtraHourRate ?? 200}
+                            onChange={(e) => handleRateChange(idx, "localExtraHourRate", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
 
-                    {/* Round Trip Min KM / Day */}
-                    <div>
-                      <Label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                        Round Min KM/Day
-                      </Label>
-                      <Input
-                        type="number"
-                        value={fleet.roundTripMinimumKmPerDay}
-                        onChange={(e) => handleRateChange(idx, "roundTripMinimumKmPerDay", Number(e.target.value))}
-                        className="h-8 text-xs"
-                      />
-                    </div>
+                        {/* Local Driver Allowance */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            Local Driver Bata (₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.localDriverAllowance ?? 400}
+                            onChange={(e) => handleRateChange(idx, "localDriverAllowance", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
 
-                    {/* Round Trip Driver Allowance / Day */}
-                    <div>
-                      <Label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                        Round Driver/Day (₹)
-                      </Label>
-                      <Input
-                        type="number"
-                        value={fleet.roundTripDriverAllowancePerDay}
-                        onChange={(e) => handleRateChange(idx, "roundTripDriverAllowancePerDay", Number(e.target.value))}
-                        className="h-8 text-xs"
-                      />
-                    </div>
+                        {/* Airport Base Price */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 block mb-1">
+                            Airport Base (3h/30k ₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.airportBasePrice ?? 1100}
+                            onChange={(e) => handleRateChange(idx, "airportBasePrice", Number(e.target.value))}
+                            className="h-8 text-xs font-bold text-blue-700 dark:text-blue-400"
+                          />
+                        </div>
 
-                    {/* GST % */}
-                    <div>
-                      <Label className="text-[11px] font-semibold text-muted-foreground block mb-1">
-                        GST %
-                      </Label>
-                      <Input
-                        type="number"
-                        value={fleet.gstPercentage}
-                        onChange={(e) => handleRateChange(idx, "gstPercentage", Number(e.target.value))}
-                        className="h-8 text-xs"
-                      />
+                        {/* Airport Extra KM Rate */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            Airport Extra KM (₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.airportExtraKmRate ?? 28}
+                            onChange={(e) => handleRateChange(idx, "airportExtraKmRate", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        {/* Airport Extra Hour Rate */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-muted-foreground block mb-1">
+                            Airport Extra Hr (₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.airportExtraHourRate ?? 200}
+                            onChange={(e) => handleRateChange(idx, "airportExtraHourRate", Number(e.target.value))}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

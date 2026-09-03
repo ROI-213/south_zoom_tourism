@@ -24,6 +24,10 @@ import {
   mapDbServiceToRecord,
   type Service,
 } from "@/content/services";
+import { AutoFareCalculatorModal } from "@/components/fleet/auto-fare-calculator-modal";
+import { getPublishedVehicles, type FleetVehicle } from "@/content/fleet";
+import { HotelEnquiryModal } from "@/components/hotels/hotel-enquiry-modal";
+import { getPublishedHotels } from "@/content/hotels";
 import { company } from "@/content/site";
 import supabase from "@/lib/supabase";
 
@@ -133,10 +137,42 @@ function ServicesPage() {
 
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [enquirySlug, setEnquirySlug] = useState(allServices[0]?.slug ?? "");
+  const [fleetBookingOpen, setFleetBookingOpen] = useState(false);
+  const [hotelBookingOpen, setHotelBookingOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<FleetVehicle | undefined>(undefined);
+  const [selectedTripType, setSelectedTripType] = useState<"one-way" | "round-trip" | "local" | "airport">("one-way");
 
   const openEnquiry = (service?: Service) => {
     setEnquirySlug(service?.slug ?? allServices[0]?.slug ?? "");
     setEnquiryOpen(true);
+  };
+
+  const handleBook = (service: Service) => {
+    if (service.slug === "hotel-and-room-booking") {
+      setHotelBookingOpen(true);
+      return;
+    }
+
+    let tripType: "one-way" | "round-trip" | "local" | "airport" = "one-way";
+    if (service.slug === "airport-transfers") tripType = "airport";
+    else if (service.slug === "local-taxi") tripType = "local";
+    else if (
+      service.slug === "group-travel" ||
+      service.slug === "pilgrimage-tours" ||
+      service.slug === "custom-tour-planning"
+    )
+      tripType = "round-trip";
+    else if (service.slug === "corporate-travel" || service.slug === "wedding-and-events")
+      tripType = "local";
+
+    const vehicles = getPublishedVehicles();
+    let vehicle = vehicles.find((v) => v.slug === "maruti-dzire");
+    if (service.slug === "group-travel") {
+      vehicle = vehicles.find((v) => v.slug === "tempo-traveller-12") || vehicle;
+    }
+    setSelectedVehicle(vehicle || vehicles[0]);
+    setSelectedTripType(tripType);
+    setFleetBookingOpen(true);
   };
 
   return (
@@ -220,6 +256,7 @@ function ServicesPage() {
                     <ServiceCard
                       service={service}
                       onEnquire={openEnquiry}
+                      onBook={handleBook}
                       priority={index < 3}
                     />
                   </Reveal>
@@ -234,6 +271,24 @@ function ServicesPage() {
         <ServicesFaqs />
       </main>
       <Footer />
+
+      {/* Fleet Booking Modal */}
+      <AutoFareCalculatorModal
+        open={fleetBookingOpen}
+        onOpenChange={setFleetBookingOpen}
+        initialVehicle={selectedVehicle}
+        initialTripType={selectedTripType}
+      />
+
+      {/* Hotel Enquiry Modal */}
+      {getPublishedHotels()[0] && (
+        <HotelEnquiryModal
+          open={hotelBookingOpen}
+          onOpenChange={setHotelBookingOpen}
+          hotel={getPublishedHotels()[0]}
+        />
+      )}
+
       <EnquiryDialog open={enquiryOpen} onOpenChange={setEnquiryOpen} serviceSlug={enquirySlug} />
       <Toaster />
     </div>

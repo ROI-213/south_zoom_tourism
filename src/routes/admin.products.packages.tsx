@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Plus, Search, Package, Loader2, Edit2, Trash2, Star } from 'lucide-react';
+import { Plus, Search, Package, Loader2, Edit2, Trash2, Star, Upload, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 
 export const Route = createFileRoute('/admin/products/packages')({
   component: PackagesPage,
@@ -32,6 +32,28 @@ function PackagesPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [imageSourceMode, setImageSourceMode] = useState<'upload' | 'url'>('upload');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image file must be under 5 MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      if (result) {
+        setForm((f) => ({ ...f, main_image: result }));
+        toast.success('Image loaded successfully!');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
 
   async function fetchAll() {
     setLoading(true);
@@ -78,7 +100,7 @@ function PackagesPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div><h1 className="text-xl font-bold">Tour Packages</h1><p className="text-sm text-gray-500">Manage all tour packages</p></div>
-        <Button onClick={() => { setForm(emptyForm); setEditId(null); setDialogOpen(true); }} className="bg-orange-500 hover:bg-orange-600 gap-2">
+        <Button onClick={() => { setForm(emptyForm); setEditId(null); setImageSourceMode('upload'); setDialogOpen(true); }} className="bg-orange-500 hover:bg-orange-600 gap-2">
           <Plus size={16} /> Add Package
         </Button>
       </div>
@@ -128,6 +150,8 @@ function PackagesPage() {
                       <div className="flex justify-end gap-1">
                         <button className="p-1.5 rounded hover:bg-gray-100" onClick={() => {
                           setEditId(p.id);
+                          const img = p.main_image || '';
+                          setImageSourceMode(img.startsWith('http') ? 'url' : 'upload');
                           setForm({
                             title: p.title,
                             category: p.category || 'Nature',
@@ -135,7 +159,7 @@ function PackagesPage() {
                             nights: p.nights,
                             days: p.days,
                             price_from: p.price_from,
-                            main_image: p.main_image || '',
+                            main_image: img,
                             highlights: Array.isArray((p as any).highlights) ? (p as any).highlights.join(', ') : '',
                             active: p.active,
                             featured: p.featured,
@@ -174,7 +198,110 @@ function PackagesPage() {
             <div className="space-y-1"><Label>Days</Label><Input type="number" min={1} value={form.days} onChange={e => setForm(f => ({...f, days: +e.target.value}))}/></div>
             <div className="space-y-1"><Label>Price From (₹)</Label><Input type="number" min={0} value={form.price_from} onChange={e => setForm(f => ({...f, price_from: +e.target.value}))}/></div>
             <div className="space-y-1"><Label>Display Order</Label><Input type="number" min={0} value={form.display_order} onChange={e => setForm(f => ({...f, display_order: +e.target.value}))}/></div>
-            <div className="col-span-2 space-y-1"><Label>Main Image URL</Label><Input value={form.main_image} placeholder="https://..." onChange={e => setForm(f => ({...f, main_image: e.target.value}))}/></div>
+            {/* Package Image Section with Upload & URL options */}
+            <div className="col-span-2 space-y-2 border-t pt-3 mt-1">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-gray-700">Package Image</Label>
+                <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setImageSourceMode('upload')}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded font-medium transition-colors ${
+                      imageSourceMode === 'upload'
+                        ? 'bg-white shadow-xs text-orange-600 font-bold'
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    <Upload size={12} /> Upload from Computer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageSourceMode('url')}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded font-medium transition-colors ${
+                      imageSourceMode === 'url'
+                        ? 'bg-white shadow-xs text-orange-600 font-bold'
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    <LinkIcon size={12} /> Image URL
+                  </button>
+                </div>
+              </div>
+
+              {imageSourceMode === 'upload' ? (
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-200 hover:border-orange-400 bg-gray-50/70 hover:bg-orange-50/30 rounded-xl p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Upload size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700">Click to browse or upload image from your device</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">Supports PNG, JPG, JPEG, WebP up to 5 MB</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Input
+                  value={form.main_image}
+                  placeholder="https://images.unsplash.com/... or direct image link"
+                  onChange={(e) => setForm((f) => ({ ...f, main_image: e.target.value }))}
+                  className="text-xs"
+                />
+              )}
+
+              {/* Selected / Uploaded Image Preview */}
+              {form.main_image && (
+                <div className="relative flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl border border-gray-200 mt-2">
+                  <img
+                    src={form.main_image}
+                    alt="Package Preview"
+                    className="w-16 h-14 rounded-lg object-cover border border-gray-200 shadow-xs bg-white shrink-0"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-800">Image Ready</p>
+                    <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                      {form.main_image.startsWith('data:') ? 'Uploaded image file (Local)' : form.main_image}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {imageSourceMode === 'upload' && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="h-7 text-xs px-2.5"
+                      >
+                        Change
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setForm((f) => ({ ...f, main_image: '' }))}
+                      className="h-7 text-xs px-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="col-span-2 space-y-1"><Label>Highlights (comma separated)</Label><Textarea rows={2} value={form.highlights} placeholder="Beach views, Heritage walk, Local cuisine..." onChange={e => setForm(f => ({...f, highlights: e.target.value}))}/></div>
             <div className="flex items-center gap-3"><Switch checked={form.active} onCheckedChange={v => setForm(f => ({...f, active: v}))}/><Label>Active / Published</Label></div>
             <div className="flex items-center gap-3"><Switch checked={form.featured} onCheckedChange={v => setForm(f => ({...f, featured: v}))}/><Label>Featured on Homepage</Label></div>

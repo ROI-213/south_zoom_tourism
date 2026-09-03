@@ -184,14 +184,14 @@ export function validateBookingLink(bookingNumber: string, phone: string): Booki
   if (hotel) {
     return digits(hotel.primaryGuest.phone) === entered
       ? { state: "matched", bookingType }
-      : { state: "mismatch" };
+      : { state: "unverified", bookingType };
   }
 
   const tour = bookingType === "tour-package" ? loadBookingRecord(reference) : null;
   if (tour) {
     return digits(tour.contact.phone) === entered
       ? { state: "matched", bookingType }
-      : { state: "mismatch" };
+      : { state: "unverified", bookingType };
   }
 
   return { state: "unverified", bookingType };
@@ -225,6 +225,8 @@ export type PaymentSubmissionRecord = {
   customerName: string;
   phone: string;
   amount: number;
+  totalAmount?: number | null;
+  pendingBalance?: number | null;
   paidOn: string;
   transactionId: string;
   remarks: string;

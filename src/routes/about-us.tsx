@@ -11,7 +11,6 @@ import { AboutStats } from "@/components/about/about-stats";
 import { FounderMessage } from "@/components/about/founder-message";
 import { TeamGrid } from "@/components/about/team-grid";
 import { Achievements } from "@/components/about/achievements";
-import { OfficeGallery } from "@/components/about/office-gallery";
 import { AboutCta } from "@/components/about/about-cta";
 import {
   aboutBannerBlock,
@@ -128,7 +127,6 @@ function AboutUsPage() {
         <FounderMessage />
         <TeamGrid />
         <Achievements />
-        <OfficeGallery />
         <AboutCta />
       </main>
       <Footer />

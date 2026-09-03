@@ -18,7 +18,6 @@ import serviceCorporate from "@/assets/service-corporate-new.png";
 import serviceGroup from "@/assets/service-group.png";
 import interiorInnovaSeats from "@/assets/interior-innova-seats.jpg";
 import interiorTempoSeats from "@/assets/interior-tempo-seats.jpg";
-import interiorUrbaniaSeats from "@/assets/interior-urbania-seats.svg";
 import interiorBusSeats from "@/assets/interior-bus-seats.jpg";
 import fleetBigSuv from "@/assets/fleet-innova-new.png";
 import fleetTempo from "@/assets/fleet-tempo-new.png";
@@ -361,14 +360,12 @@ export const vehicleDetails: VehicleDetail[] = [
     "Fourteen individual luxury push-back recliner seats with aircraft-style ambient lighting, personal AC vents and panoramic windows — the premier choice for VIP group travel.",
     [
       { url: fleetUrbania, alt: "Force Urbania Luxury Van with KA yellow board & SZT sticker", kind: "exterior" },
-      { url: interiorUrbaniaSeats, alt: "Plush diamond-quilted luxury recliner seats in Force Urbania", kind: "seating" },
-      { url: interiorUrbaniaSeats, alt: "Aircraft-style luxury cabin and ambient LED roof strip", kind: "interior" },
       { url: serviceGroup, alt: "Dedicated rear luggage bay for group baggage", kind: "luggage" },
     ],
     largeVehicleFeatures,
     [
       { label: "Seat layout", value: "Individual luxury recliners" },
-      { label: "Air conditioning", value: "Dual-zone individual vents" },
+      { label: "AC System", value: "Dual-zone individual vents" },
       { label: "Best for", value: "Executive corporate & VIP tours" },
     ],
     basePricing("force-urbania", 28),

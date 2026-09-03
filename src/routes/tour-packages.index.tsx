@@ -15,6 +15,7 @@ import {
   type PackageFilterState,
 } from "@/components/packages/package-filters";
 import { PackageEnquiryDialog } from "@/components/packages/package-enquiry-dialog";
+import { TourPackageBookingModal } from "@/components/packages/tour-package-booking-modal";
 import { ActiveFilterChips, type Chip } from "@/components/fleet/active-filter-chips";
 import {
   getPackageCategoryLabel,
@@ -155,6 +156,7 @@ function TourPackagesPage() {
     open: false,
     slug: "",
   });
+  const [bookingPackage, setBookingPackage] = useState<TourPackageRecord | null>(null);
 
   const filters: PackageFilterState = {
     categories: search.categories ? search.categories.split(",").filter(Boolean) : [],
@@ -481,6 +483,7 @@ function TourPackagesPage() {
                         <PackageCard
                           pkg={pkg}
                           priority={index < 3}
+                          onBook={(selected) => setBookingPackage(selected)}
                           onEnquire={(selected) =>
                             setEnquiry({ open: true, slug: selected.slug })
                           }
@@ -548,6 +551,13 @@ function TourPackagesPage() {
         packageSlug={enquiry.slug}
         travelDate={filters.travelDate}
         travellers={filters.travellers || undefined}
+      />
+
+      {/* Tour Package Booking Modal — opens with the selected package destination pre-filled */}
+      <TourPackageBookingModal
+        open={Boolean(bookingPackage)}
+        onOpenChange={(open) => !open && setBookingPackage(null)}
+        packageItem={bookingPackage}
       />
     </div>
   );

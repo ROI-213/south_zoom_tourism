@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { HotelListingView } from "@/components/hotels/hotel-listing-view";
 import {
   validateListingSearch,
@@ -71,9 +71,9 @@ export const Route = createFileRoute("/hotels/$destinationSlug/")({
       <p className="mt-2 text-sm text-muted-foreground">
         We do not have contracted stays for this destination yet.
       </p>
-      <a href="/hotels" className="mt-4 inline-block text-primary underline">
+      <Link to="/hotels" preload="intent" className="mt-4 inline-block text-primary underline">
         Back to hotels
-      </a>
+      </Link>
     </div>
   ),
   component: DestinationHotels,

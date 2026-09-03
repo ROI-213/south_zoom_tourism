@@ -22,7 +22,11 @@ export function FleetSection() {
     loadVehicles();
     const handleUpdate = () => loadVehicles();
     window.addEventListener("fleetDataUpdated", handleUpdate);
-    return () => window.removeEventListener("fleetDataUpdated", handleUpdate);
+    window.addEventListener("fleetFareSettingsUpdated", handleUpdate);
+    return () => {
+      window.removeEventListener("fleetDataUpdated", handleUpdate);
+      window.removeEventListener("fleetFareSettingsUpdated", handleUpdate);
+    };
   }, []);
 
   if (!featuredFleet.meta.visible) return null;

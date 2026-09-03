@@ -14,9 +14,6 @@ import {
 import {
   ServiceOverview,
   ServiceModules,
-  ServiceFeatures,
-  ServiceProcess,
-  ServiceGallery,
   ServicePricing,
   ServiceTerms,
   ServiceFaqs,
@@ -29,7 +26,12 @@ import {
   orderedSections,
   resolveServiceFaqs,
   type SectionKey,
+  type PricingRow,
 } from "@/content/service-details";
+import { AutoFareCalculatorModal } from "@/components/fleet/auto-fare-calculator-modal";
+import { getPublishedVehicles, type FleetVehicle } from "@/content/fleet";
+import { HotelEnquiryModal } from "@/components/hotels/hotel-enquiry-modal";
+import { getPublishedHotels } from "@/content/hotels";
 import { company } from "@/content/site";
 
 export const Route = createFileRoute("/services/$slug")({
@@ -120,6 +122,11 @@ function ServiceFallback({ title, message }: { title: string; message: string })
 function ServiceDetailPage() {
   const { service } = Route.useLoaderData() as { service: Service };
   const [open, setOpen] = useState(false);
+  const [fleetBookingOpen, setFleetBookingOpen] = useState(false);
+  const [hotelBookingOpen, setHotelBookingOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<FleetVehicle | undefined>(undefined);
+  const [selectedTripType, setSelectedTripType] = useState<"one-way" | "round-trip" | "local" | "airport">("one-way");
+
   const detail = getServiceDetail(service);
   const sections = orderedSections(detail);
   const faqs = resolveServiceFaqs(detail);
@@ -128,18 +135,84 @@ function ServiceDetailPage() {
     .map((id) => published.find((s) => s.id === id))
     .filter((s): s is Service => Boolean(s));
 
+  const defaultTripType = (): "one-way" | "round-trip" | "local" | "airport" => {
+    if (service.slug === "airport-transfers") return "airport";
+    if (service.slug === "local-taxi") return "local";
+    if (
+      service.slug === "group-travel" ||
+      service.slug === "pilgrimage-tours" ||
+      service.slug === "custom-tour-planning"
+    )
+      return "round-trip";
+    if (service.slug === "corporate-travel" || service.slug === "wedding-and-events")
+      return "local";
+    return "one-way";
+  };
+
+  const handleBookRow = (row: PricingRow) => {
+    if (service.slug === "hotel-and-room-booking") {
+      setHotelBookingOpen(true);
+      return;
+    }
+
+    const tripType = row.tripType || defaultTripType();
+    const vehicles = getPublishedVehicles();
+    let vehicle: FleetVehicle | undefined = undefined;
+
+    if (row.vehicleSlug) {
+      vehicle = vehicles.find((v) => v.slug === row.vehicleSlug || v.id === row.vehicleSlug);
+    }
+
+    if (!vehicle) {
+      const lower = (row.label + " " + row.id).toLowerCase();
+      if (lower.includes("dzire") || lower.includes("sedan") || lower.includes("etios")) {
+        vehicle = vehicles.find((v) => v.slug === "maruti-dzire");
+      } else if (lower.includes("ertiga") || lower.includes("small suv")) {
+        vehicle = vehicles.find((v) => v.slug === "maruti-ertiga");
+      } else if (lower.includes("crysta") || lower.includes("innova") || lower.includes("big suv")) {
+        vehicle = vehicles.find((v) => v.slug === "innova-crysta");
+      } else if (lower.includes("tempo") || lower.includes("bus") || lower.includes("coach") || lower.includes("shuttle")) {
+        vehicle = vehicles.find((v) => v.slug === "tempo-traveller-12");
+      } else if (lower.includes("hatchback") || lower.includes("wagonr")) {
+        vehicle = vehicles.find((v) => v.slug === "hatchback-wagonr");
+      }
+    }
+
+    if (!vehicle) {
+      vehicle = vehicles.find((v) => v.slug === "maruti-dzire") || vehicles[0];
+    }
+
+    setSelectedVehicle(vehicle);
+    setSelectedTripType(tripType);
+    setFleetBookingOpen(true);
+  };
+
+  const handleGeneralBooking = () => {
+    if (service.slug === "hotel-and-room-booking") {
+      setHotelBookingOpen(true);
+    } else if (
+      service.categorySlug === "cabs" ||
+      service.slug === "group-travel" ||
+      service.slug === "wedding-and-events" ||
+      service.slug === "corporate-travel" ||
+      service.slug === "pilgrimage-tours" ||
+      service.slug === "custom-tour-planning"
+    ) {
+      const vehicles = getPublishedVehicles();
+      setSelectedVehicle(vehicles.find((v) => v.slug === "maruti-dzire") || vehicles[0]);
+      setSelectedTripType(defaultTripType());
+      setFleetBookingOpen(true);
+    } else {
+      setOpen(true);
+    }
+  };
+
   const renderSection = (key: SectionKey) => {
     switch (key) {
       case "overview":
         return <ServiceOverview key={key} text={service.detailDescription} />;
       case "modules":
         return <ServiceModules key={key} modules={detail.modules} />;
-      case "features":
-        return <ServiceFeatures key={key} features={service.features} benefits={service.benefits} />;
-      case "process":
-        return <ServiceProcess key={key} steps={detail.process} />;
-      case "gallery":
-        return <ServiceGallery key={key} items={detail.gallery} serviceTitle={service.title} />;
       case "pricing":
         return (
           <ServicePricing
@@ -148,6 +221,7 @@ function ServiceDetailPage() {
             note={detail.pricing.note}
             rows={detail.pricing.rows}
             onEnquire={() => setOpen(true)}
+            onBookRow={handleBookRow}
           />
         );
       case "terms":
@@ -186,12 +260,12 @@ function ServiceDetailPage() {
       <TopBar />
       <Navbar />
       <main className="flex-1">
-        <ServiceHero service={service} onEnquire={() => setOpen(true)} />
+        <ServiceHero service={service} onEnquire={handleGeneralBooking} />
 
         <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="grid min-w-0 gap-10">{sections.map(renderSection)}</div>
-            <ServiceEnquiryCard service={service} onEnquire={() => setOpen(true)} />
+            <ServiceEnquiryCard service={service} onEnquire={handleGeneralBooking} />
           </div>
 
           <div className="mt-10">
@@ -209,7 +283,25 @@ function ServiceDetailPage() {
         <ServicesTrust />
       </main>
       <Footer />
-      <ServiceMobileActionBar service={service} onEnquire={() => setOpen(true)} />
+      <ServiceMobileActionBar service={service} onEnquire={handleGeneralBooking} />
+
+      {/* Fleet Booking Modal — exact same enquiry/booking form as fleet page */}
+      <AutoFareCalculatorModal
+        open={fleetBookingOpen}
+        onOpenChange={setFleetBookingOpen}
+        initialVehicle={selectedVehicle}
+        initialTripType={selectedTripType}
+      />
+
+      {/* Hotel Enquiry Modal */}
+      {getPublishedHotels()[0] && (
+        <HotelEnquiryModal
+          open={hotelBookingOpen}
+          onOpenChange={setHotelBookingOpen}
+          hotel={getPublishedHotels()[0]}
+        />
+      )}
+
       <EnquiryDialog
         open={open}
         onOpenChange={setOpen}

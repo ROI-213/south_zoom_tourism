@@ -4,22 +4,25 @@ import { Link } from "@tanstack/react-router";
 import type { Service } from "@/content/services";
 import { waLink } from "@/content/site";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 type IconName = keyof typeof Icons;
 
 export function ServiceCard({
   service,
   onEnquire,
+  onBook,
   priority = false,
 }: {
   service: Service;
   onEnquire: (service: Service) => void;
+  onBook?: (service: Service) => void;
   priority?: boolean;
 }) {
   const Icon = (Icons[service.icon as IconName] ?? Icons.Circle) as Icons.LucideIcon;
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors focus-within:border-primary hover:border-primary">
+    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl">
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         <img
           src={service.image}
@@ -28,13 +31,15 @@ export function ServiceCard({
           height={750}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
         />
         <span className="absolute left-3 top-3 grid h-9 w-9 place-items-center rounded-lg bg-background/90 text-primary shadow-sm">
           <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
         {service.showPricing && service.priceFrom ? (
-          <Badge className="absolute right-3 top-3">From {service.priceFrom}</Badge>
+          <Badge className="absolute right-3 top-3 font-bold">
+            {service.priceFrom.startsWith("From ") ? service.priceFrom : `From ${service.priceFrom}`}
+          </Badge>
         ) : null}
       </div>
 
@@ -53,27 +58,39 @@ export function ServiceCard({
 
         <div className="mt-auto pt-5">
           <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/services/$slug"
-              params={{ slug: service.slug }}
-              className="inline-flex items-center gap-1 rounded-md bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            <Button
+              size="sm"
+              type="button"
+              onClick={() => (onBook ? onBook(service) : onEnquire(service))}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-xs transition-transform active:scale-95 text-xs px-3"
             >
-              View Details
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-            <button
+              Book Now
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              asChild
+              className="text-xs font-semibold px-2.5"
+            >
+              <Link to="/services/$slug" params={{ slug: service.slug }} preload="intent">
+                View Details
+              </Link>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               type="button"
               onClick={() => onEnquire(service)}
-              className="inline-flex items-center rounded-md border border-border px-3.5 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="text-xs font-semibold px-2.5"
             >
-              Enquire Now
-            </button>
+              Enquire
+            </Button>
             <a
-              href={waLink(`Hi South Zoom Tourism, I'd like to know more about your ${service.title} service.`)}
+              href={waLink(`Hi South Zoom Tourism, I'd like to book your ${service.title} service.`)}
               target="_blank"
               rel="noreferrer noopener"
               aria-label={`Chat on WhatsApp about ${service.title}`}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-primary transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
             >
               <MessageCircle className="h-4 w-4" aria-hidden="true" />
             </a>

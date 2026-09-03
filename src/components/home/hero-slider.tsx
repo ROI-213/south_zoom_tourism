@@ -33,8 +33,8 @@ export function HeroSlider() {
             badge: s.badge || undefined,
             heading: s.heading,
             description: s.description || "",
-            imageDesktop: resolveHeroImage(s.image_desktop),
-            imageMobile: resolveHeroImage(s.image_mobile || s.image_desktop),
+            imageDesktop: resolveHeroImage(s.image_desktop, s.heading),
+            imageMobile: resolveHeroImage(s.image_mobile || s.image_desktop, s.heading),
             alt: s.heading,
             primaryCta: {
               label: s.primary_cta_label || "Book Now",

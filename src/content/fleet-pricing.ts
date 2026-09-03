@@ -33,35 +33,56 @@ export type FleetFareConfig = {
   stateTaxMode: StateTaxCalculationMode;
   isActive: boolean;
   displayOrder: number;
+  // Local Package Configuration (Admin editable)
+  localBasePrice: number; // Base rate for 4h / 40km (e.g. 2200 for Sedan)
+  localBaseHours: number; // 4 hrs
+  localBaseKm: number; // 40 km
+  localExtraKmRate: number; // ₹/km
+  localExtraHourRate: number; // ₹/hr
+  localDriverAllowance: number; // e.g. 400
+  // Airport Transfer Configuration (Admin editable)
+  airportBasePrice: number; // Base rate for 3h / 30km (e.g. 1100 for Sedan)
+  airportBaseHours: number; // 3 hrs
+  airportBaseKm: number; // 30 km
+  airportExtraKmRate: number; // ₹/km
+  airportExtraHourRate: number; // ₹/hr
   updatedAt?: string;
 };
 
 export type FareCalculationInput = {
   fleetId: string;
-  tripType: "one-way" | "round-trip";
+  tripType: "one-way" | "round-trip" | "local" | "airport";
   pickup: string;
   destination: string;
   pickupDate: string;
   pickupTime?: string;
   returnDate?: string;
   returnTime?: string;
-  routeDistanceKm: number;
+  routeDistanceKm?: number;
   routeDuration?: string;
   estimatedTollAmount?: number | null;
   estimatedStateTaxAmount?: number | null;
   isInterstate?: boolean;
+  // Choosing / Selection Add-on options
+  luggageCarrier?: boolean; // ₹250
+  petTravelling?: boolean; // ₹900
+  // Package settings for Local / Airport
+  localPackageHours?: number; // 4, 8, 12
+  localPackageKm?: number; // 40, 80, 120
+  airportTransferType?: "drop" | "pickup";
+  flightNumber?: string;
 };
 
 export type FareCalculationResult = {
   fleet: FleetFareConfig;
-  tripType: "one-way" | "round-trip";
+  tripType: "one-way" | "round-trip" | "local" | "airport";
   pickup: string;
   destination: string;
   pickupDate: string;
   returnDate?: string;
   dayCount: number;
-  routeDistanceKm: number; // Single route distance
-  effectiveTripDistanceKm: number; // Single distance for one-way, 2x for round-trip
+  routeDistanceKm: number; // Single route distance or package km
+  effectiveTripDistanceKm: number; // Single distance for one-way, 2x for round-trip, package km for local/airport
   minimumBillingKm: number;
   billableDistanceKm: number;
   ratePerKm: number;
@@ -71,10 +92,19 @@ export type FareCalculationResult = {
   tollDisplay: string;
   stateTaxAmount: number | null;
   stateTaxDisplay: string;
+  // Add-on options
+  luggageCarrier: boolean;
+  luggageCarrierCost: number; // ₹250
+  petTravelling: boolean;
+  petTravellingCost: number; // ₹900
+  addonsCost: number;
+  packageName?: string;
   subtotal: number;
   gstPercentage: number;
   gstAmount: number;
   totalEstimatedFare: number;
+  advanceAmount: number; // 15%
+  balanceToDriver: number; // Remaining
   routeDuration?: string;
   isInterstate?: boolean;
   calculatedAt: string;
@@ -110,6 +140,17 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     stateTaxMode: "extra",
     isActive: true,
     displayOrder: 1,
+    localBasePrice: 1400,
+    localBaseHours: 4,
+    localBaseKm: 40,
+    localExtraKmRate: 12,
+    localExtraHourRate: 180,
+    localDriverAllowance: 300,
+    airportBasePrice: 899,
+    airportBaseHours: 3,
+    airportBaseKm: 30,
+    airportExtraKmRate: 24,
+    airportExtraHourRate: 180,
   },
   {
     id: "ffc-sedan",
@@ -129,6 +170,17 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     stateTaxMode: "extra",
     isActive: true,
     displayOrder: 2,
+    localBasePrice: 2200,
+    localBaseHours: 4,
+    localBaseKm: 40,
+    localExtraKmRate: 18,
+    localExtraHourRate: 200,
+    localDriverAllowance: 400,
+    airportBasePrice: 1100,
+    airportBaseHours: 3,
+    airportBaseKm: 30,
+    airportExtraKmRate: 28,
+    airportExtraHourRate: 200,
   },
   {
     id: "ffc-small-suv",
@@ -148,6 +200,17 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     stateTaxMode: "extra",
     isActive: true,
     displayOrder: 3,
+    localBasePrice: 2800,
+    localBaseHours: 4,
+    localBaseKm: 40,
+    localExtraKmRate: 18,
+    localExtraHourRate: 200,
+    localDriverAllowance: 400,
+    airportBasePrice: 1400,
+    airportBaseHours: 3,
+    airportBaseKm: 30,
+    airportExtraKmRate: 28,
+    airportExtraHourRate: 200,
   },
   {
     id: "ffc-big-suv",
@@ -167,6 +230,17 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     stateTaxMode: "extra",
     isActive: true,
     displayOrder: 4,
+    localBasePrice: 3500,
+    localBaseHours: 4,
+    localBaseKm: 40,
+    localExtraKmRate: 20,
+    localExtraHourRate: 250,
+    localDriverAllowance: 400,
+    airportBasePrice: 1800,
+    airportBaseHours: 3,
+    airportBaseKm: 30,
+    airportExtraKmRate: 30,
+    airportExtraHourRate: 250,
   },
   {
     id: "ffc-tempo",
@@ -186,6 +260,17 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     stateTaxMode: "extra",
     isActive: true,
     displayOrder: 5,
+    localBasePrice: 4500,
+    localBaseHours: 4,
+    localBaseKm: 40,
+    localExtraKmRate: 24,
+    localExtraHourRate: 300,
+    localDriverAllowance: 500,
+    airportBasePrice: 2400,
+    airportBaseHours: 3,
+    airportBaseKm: 30,
+    airportExtraKmRate: 32,
+    airportExtraHourRate: 300,
   },
   {
     id: "ffc-urbania",
@@ -205,6 +290,17 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     stateTaxMode: "extra",
     isActive: true,
     displayOrder: 6,
+    localBasePrice: 5500,
+    localBaseHours: 4,
+    localBaseKm: 40,
+    localExtraKmRate: 28,
+    localExtraHourRate: 350,
+    localDriverAllowance: 600,
+    airportBasePrice: 3200,
+    airportBaseHours: 3,
+    airportBaseKm: 30,
+    airportExtraKmRate: 36,
+    airportExtraHourRate: 350,
   },
   {
     id: "ffc-bus",
@@ -224,6 +320,17 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     stateTaxMode: "extra",
     isActive: true,
     displayOrder: 7,
+    localBasePrice: 8000,
+    localBaseHours: 4,
+    localBaseKm: 40,
+    localExtraKmRate: 38,
+    localExtraHourRate: 500,
+    localDriverAllowance: 1000,
+    airportBasePrice: 4500,
+    airportBaseHours: 3,
+    airportBaseKm: 30,
+    airportExtraKmRate: 45,
+    airportExtraHourRate: 500,
   },
   {
     id: "ffc-premium",
@@ -243,16 +350,78 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     stateTaxMode: "extra",
     isActive: true,
     displayOrder: 8,
+    localBasePrice: 6000,
+    localBaseHours: 4,
+    localBaseKm: 40,
+    localExtraKmRate: 45,
+    localExtraHourRate: 400,
+    localDriverAllowance: 500,
+    airportBasePrice: 3500,
+    airportBaseHours: 3,
+    airportBaseKm: 30,
+    airportExtraKmRate: 45,
+    airportExtraHourRate: 400,
   },
 ];
 
-const STORAGE_KEY_FLEET_PRICING = "szt_fleet_fare_settings_v3";
+const STORAGE_KEY_FLEET_PRICING = "szt_fleet_fare_settings_v4";
 const STORAGE_KEY_CALC_LOGS = "szt_fare_calculations_log_v1";
 
 let memorySettings: FleetFareConfig[] = DEFAULT_FLEET_FARE_SETTINGS;
 let memoryLogs: FareCalculationLog[] = [];
 
 const isBrowser = () => typeof window !== "undefined";
+
+/**
+ * Canonical vehicle matcher that resolves any ID, slug, model, or category to its fare config.
+ */
+export function matchVehicleToFareConfig(
+  identifier: string | undefined | null,
+  configs: FleetFareConfig[]
+): FleetFareConfig | undefined {
+  if (!identifier || !configs || configs.length === 0) return undefined;
+  const raw = String(identifier).toLowerCase().trim();
+  if (!raw) return undefined;
+
+  // 1. Direct exact match on id, fleetId, vehicleSlug, or vehicleName
+  const direct = configs.find(
+    (c) =>
+      c.id.toLowerCase() === raw ||
+      c.fleetId.toLowerCase() === raw ||
+      c.vehicleSlug.toLowerCase() === raw ||
+      c.vehicleName.toLowerCase() === raw ||
+      `ffc-${c.vehicleSlug}`.toLowerCase() === raw
+  );
+  if (direct) return direct;
+
+  // 2. Canonical keyword matching for South Zoom Tourism's 8 fleets
+  if (raw.includes("wagonr") || raw.includes("wagon-r") || raw.includes("hatchback")) {
+    return configs.find((c) => c.id === "ffc-hatchback" || c.category.toLowerCase().includes("hatchback")) || configs[0];
+  }
+  if (raw.includes("dzire") || raw.includes("etios") || raw.includes("sedan")) {
+    return configs.find((c) => c.id === "ffc-sedan" || c.category.toLowerCase().includes("sedan")) || configs[1];
+  }
+  if (raw.includes("ertiga") || raw.includes("small-suv") || raw.includes("small suv") || raw.includes("6-seater") || raw.includes("6 seater")) {
+    return configs.find((c) => c.id === "ffc-small-suv") || configs[2];
+  }
+  if (raw.includes("innova") || raw.includes("crysta") || raw.includes("big-suv") || raw.includes("big suv") || raw.includes("7-seater") || raw.includes("7 seater")) {
+    return configs.find((c) => c.id === "ffc-big-suv") || configs[3];
+  }
+  if (raw.includes("urbania") || raw.includes("14-seater") || raw.includes("10-seater")) {
+    return configs.find((c) => c.id === "ffc-urbania") || configs[5];
+  }
+  if (raw.includes("tempo") || raw.includes("traveller") || raw.includes("12-seater") || raw.includes("17-seater") || raw.includes("tt")) {
+    return configs.find((c) => c.id === "ffc-tempo") || configs[4];
+  }
+  if (raw.includes("bus") || raw.includes("coach") || raw.includes("27-seater") || raw.includes("35-seater") || raw.includes("45-seater") || raw.includes("50-seater")) {
+    return configs.find((c) => c.id === "ffc-bus") || configs[6];
+  }
+  if (raw.includes("bmw") || raw.includes("mercedes") || raw.includes("audi") || raw.includes("premium") || raw.includes("vip")) {
+    return configs.find((c) => c.id === "ffc-premium") || configs[7];
+  }
+
+  return undefined;
+}
 
 /**
  * Retrieve current fleet fare configuration.
@@ -263,11 +432,40 @@ export function getFleetFareSettings(): FleetFareConfig[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY_FLEET_PRICING);
     if (!raw) return memorySettings;
-    const parsed: FleetFareConfig[] = JSON.parse(raw);
-    // Ensure all default fleets are present in case schema was updated
+    const parsed: Partial<FleetFareConfig>[] = JSON.parse(raw);
+    
+    // Ensure all default fleets and newly added fields are present with updated rates
     const merged = DEFAULT_FLEET_FARE_SETTINGS.map((def) => {
-      const found = parsed.find((p) => p.fleetId === def.fleetId || p.id === def.id);
-      return found ? { ...def, ...found } : def;
+      const found = parsed.find(
+        (p) =>
+          p.fleetId === def.fleetId ||
+          p.id === def.id ||
+          p.vehicleSlug === def.vehicleSlug ||
+          (p.vehicleName && def.vehicleName && p.vehicleName.toLowerCase() === def.vehicleName.toLowerCase()) ||
+          matchVehicleToFareConfig(p.fleetId || p.vehicleSlug || p.id, [def]) !== undefined
+      );
+      if (!found) return def;
+      return {
+        ...def,
+        ...found,
+        oneWayRatePerKm: typeof found.oneWayRatePerKm === 'number' && found.oneWayRatePerKm > 0 ? found.oneWayRatePerKm : def.oneWayRatePerKm,
+        roundTripRatePerKm: typeof found.roundTripRatePerKm === 'number' && found.roundTripRatePerKm > 0 ? found.roundTripRatePerKm : def.roundTripRatePerKm,
+        oneWayMinimumKm: typeof found.oneWayMinimumKm === 'number' && found.oneWayMinimumKm > 0 ? found.oneWayMinimumKm : def.oneWayMinimumKm,
+        roundTripMinimumKmPerDay: typeof found.roundTripMinimumKmPerDay === 'number' && found.roundTripMinimumKmPerDay > 0 ? found.roundTripMinimumKmPerDay : def.roundTripMinimumKmPerDay,
+        oneWayDriverAllowance: typeof found.oneWayDriverAllowance === 'number' ? found.oneWayDriverAllowance : def.oneWayDriverAllowance,
+        roundTripDriverAllowancePerDay: typeof found.roundTripDriverAllowancePerDay === 'number' ? found.roundTripDriverAllowancePerDay : def.roundTripDriverAllowancePerDay,
+        localBasePrice: typeof found.localBasePrice === 'number' && found.localBasePrice > 0 ? found.localBasePrice : def.localBasePrice,
+        localBaseHours: typeof found.localBaseHours === 'number' ? found.localBaseHours : def.localBaseHours,
+        localBaseKm: typeof found.localBaseKm === 'number' ? found.localBaseKm : def.localBaseKm,
+        localExtraKmRate: typeof found.localExtraKmRate === 'number' && found.localExtraKmRate > 0 ? found.localExtraKmRate : def.localExtraKmRate,
+        localExtraHourRate: typeof found.localExtraHourRate === 'number' ? found.localExtraHourRate : def.localExtraHourRate,
+        localDriverAllowance: typeof found.localDriverAllowance === 'number' ? found.localDriverAllowance : def.localDriverAllowance,
+        airportBasePrice: typeof found.airportBasePrice === 'number' && found.airportBasePrice > 0 ? found.airportBasePrice : def.airportBasePrice,
+        airportBaseHours: typeof found.airportBaseHours === 'number' ? found.airportBaseHours : def.airportBaseHours,
+        airportBaseKm: typeof found.airportBaseKm === 'number' ? found.airportBaseKm : def.airportBaseKm,
+        airportExtraKmRate: typeof found.airportExtraKmRate === 'number' && found.airportExtraKmRate > 0 ? found.airportExtraKmRate : def.airportExtraKmRate,
+        airportExtraHourRate: typeof found.airportExtraHourRate === 'number' ? found.airportExtraHourRate : def.airportExtraHourRate,
+      };
     });
     memorySettings = merged.sort((a, b) => a.displayOrder - b.displayOrder);
     return memorySettings;
@@ -278,35 +476,14 @@ export function getFleetFareSettings(): FleetFareConfig[] {
 }
 
 /**
- * Get fare configuration for a specific fleet by fleetId or slug.
+ * Get fare configuration for a specific fleet by fleetId, slug, or name.
  */
 export function getFleetFareConfig(fleetIdOrSlug: string, fallbackSlugOrName?: string): FleetFareConfig {
   const all = getFleetFareSettings();
-  const lower = (fleetIdOrSlug || "").toLowerCase();
-  const lowerFallback = (fallbackSlugOrName || "").toLowerCase();
-
-  const match = all.find(
-    (f) =>
-      f.fleetId === fleetIdOrSlug ||
-      f.vehicleSlug === fleetIdOrSlug ||
-      f.id === fleetIdOrSlug ||
-      (lower && (f.vehicleSlug.toLowerCase() === lower || f.fleetId.toLowerCase() === lower)) ||
-      (lowerFallback && (f.vehicleSlug.toLowerCase() === lowerFallback || f.vehicleName.toLowerCase().includes(lowerFallback) || lowerFallback.includes(f.vehicleSlug.toLowerCase()))) ||
-      (lower && (f.vehicleName.toLowerCase().includes(lower) || lower.includes(f.vehicleSlug.toLowerCase())))
-  );
-  if (match) return match;
-
-  // Find by keyword if not direct match
-  const searchStr = `${lower} ${lowerFallback}`;
-  if (searchStr.includes("hatchback") || searchStr.includes("wagonr")) return all.find((f) => f.id === "ffc-hatchback") || all[0];
-  if (searchStr.includes("dzire") || searchStr.includes("sedan")) return all.find((f) => f.id === "ffc-sedan") || all[1];
-  if (searchStr.includes("ertiga") || searchStr.includes("small-suv") || searchStr.includes("6-seater")) return all.find((f) => f.id === "ffc-small-suv") || all[2];
-  if (searchStr.includes("innova") || searchStr.includes("crysta") || searchStr.includes("big-suv") || searchStr.includes("7-seater")) return all.find((f) => f.id === "ffc-big-suv") || all[3];
-  if (searchStr.includes("urbania")) return all.find((f) => f.id === "ffc-urbania") || all[5];
-  if (searchStr.includes("tempo") || searchStr.includes("traveller") || searchStr.includes("12-seater") || searchStr.includes("17-seater")) return all.find((f) => f.id === "ffc-tempo") || all[4];
-  if (searchStr.includes("bus") || searchStr.includes("coach")) return all.find((f) => f.id === "ffc-bus") || all[6];
-  if (searchStr.includes("bmw") || searchStr.includes("mercedes") || searchStr.includes("premium")) return all.find((f) => f.id === "ffc-premium") || all[7];
-
+  const matched =
+    matchVehicleToFareConfig(fleetIdOrSlug, all) ||
+    matchVehicleToFareConfig(fallbackSlugOrName, all);
+  if (matched) return matched;
   return all[0];
 }
 
@@ -326,12 +503,13 @@ export function saveFleetFareSettings(settings: FleetFareConfig[]): void {
   try {
     window.localStorage.setItem(STORAGE_KEY_FLEET_PRICING, JSON.stringify(stamped));
     window.dispatchEvent(new CustomEvent("fleetFareSettingsUpdated", { detail: stamped }));
+    window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
 
-    // Synchronize pricePerKm and priceFromLabel across all frontend fleet vehicles
+    // Synchronize pricePerKm and priceFromLabel across all frontend fleet vehicles using canonical matching
     const vehicles = getFleetVehicles();
     let hasChanges = false;
     const updatedVehicles = vehicles.map((v) => {
-      const match = stamped.find((s) => s.fleetId === v.id || s.vehicleSlug === v.slug);
+      const match = matchVehicleToFareConfig(v.slug || v.id || v.name, stamped);
       if (match && match.oneWayRatePerKm) {
         hasChanges = true;
         return {
@@ -411,8 +589,132 @@ export function calculateCalendarDays(startDateStr: string, returnDateStr?: stri
  */
 export function calculateFleetFare(input: FareCalculationInput): FareCalculationResult {
   const config = getFleetFareConfig(input.fleetId);
-  const routeDist = Math.max(1, Math.round(input.routeDistanceKm));
   const tollRate = config.tollRatePerKm ?? 1.5;
+
+  // Add-on options: Luggage Carrier ₹250, Pet Traveling ₹900
+  const luggageCarrier = Boolean(input.luggageCarrier);
+  const luggageCarrierCost = luggageCarrier ? 250 : 0;
+  const petTravelling = Boolean(input.petTravelling);
+  const petTravellingCost = petTravelling ? 900 : 0;
+  const addonsCost = luggageCarrierCost + petTravellingCost;
+
+  // 1. LOCAL RENTAL CALCULATION
+  if (input.tripType === "local") {
+    const pkgHours = input.localPackageHours || 4;
+    const pkgKm = input.localPackageKm || (pkgHours === 4 ? 40 : pkgHours === 8 ? 80 : 120);
+    const base4hPrice = config.localBasePrice || 2200;
+    
+    // Scale package base price cleanly according to hours/km if 8h or 12h
+    let baseFare = base4hPrice;
+    if (pkgHours === 8) {
+      baseFare = Math.round(base4hPrice * 1.6);
+    } else if (pkgHours >= 12) {
+      baseFare = Math.round(base4hPrice * 2.2);
+    }
+
+    const driverAllowance = config.localDriverAllowance || 400;
+    const tollAmount = null;
+    const tollDisplay = "Extra at actuals (Direct to Toll/Parking)";
+    const stateTaxAmount = null;
+    const stateTaxDisplay = "Extra at actuals where applicable";
+
+    const subtotal = baseFare + driverAllowance + addonsCost;
+    const gstPercentage = config.gstPercentage || 5;
+    const gstAmount = Math.round((subtotal * gstPercentage) / 100);
+    const totalEstimatedFare = subtotal + gstAmount;
+    const advanceAmount = Math.round(totalEstimatedFare * 0.15);
+    const balanceToDriver = totalEstimatedFare - advanceAmount;
+
+    return {
+      fleet: config,
+      tripType: "local",
+      pickup: input.pickup,
+      destination: input.destination || "Local City Use",
+      pickupDate: input.pickupDate,
+      dayCount: 1,
+      routeDistanceKm: pkgKm,
+      effectiveTripDistanceKm: pkgKm,
+      minimumBillingKm: pkgKm,
+      billableDistanceKm: pkgKm,
+      ratePerKm: config.localExtraKmRate || 18,
+      baseFare,
+      driverAllowance,
+      tollAmount,
+      tollDisplay,
+      stateTaxAmount,
+      stateTaxDisplay,
+      luggageCarrier,
+      luggageCarrierCost,
+      petTravelling,
+      petTravellingCost,
+      addonsCost,
+      packageName: `Local ${pkgHours}h / ${pkgKm}km Package`,
+      subtotal,
+      gstPercentage,
+      gstAmount,
+      totalEstimatedFare,
+      advanceAmount,
+      balanceToDriver,
+      routeDuration: `${pkgHours} hours package`,
+      calculatedAt: new Date().toISOString(),
+    };
+  }
+
+  // 2. AIRPORT TRANSFER CALCULATION
+  if (input.tripType === "airport") {
+    const pkgHours = 3;
+    const pkgKm = 30;
+    const baseFare = config.airportBasePrice || 1100;
+    const driverAllowance = 0; // Included in airport fixed fare
+    const tollAmount = null;
+    const tollDisplay = "Extra at actuals (Airport toll/parking)";
+    const stateTaxAmount = null;
+    const stateTaxDisplay = "Extra at actuals if interstate";
+
+    const subtotal = baseFare + addonsCost;
+    const gstPercentage = config.gstPercentage || 5;
+    const gstAmount = Math.round((subtotal * gstPercentage) / 100);
+    const totalEstimatedFare = subtotal + gstAmount;
+    const advanceAmount = Math.round(totalEstimatedFare * 0.15);
+    const balanceToDriver = totalEstimatedFare - advanceAmount;
+
+    return {
+      fleet: config,
+      tripType: "airport",
+      pickup: input.pickup,
+      destination: input.destination || "Airport",
+      pickupDate: input.pickupDate,
+      dayCount: 1,
+      routeDistanceKm: pkgKm,
+      effectiveTripDistanceKm: pkgKm,
+      minimumBillingKm: pkgKm,
+      billableDistanceKm: pkgKm,
+      ratePerKm: config.airportExtraKmRate || 28,
+      baseFare,
+      driverAllowance,
+      tollAmount,
+      tollDisplay,
+      stateTaxAmount,
+      stateTaxDisplay,
+      luggageCarrier,
+      luggageCarrierCost,
+      petTravelling,
+      petTravellingCost,
+      addonsCost,
+      packageName: `Airport Transfer (3h / 30km)`,
+      subtotal,
+      gstPercentage,
+      gstAmount,
+      totalEstimatedFare,
+      advanceAmount,
+      balanceToDriver,
+      routeDuration: "Airport Transfer (3 Hours)",
+      calculatedAt: new Date().toISOString(),
+    };
+  }
+
+  // 3. ONE-WAY TRIP CALCULATION
+  const routeDist = Math.max(1, Math.round(input.routeDistanceKm || 150));
 
   if (input.tripType === "one-way") {
     const minKm = config.oneWayMinimumKm;
@@ -429,12 +731,14 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
     const stateTaxAmount: number | null = null;
     const stateTaxDisplay = "Pay directly by customer (at actuals)";
 
-    // Taxable Subtotal (Base Fare + Driver Allowance + Toll)
-    const subtotal = baseFare + driverAllowance + tollAmount;
+    // Taxable Subtotal (Base Fare + Driver Allowance + Toll + Addons)
+    const subtotal = baseFare + driverAllowance + tollAmount + addonsCost;
 
     const gstPercentage = config.gstPercentage;
     const gstAmount = Math.round((subtotal * gstPercentage) / 100);
     const totalEstimatedFare = subtotal + gstAmount;
+    const advanceAmount = Math.round(totalEstimatedFare * 0.15);
+    const balanceToDriver = totalEstimatedFare - advanceAmount;
 
     return {
       fleet: config,
@@ -454,17 +758,24 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
       tollDisplay,
       stateTaxAmount,
       stateTaxDisplay,
+      luggageCarrier,
+      luggageCarrierCost,
+      petTravelling,
+      petTravellingCost,
+      addonsCost,
       subtotal,
       gstPercentage,
       gstAmount,
       totalEstimatedFare,
+      advanceAmount,
+      balanceToDriver,
       routeDuration: input.routeDuration,
       isInterstate: input.isInterstate,
       calculatedAt: new Date().toISOString(),
     };
   }
 
-  // ROUND TRIP CALCULATION
+  // 4. ROUND TRIP CALCULATION
   const dayCount = calculateCalendarDays(input.pickupDate, input.returnDate);
   const minKmPerDay = config.roundTripMinimumKmPerDay;
   const minimumBillingKm = dayCount * minKmPerDay;
@@ -483,12 +794,14 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
   const stateTaxAmount: number | null = null;
   const stateTaxDisplay = "Pay directly by customer (at actuals)";
 
-  // Taxable Subtotal (Base Fare + Driver Allowance + Toll)
-  const subtotal = baseFare + driverAllowance + tollAmount;
+  // Taxable Subtotal (Base Fare + Driver Allowance + Toll + Addons)
+  const subtotal = baseFare + driverAllowance + tollAmount + addonsCost;
 
   const gstPercentage = config.gstPercentage;
   const gstAmount = Math.round((subtotal * gstPercentage) / 100);
   const totalEstimatedFare = subtotal + gstAmount;
+  const advanceAmount = Math.round(totalEstimatedFare * 0.15);
+  const balanceToDriver = totalEstimatedFare - advanceAmount;
 
   return {
     fleet: config,
@@ -501,7 +814,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
     routeDistanceKm: routeDist,
     effectiveTripDistanceKm: roundTripRouteKm,
     minimumBillingKm,
-    billableDistanceKm: billableDistanceKm,
+    billableDistanceKm,
     ratePerKm: rate,
     baseFare,
     driverAllowance,
@@ -509,10 +822,17 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
     tollDisplay,
     stateTaxAmount,
     stateTaxDisplay,
+    luggageCarrier,
+    luggageCarrierCost,
+    petTravelling,
+    petTravellingCost,
+    addonsCost,
     subtotal,
     gstPercentage,
     gstAmount,
     totalEstimatedFare,
+    advanceAmount,
+    balanceToDriver,
     routeDuration: input.routeDuration,
     isInterstate: input.isInterstate,
     calculatedAt: new Date().toISOString(),
@@ -565,29 +885,42 @@ export function listFareCalculationLogs(): FareCalculationLog[] {
  * Generate formatted WhatsApp quotation text.
  */
 export function formatWhatsAppQuoteMessage(calc: FareCalculationResult): string {
-  const isOneWay = calc.tripType === "one-way";
+  const tripTypeLabel =
+    calc.tripType === "one-way"
+      ? "One Way"
+      : calc.tripType === "round-trip"
+      ? "Round Trip"
+      : calc.tripType === "local"
+      ? "Local Rental"
+      : "Airport Transfer";
+
   const lines: string[] = [
     `*SOUTH ZOOM TOURISM — FARE ESTIMATE*`,
     `🚗 *Vehicle:* ${calc.fleet.vehicleName}`,
-    `🛣 *Trip Type:* ${isOneWay ? "One Way" : "Round Trip"}`,
-    `📍 *From:* ${calc.pickup}`,
-    `🏁 *To:* ${calc.destination}`,
+    `🛣 *Trip Type:* ${tripTypeLabel}`,
+    `📍 *Pickup:* ${calc.pickup}`,
+    calc.destination ? `🏁 *Drop:* ${calc.destination}` : "",
     `📅 *Pickup Date:* ${calc.pickupDate}${calc.returnDate ? ` → Return: ${calc.returnDate}` : ""}`,
-    !isOneWay ? `⏱ *Trip Duration:* ${calc.dayCount} Days` : "",
-    calc.routeDuration ? `⏳ *Estimated Travel Time:* ${calc.routeDuration}` : "",
+    calc.tripType === "round-trip" ? `⏱ *Trip Duration:* ${calc.dayCount} Days` : "",
+    calc.routeDuration ? `⏳ *Estimated Travel / Duration:* ${calc.routeDuration}` : "",
     `\n*--- FARE BREAKDOWN ---*`,
-    `• *Actual Route Distance:* ${calc.effectiveTripDistanceKm} km ${!isOneWay ? `(${calc.routeDistanceKm} km × 2)` : ""}`,
-    `• *Minimum Billing Rule:* ${calc.minimumBillingKm} km ${!isOneWay ? `(${calc.dayCount} days × ${calc.fleet.roundTripMinimumKmPerDay} km/day)` : `(Min ${calc.fleet.oneWayMinimumKm} km)`}`,
-    `• *Billable Distance:* ${calc.billableDistanceKm} km`,
-    `• *Rate per KM:* ₹${calc.ratePerKm}/km`,
+    calc.packageName ? `• *Package:* ${calc.packageName}` : "",
+    calc.tripType === "one-way" || calc.tripType === "round-trip"
+      ? `• *Billable Distance:* ${calc.billableDistanceKm} km (@ ₹${calc.ratePerKm}/km)`
+      : `• *Base Allowance:* ${calc.billableDistanceKm} km`,
     `• *Base Fare:* ₹${calc.baseFare.toLocaleString("en-IN")}`,
-    `• *Driver Allowance:* ₹${calc.driverAllowance.toLocaleString("en-IN")} ${!isOneWay ? `(${calc.dayCount} days × ₹${calc.fleet.roundTripDriverAllowancePerDay})` : ""}`,
+    calc.driverAllowance > 0
+      ? `• *Driver Allowance:* ₹${calc.driverAllowance.toLocaleString("en-IN")}`
+      : "",
     `• *Toll:* ${calc.tollDisplay}`,
-    calc.stateTaxDisplay !== "Included / As applicable" ? `• *State Tax:* ${calc.stateTaxDisplay}` : "",
+    calc.luggageCarrier ? `• *Luggage Carrier (+₹250):* Added` : "",
+    calc.petTravelling ? `• *Pet Traveling (+₹900):* Added` : "",
     `• *Subtotal:* ₹${calc.subtotal.toLocaleString("en-IN")}`,
     `• *GST (${calc.gstPercentage}%):* ₹${calc.gstAmount.toLocaleString("en-IN")}`,
     `\n💰 *ESTIMATED TOTAL: ₹${calc.totalEstimatedFare.toLocaleString("en-IN")}*`,
-    `\n_Note: Fare shown is an estimated fare based on the selected route and vehicle. Toll charges are included. Parking, permit, and interstate taxes are billed at actuals where applicable._`,
+    `💳 *15% Advance to Pay:* ₹${calc.advanceAmount.toLocaleString("en-IN")}`,
+    `💵 *Balance (Pay to Driver):* ₹${calc.balanceToDriver.toLocaleString("en-IN")}`,
+    `\n_Note: Toll, parking, state tax at actuals where applicable. Complete advance payment online to lock vehicle._`,
   ].filter(Boolean);
 
   return lines.join("\n");

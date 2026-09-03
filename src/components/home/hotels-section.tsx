@@ -140,22 +140,25 @@ export function HotelsSection() {
                   </div>
                 </div>
 
-                <div className="mt-2.5 flex gap-1.5 pt-1">
-                  <Button asChild size="sm" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
-                    <AppLink href={`/hotels`}>Explore</AppLink>
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
-                    <a
-                      href={waLink(
-                        `Hi South Zoom Tourism, I'd like to check availability at ${h.name}, ${h.city} (${h.roomType}).`,
-                      )}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      WhatsApp
-                    </a>
-                  </Button>
-                </div>
+                {(() => {
+                  const citySlug = (h.city || "south-india")
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "");
+                  const detailHref = `/hotels/${citySlug}/${h.id}`;
+                  const bookHref = `/book/hotel?hotel=${encodeURIComponent(h.id)}&destination=${encodeURIComponent(h.city)}`;
+
+                  return (
+                    <div className="mt-2.5 flex gap-1.5 pt-1">
+                      <Button asChild size="sm" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3 bg-primary hover:bg-primary/90 text-primary-foreground">
+                        <AppLink href={bookHref}>Book now</AppLink>
+                      </Button>
+                      <Button asChild size="sm" variant="outline" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
+                        <AppLink href={detailHref}>View details</AppLink>
+                      </Button>
+                    </div>
+                  );
+                })()}
               </div>
             </li>
           ))}

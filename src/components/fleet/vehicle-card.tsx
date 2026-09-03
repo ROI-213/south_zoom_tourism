@@ -26,10 +26,14 @@ export function VehicleCard({
       setFareConfig(getFleetFareConfig(vehicle.slug || vehicle.id, vehicle.name));
     };
     window.addEventListener("fleetFareSettingsUpdated", handleUpdate);
-    return () => window.removeEventListener("fleetFareSettingsUpdated", handleUpdate);
+    window.addEventListener("fleetDataUpdated", handleUpdate);
+    return () => {
+      window.removeEventListener("fleetFareSettingsUpdated", handleUpdate);
+      window.removeEventListener("fleetDataUpdated", handleUpdate);
+    };
   }, [vehicle.id, vehicle.slug, vehicle.name]);
 
-  const displayRate = vehicle.pricePerKm || fareConfig?.oneWayRatePerKm || 14;
+  const displayRate = fareConfig?.oneWayRatePerKm || vehicle.pricePerKm || 14;
 
   return (
     <>
@@ -62,7 +66,7 @@ export function VehicleCard({
         <div className="flex flex-1 flex-col p-2.5 sm:p-5">
           <div className="flex items-start justify-between gap-1 sm:gap-2">
             <div className="min-w-0">
-              <Link to="/fleet/$slug" params={{ slug: vehicle.slug }}>
+              <Link to="/fleet/$slug" params={{ slug: vehicle.slug }} preload="intent">
                 <h3 className="text-xs sm:text-base font-bold group-hover:text-primary transition-colors truncate">{vehicle.name}</h3>
               </Link>
               <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{getVehicleCategoryLabel(vehicle.categorySlug)}</p>

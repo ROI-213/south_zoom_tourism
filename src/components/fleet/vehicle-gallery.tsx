@@ -97,7 +97,12 @@ export function VehicleGallery({ images }: { images: VehicleGalleryImage[] }) {
         </span>
       </div>
 
-      <ul className="mt-3 grid grid-cols-4 gap-2" aria-label="Vehicle photo thumbnails">
+      <ul
+        className={`mt-3 grid gap-2 ${
+          count <= 2 ? "grid-cols-2 max-w-sm" : count === 3 ? "grid-cols-3 max-w-md" : "grid-cols-4"
+        }`}
+        aria-label="Vehicle photo thumbnails"
+      >
         {images.map((image, index) => (
           <li key={image.id}>
             <button

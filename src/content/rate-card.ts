@@ -69,7 +69,7 @@ export const DEFAULT_RATE_CARD_CONFIG: RateCardConfig = {
   local: {
     baseHours: 4,
     baseKm: 40,
-    basePrice: 1200,
+    basePrice: 2200,
     extraKmRate: 18,
     extraHourRate: 200,
     driverAllowance: 400,
@@ -114,7 +114,7 @@ export const DEFAULT_RATE_CARD_CONFIG: RateCardConfig = {
   },
 };
 
-const STORAGE_KEY = "south_zoom_rate_card_config_v1";
+const STORAGE_KEY = "south_zoom_rate_card_config_v2";
 
 export function getRateCardConfig(): RateCardConfig {
   if (typeof window === "undefined") return DEFAULT_RATE_CARD_CONFIG;
@@ -126,6 +126,7 @@ export function getRateCardConfig(): RateCardConfig {
       ...DEFAULT_RATE_CARD_CONFIG,
       ...parsed,
       local: { ...DEFAULT_RATE_CARD_CONFIG.local, ...(parsed.local || {}) },
+      airport: { ...DEFAULT_RATE_CARD_CONFIG.airport, ...(parsed.airport || {}) },
       outstationOneWay: {
         ...DEFAULT_RATE_CARD_CONFIG.outstationOneWay,
         ...(parsed.outstationOneWay || {}),

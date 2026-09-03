@@ -25,6 +25,7 @@ import fleetUrbania from "@/assets/fleet-urbania-ka.jpg";
 import fleetBus from "@/assets/fleet-bus-ka.jpg";
 import fleetBmw from "@/assets/fleet-bmw-new.png";
 import { resolveVehicleImage } from "@/lib/image-map";
+import { matchVehicleToFareConfig } from "@/content/fleet-pricing";
 
 export type VehicleCategory = {
   id: string;
@@ -69,7 +70,7 @@ export const setDynamicFleetVehicles = (vehicles: FleetVehicle[]) => {
 };
 
 export function getStandardVehiclePrice(slugOrNameOrCategory: string, customPrice?: number): number {
-  if (customPrice && customPrice > 0 && customPrice !== 12) return customPrice;
+  if (typeof customPrice === 'number' && customPrice > 0) return customPrice;
   const lower = (slugOrNameOrCategory || "").toLowerCase();
   if (lower.includes("hatchback") || lower.includes("wagonr")) return 12;
   if (lower.includes("dzire") || lower.includes("sedan") || lower.includes("etios")) return 14;
@@ -79,7 +80,7 @@ export function getStandardVehiclePrice(slugOrNameOrCategory: string, customPric
   if (lower.includes("tempo") || lower.includes("traveller") || lower.includes("12-seater") || lower.includes("17-seater")) return 24;
   if (lower.includes("bus") || lower.includes("coach") || lower.includes("27-seater") || lower.includes("45-seater")) return 38;
   if (lower.includes("bmw") || lower.includes("mercedes") || lower.includes("premium")) return 45;
-  return customPrice && customPrice > 0 ? customPrice : 14;
+  return 14;
 }
 
 export function mapDbFleetToRecord(row: any, index: number = 0): FleetVehicle {
@@ -87,7 +88,21 @@ export function mapDbFleetToRecord(row: any, index: number = 0): FleetVehicle {
     (v) => v.id === row.id || v.slug === row.slug || v.name?.toLowerCase() === (row.name || '').toLowerCase()
   );
   const resolvedImg = resolveVehicleImage(row.image || existing?.image, row.slug || row.name || existing?.slug || existing?.name);
-  const rate = getStandardVehiclePrice(row.slug || row.name || row.category_slug || existing?.slug || existing?.name || '', row.price_per_km || existing?.pricePerKm);
+  
+  let liveRate: number | undefined;
+  if (isBrowser()) {
+    try {
+      const fareRaw = window.localStorage.getItem(STORAGE_KEY_FLEET_PRICING);
+      if (fareRaw) {
+        const configs = JSON.parse(fareRaw);
+        const match = matchVehicleToFareConfig(row.slug || row.id || row.name || existing?.slug || existing?.name, configs);
+        if (match?.oneWayRatePerKm) liveRate = match.oneWayRatePerKm;
+      }
+    } catch {}
+  }
+  const rate = typeof row.price_per_km === 'number' && row.price_per_km > 0
+    ? row.price_per_km
+    : liveRate || getStandardVehiclePrice(row.slug || row.name || row.category_slug || existing?.slug || existing?.name || '', existing?.pricePerKm);
 
   return {
     id: row.id || existing?.id || `fv-${row.slug || index}`,
@@ -446,37 +461,92 @@ export function getVehicleBySlug(slug: string): FleetVehicle | undefined {
 }
 
 const STORAGE_KEY_FLEET_DATA = "szt_fleet_data_v1";
+const STORAGE_KEY_FLEET_PRICING = "szt_fleet_fare_settings_v4";
 
 let memoryFleetVehicles: FleetVehicle[] = [...fleetVehicles];
 
 const isBrowser = () => typeof window !== "undefined";
 
 export function getFleetVehicles(): FleetVehicle[] {
-  if (dynamicFleetVehicles.length > 0) {
-    return dynamicFleetVehicles;
+  // Start with dynamic or default vehicles
+  let list = dynamicFleetVehicles.length > 0 ? [...dynamicFleetVehicles] : [...fleetVehicles];
+
+  if (isBrowser()) {
+    try {
+      // 1. Merge vehicle listing data overrides (e.g. from Edit Vehicle dialog)
+      const raw = window.localStorage.getItem(STORAGE_KEY_FLEET_DATA);
+      if (raw) {
+        const stored: Partial<FleetVehicle>[] = JSON.parse(raw);
+        list = list.map((def) => {
+          const found = stored.find((s) => s.id === def.id || s.slug === def.slug);
+          return found ? { ...def, ...found } : def;
+        });
+        // Include any newly created vehicles from admin
+        for (const s of stored) {
+          if (s.id && !list.some((item) => item.id === s.id || item.slug === s.slug)) {
+            list.push(s as FleetVehicle);
+          }
+        }
+      }
+
+      // 2. CRITICAL: Merge price from fleet fare settings (from All Fleet Pricing tab)
+      // If admin changed rates in the tariff manager, it MUST reflect in getFleetVehicles()
+      const fareRaw = window.localStorage.getItem(STORAGE_KEY_FLEET_PRICING);
+      if (fareRaw) {
+        const fareConfigs: any[] = JSON.parse(fareRaw);
+        list = list.map((v) => {
+          const fareMatch = matchVehicleToFareConfig(v.slug || v.id || v.name, fareConfigs);
+          if (fareMatch && fareMatch.oneWayRatePerKm) {
+            return {
+              ...v,
+              pricePerKm: fareMatch.oneWayRatePerKm,
+              priceFromLabel: `₹${fareMatch.oneWayRatePerKm} / km`,
+            };
+          }
+          return v;
+        });
+      }
+    } catch (err) {
+      console.error("Error loading fleet overrides:", err);
+    }
   }
-  if (!isBrowser()) return memoryFleetVehicles;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY_FLEET_DATA);
-    if (!raw) return memoryFleetVehicles;
-    const stored: Partial<FleetVehicle>[] = JSON.parse(raw);
-    const merged = fleetVehicles.map((def) => {
-      const found = stored.find((s) => s.id === def.id || s.slug === def.slug);
-      return found ? { ...def, ...found } : def;
-    });
-    memoryFleetVehicles = merged.sort((a, b) => a.order - b.order);
-    return memoryFleetVehicles;
-  } catch {
-    return memoryFleetVehicles;
-  }
+
+  memoryFleetVehicles = list.sort((a, b) => a.order - b.order);
+  return memoryFleetVehicles;
 }
 
 export function saveFleetVehicles(vehicles: FleetVehicle[]): void {
   memoryFleetVehicles = [...vehicles];
+  dynamicFleetVehicles = [...vehicles];
   if (!isBrowser()) return;
   try {
     window.localStorage.setItem(STORAGE_KEY_FLEET_DATA, JSON.stringify(vehicles));
     window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
+
+    // Also sync to Supabase in background if available
+    try {
+      import("@/lib/supabase").then(({ default: supabase }) => {
+        if (supabase) {
+          for (const v of vehicles) {
+            supabase
+              .from("fleets")
+              .update({
+                price_per_km: v.pricePerKm,
+                seats: v.seats,
+                luggage: v.luggage,
+                ac: v.ac,
+                fuel: v.fuel,
+                is_published: v.published,
+                is_featured: v.featured,
+              })
+              .eq("slug", v.slug)
+              .then(() => {});
+          }
+        }
+      });
+    } catch {
+      // ignore
+    }
   } catch {
     // ignore storage errors
   }
@@ -484,6 +554,7 @@ export function saveFleetVehicles(vehicles: FleetVehicle[]): void {
 
 export function resetFleetVehicles(): FleetVehicle[] {
   memoryFleetVehicles = [...fleetVehicles];
+  dynamicFleetVehicles = [];
   if (isBrowser()) {
     window.localStorage.removeItem(STORAGE_KEY_FLEET_DATA);
     window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
@@ -503,6 +574,27 @@ export function updateFleetVehicle(
   const index = vehicles.findIndex((v) => v.id === id);
   if (index === -1) return undefined;
   vehicles[index] = { ...vehicles[index], ...updates };
+
+  // If pricePerKm was updated, also update fare settings so auto fare calculator and cards match
+  if (updates.pricePerKm && isBrowser()) {
+    try {
+      const fareRaw = window.localStorage.getItem(STORAGE_KEY_FLEET_PRICING);
+      if (fareRaw) {
+        const fareConfigs: any[] = JSON.parse(fareRaw);
+        const fareIdx = fareConfigs.findIndex(
+          (f) => f.fleetId === id || f.vehicleSlug === vehicles[index].slug || f.id === `ffc-${vehicles[index].slug}`
+        );
+        if (fareIdx !== -1) {
+          fareConfigs[fareIdx].oneWayRatePerKm = updates.pricePerKm;
+          window.localStorage.setItem(STORAGE_KEY_FLEET_PRICING, JSON.stringify(fareConfigs));
+          window.dispatchEvent(new CustomEvent("fleetFareSettingsUpdated", { detail: fareConfigs }));
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   saveFleetVehicles(vehicles);
   return vehicles[index];
 }

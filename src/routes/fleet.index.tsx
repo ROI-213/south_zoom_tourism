@@ -153,7 +153,11 @@ function FleetPage() {
 
     const handleUpdate = () => setFleetDataVersion((v) => v + 1);
     window.addEventListener("fleetDataUpdated", handleUpdate);
-    return () => window.removeEventListener("fleetDataUpdated", handleUpdate);
+    window.addEventListener("fleetFareSettingsUpdated", handleUpdate);
+    return () => {
+      window.removeEventListener("fleetDataUpdated", handleUpdate);
+      window.removeEventListener("fleetFareSettingsUpdated", handleUpdate);
+    };
   }, []);
 
   useEffect(() => {

@@ -100,8 +100,8 @@ export function VehicleBookingForm({
 
   const addonTotal =
     (newModel ? 200 : 0) +
-    (luggageCarrier ? 200 : 0) +
-    (petTravelling ? 500 : 0) +
+    (luggageCarrier ? 250 : 0) +
+    (petTravelling ? 900 : 0) +
     (spokenLang ? 200 : 0);
 
   const schema = useMemo(() => buildBookingSchema(vehicle.seats), [vehicle.seats]);
@@ -160,9 +160,10 @@ export function VehicleBookingForm({
 
   const availability = checkAvailability(detail, vehicle, pickupDate, returnDate);
 
-  // Compute 15% advance amount
-  const estimatedFare = prefillFare || vehicle.pricePerKm * 150 + 300 + 225;
-  const advanceAmount = prefillAdvance || Math.round(estimatedFare * 0.15);
+  // Compute 15% advance amount with add-on charges included
+  const baseEstimatedFare = prefillFare || vehicle.pricePerKm * 150 + 300 + 225;
+  const estimatedFare = baseEstimatedFare + addonTotal;
+  const advanceAmount = prefillAdvance ? prefillAdvance + Math.round(addonTotal * 0.15) : Math.round(estimatedFare * 0.15);
   const balanceToDriver = estimatedFare - advanceAmount;
 
   const onSubmit = async (values: BookingValues) => {
@@ -205,8 +206,8 @@ export function VehicleBookingForm({
       `Passengers: ${values.passengers}`,
       `Trip type: ${values.tripType}`,
       newModel ? `Add-on: 2023 above model (+₹200)` : null,
-      luggageCarrier ? `Add-on: Luggage carrier required (+₹200)` : null,
-      petTravelling ? `Add-on: Pet travelling (+₹500)` : null,
+      luggageCarrier ? `Add-on: Luggage carrier required (+₹250)` : null,
+      petTravelling ? `Add-on: Pet travelling (+₹900)` : null,
       spokenLang ? `Add-on Driver Language: ${spokenLang} (+₹200)` : null,
       addonTotal > 0 ? `Total Add-ons Extra: +₹${addonTotal}` : null,
       values.request ? `Special request: ${values.request}` : null,
@@ -214,8 +215,8 @@ export function VehicleBookingForm({
     ].filter(Boolean);
 
     // Create Trip Ticket Data
-    const totalEst = prefillFare || (vehicle.minKmPerDay * vehicle.pricePerKm * 2) || 4500;
-    const adv = advanceAmount || Math.round(totalEst * 0.15);
+    const totalEst = estimatedFare;
+    const adv = advanceAmount;
 
     const ticket: TripTicketData = {
       bookingNumber: ref,
@@ -239,8 +240,8 @@ export function VehicleBookingForm({
       notes: [
         values.request,
         newModel ? '2023+ Model (+₹200)' : null,
-        luggageCarrier ? 'Luggage carrier (+₹200)' : null,
-        petTravelling ? 'Pet travelling (+₹500)' : null,
+        luggageCarrier ? 'Luggage carrier (+₹250)' : null,
+        petTravelling ? 'Pet travelling (+₹900)' : null,
         spokenLang ? `Driver language: ${spokenLang} (+₹200)` : null,
       ].filter(Boolean).join(', '),
     };
@@ -433,7 +434,7 @@ export function VehicleBookingForm({
               onChange={(e) => setLuggageCarrier(e.target.checked)}
               className="h-4 w-4 rounded accent-primary"
             />
-            <span>Luggage carrier required (+₹200/-)</span>
+            <span>Luggage carrier required (+₹250/-)</span>
           </label>
 
           <label className="flex items-center gap-2 cursor-pointer select-none rounded-lg border border-border/60 p-2 hover:bg-muted/30">
@@ -443,7 +444,7 @@ export function VehicleBookingForm({
               onChange={(e) => setPetTravelling(e.target.checked)}
               className="h-4 w-4 rounded accent-primary"
             />
-            <span>Pet travelling (+₹500/-)</span>
+            <span>Pet travelling (+₹900/-)</span>
           </label>
         </div>
 

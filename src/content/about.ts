@@ -295,7 +295,7 @@ export const achievementsBlock = {
 };
 
 export const officeGalleryBlock = {
-  visible: true,
+  visible: false,
   heading: "Inside our office",
   items: [
     { id: "g-1", order: 1, visible: true, image: office1, alt: "South Zoom Tourism travel desk with staff at work" },
