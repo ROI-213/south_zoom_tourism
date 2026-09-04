@@ -100,9 +100,12 @@ export function mapDbFleetToRecord(row: any, index: number = 0): FleetVehicle {
       }
     } catch {}
   }
-  const rate = typeof row.price_per_km === 'number' && row.price_per_km > 0
-    ? row.price_per_km
-    : liveRate || getStandardVehiclePrice(row.slug || row.name || row.category_slug || existing?.slug || existing?.name || '', existing?.pricePerKm);
+  const rawPrice = typeof row.price_per_km === 'number' 
+    ? row.price_per_km 
+    : (row.price_per_km ? parseFloat(row.price_per_km) : NaN);
+  const rate = !isNaN(rawPrice) && rawPrice > 0
+    ? rawPrice
+    : (liveRate || getStandardVehiclePrice(row.slug || row.name || row.category_slug || existing?.slug || existing?.name || '', existing?.pricePerKm));
 
   return {
     id: row.id || existing?.id || `fv-${row.slug || index}`,
@@ -116,20 +119,24 @@ export function mapDbFleetToRecord(row: any, index: number = 0): FleetVehicle {
     ac: row.ac !== false,
     fuel: row.fuel || existing?.fuel || 'Diesel',
     pricePerKm: rate,
-    priceFromLabel: `₹${rate} / km`,
-    available: true,
-    availabilityText: 'Available today',
-    allowEnquiryWhenUnavailable: true,
-    tripTypes: existing?.tripTypes || ['local', 'outstation', 'airport'],
-    features: existing?.features || [
-      'AC with individual vents',
-      'KA registered yellow board',
-      'SZT verified fleet sticker',
-      'Professional chauffeur',
-    ],
+    priceFromLabel: row.price_from_label || `₹${rate} / km`,
+    available: row.is_available !== false,
+    availabilityText: row.availability_text || 'Available today',
+    allowEnquiryWhenUnavailable: row.allow_enquiry_when_unavailable !== false,
+    tripTypes: Array.isArray(row.trip_types) && row.trip_types.length > 0
+      ? row.trip_types
+      : (existing?.tripTypes || ['local', 'outstation', 'airport']),
+    features: Array.isArray(row.features) && row.features.length > 0
+      ? row.features
+      : (existing?.features || [
+          'AC with individual vents',
+          'KA registered yellow board',
+          'SZT verified fleet sticker',
+          'Professional chauffeur',
+        ]),
     image: resolvedImg,
     imageAlt: row.image_alt || existing?.imageAlt || row.name || '',
-    order: row.display_order || existing?.order || index + 1,
+    order: row.display_order ?? (existing?.order || index + 1),
     published: row.is_published !== false,
     featured: row.is_featured !== false,
     popular: row.popularity || existing?.popular || 80,
@@ -530,17 +537,32 @@ export function saveFleetVehicles(vehicles: FleetVehicle[]): void {
           for (const v of vehicles) {
             supabase
               .from("fleets")
-              .update({
-                price_per_km: v.pricePerKm,
+              .upsert({
+                id: v.id,
+                slug: v.slug,
+                name: v.name,
+                brand: v.brand,
+                model: v.model,
+                category_slug: v.categorySlug,
                 seats: v.seats,
                 luggage: v.luggage,
                 ac: v.ac,
                 fuel: v.fuel,
+                price_per_km: v.pricePerKm,
+                price_from_label: v.priceFromLabel || `₹${v.pricePerKm} / km`,
+                image: typeof v.image === 'string' ? v.image : undefined,
+                image_alt: v.imageAlt || `${v.name} cab`,
+                display_order: v.order,
                 is_published: v.published,
                 is_featured: v.featured,
-              })
-              .eq("slug", v.slug)
-              .then(() => {});
+                popularity: v.popular,
+                features: v.features,
+                trip_types: v.tripTypes,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: "id" })
+              .then(({ error }) => {
+                if (error) console.error("Error upserting fleet vehicle to Supabase:", error);
+              });
           }
         }
       });
@@ -550,6 +572,26 @@ export function saveFleetVehicles(vehicles: FleetVehicle[]): void {
   } catch {
     // ignore storage errors
   }
+}
+
+export async function fetchFleetVehicles(): Promise<FleetVehicle[]> {
+  try {
+    const { default: supabase } = await import("@/lib/supabase");
+    if (!supabase) return getFleetVehicles();
+    const { data, error } = await supabase.from("fleets").select("*").order("display_order");
+    if (!error && data && data.length > 0) {
+      const mapped = data.map(mapDbFleetToRecord);
+      setDynamicFleetVehicles(mapped);
+      if (isBrowser()) {
+        window.localStorage.setItem(STORAGE_KEY_FLEET_DATA, JSON.stringify(mapped));
+        window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
+      }
+      return mapped;
+    }
+  } catch (err) {
+    console.error("fetchFleetVehicles error:", err);
+  }
+  return getFleetVehicles();
 }
 
 export function resetFleetVehicles(): FleetVehicle[] {
@@ -609,6 +651,17 @@ export function addFleetVehicle(vehicle: FleetVehicle): FleetVehicle[] {
 export function deleteFleetVehicle(id: string): FleetVehicle[] {
   const vehicles = getFleetVehicles().filter((v) => v.id !== id);
   saveFleetVehicles(vehicles);
+  if (isBrowser()) {
+    try {
+      import("@/lib/supabase").then(({ default: supabase }) => {
+        if (supabase) {
+          supabase.from("fleets").delete().eq("id", id).then(({ error }) => {
+            if (error) console.error("Error deleting fleet vehicle from Supabase:", error);
+          });
+        }
+      });
+    } catch {}
+  }
   return vehicles;
 }
 

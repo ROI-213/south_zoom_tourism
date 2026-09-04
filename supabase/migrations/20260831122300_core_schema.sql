@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS public.drivers (
   experience_years INTEGER,
   languages TEXT[],
   assigned_fleet_id TEXT REFERENCES public.fleets(id) ON DELETE SET NULL,
+  cab_type TEXT,
+  car_number TEXT,
   status TEXT NOT NULL DEFAULT 'Available' CHECK (status IN ('Available', 'Assigned', 'On Trip', 'Leave', 'Inactive')),
   rating NUMERIC(3,2) DEFAULT 5.00,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

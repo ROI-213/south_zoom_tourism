@@ -3,7 +3,7 @@ import { Users, Briefcase, Snowflake, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { featuredFleet, waLink } from "@/content/site";
-import { getFleetVehicles, getVehicleCategoryLabel, type FleetVehicle } from "@/content/fleet";
+import { getFleetVehicles, fetchFleetVehicles, getVehicleCategoryLabel, type FleetVehicle } from "@/content/fleet";
 import { SectionHeader, ViewAllMobile } from "@/components/common/section-header";
 import { AppLink } from "@/components/common/app-link";
 
@@ -20,6 +20,7 @@ export function FleetSection() {
 
   useEffect(() => {
     loadVehicles();
+    fetchFleetVehicles().then(() => loadVehicles()).catch(console.error);
     const handleUpdate = () => loadVehicles();
     window.addEventListener("fleetDataUpdated", handleUpdate);
     window.addEventListener("fleetFareSettingsUpdated", handleUpdate);

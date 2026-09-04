@@ -18,6 +18,7 @@ import {
   getPublishedVehicles,
   getVehicleBySlug,
   getVehicleCategoryLabel,
+  fetchFleetVehicles,
   tripTypeOptions,
   type FleetVehicle,
 } from "@/content/fleet";
@@ -172,6 +173,13 @@ function VehicleDetailPage() {
   const [fareConfig, setFareConfig] = useState<FleetFareConfig>(() => getFleetFareConfig(initialVehicle.id));
 
   useEffect(() => {
+    fetchFleetVehicles().then(() => {
+      const updated = getVehicleBySlug(initialVehicle.slug);
+      if (updated) setVehicle(updated);
+      setDetail(getVehicleDetail(initialVehicle.slug));
+      setFareConfig(getFleetFareConfig(initialVehicle.id));
+    }).catch(console.error);
+
     const handleUpdate = () => {
       const updated = getVehicleBySlug(initialVehicle.slug);
       if (updated) setVehicle(updated);

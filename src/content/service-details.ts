@@ -388,8 +388,9 @@ export function getServiceDetail(service: Service): ServiceDetail {
     process: override.process ?? commonProcess,
     gallery: override.gallery ?? commonGallery.slice(0, 3),
     pricing:
-      override.pricing ??
-      { showRates: false, note: "Rates for this service are shared on enquiry.", rows: [] },
+      service.pricingRows && service.pricingRows.length > 0
+        ? { showRates: service.showPricing, note: override.pricing?.note || "Quoted rates include fuel and driver charges. Tolls and permits extra at actuals.", rows: service.pricingRows }
+        : (override.pricing ?? { showRates: false, note: "Rates for this service are shared on enquiry.", rows: [] }),
     terms: override.terms ?? commonTerms,
     faqIds: override.faqIds ?? servicesFaqBlock.items.slice(0, 4).map((f) => f.id),
     faqs: override.faqs ?? [],

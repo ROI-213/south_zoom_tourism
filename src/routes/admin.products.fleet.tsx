@@ -70,6 +70,7 @@ import {
 } from '@/content/fleet-pricing';
 import {
   getFleetVehicles,
+  fetchFleetVehicles,
   addFleetVehicle,
   updateFleetVehicle,
   deleteFleetVehicle,
@@ -252,6 +253,13 @@ function FleetProductPage() {
 
   useEffect(() => {
     loadFleetAndPrices();
+    // Fetch live vehicles from Supabase so admin sees latest DB data immediately
+    fetchFleetVehicles().then((vehicles) => {
+      if (vehicles && vehicles.length > 0) {
+        setFleetList(vehicles);
+      }
+    }).catch(console.error);
+
     const handleData = () => loadFleetAndPrices();
     const handleFare = () => loadFleetAndPrices();
     window.addEventListener('fleetDataUpdated', handleData);
@@ -535,24 +543,24 @@ function FleetProductPage() {
     deleteFleetVehicle(id);
     toast.success('Vehicle deleted');
     setDeleteId(null);
-    loadFleet();
+    loadFleetAndPrices();
   }
 
   function handleTogglePublish(v: FleetVehicle) {
     updateFleetVehicle(v.id, { published: !v.published });
-    loadFleet();
+    loadFleetAndPrices();
     toast.success(v.published ? 'Vehicle hidden from public' : 'Vehicle published');
   }
 
   function handleToggleFeatured(v: FleetVehicle) {
     updateFleetVehicle(v.id, { featured: !v.featured });
-    loadFleet();
+    loadFleetAndPrices();
     toast.success(v.featured ? 'Removed from featured' : 'Marked as featured');
   }
 
   function handleReset() {
     resetFleetVehicles();
-    loadFleet();
+    loadFleetAndPrices();
     setResetConfirm(false);
     toast.success('Fleet reset to defaults');
   }

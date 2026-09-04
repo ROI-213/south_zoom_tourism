@@ -129,17 +129,17 @@ function DriversPage() {
   async function fetch() {
     setLoading(true);
     try {
-      let q = supabase.from('drivers').select('*').order('name');
-      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
-      const { data, error } = await q;
-      if (error || !data || data.length === 0) {
+      const { data, error } = await supabase.from('drivers').select('*').order('name');
+      if (error) {
+        console.warn('Supabase fetch failed, falling back to local cache:', error);
         const local = localStorage.getItem('szt_admin_drivers_v2');
         setDrivers(local ? JSON.parse(local) : DEFAULT_MOCK_DRIVERS);
       } else {
-        setDrivers(data);
-        localStorage.setItem('szt_admin_drivers_v2', JSON.stringify(data));
+        setDrivers(data || []);
+        localStorage.setItem('szt_admin_drivers_v2', JSON.stringify(data || []));
       }
-    } catch {
+    } catch (err) {
+      console.warn('Network error during fetch:', err);
       const local = localStorage.getItem('szt_admin_drivers_v2');
       setDrivers(local ? JSON.parse(local) : DEFAULT_MOCK_DRIVERS);
     } finally {
@@ -147,54 +147,86 @@ function DriversPage() {
     }
   }
 
-  useEffect(() => { fetch(); }, [statusFilter]);
+  useEffect(() => {
+    fetch();
+  }, []);
 
-  const filtered = drivers.filter(
-    d =>
+  const filtered = drivers.filter(d => {
+    const matchesStatus = statusFilter === 'all' || d.status === statusFilter;
+    const matchesSearch =
       !search ||
-      d.name.toLowerCase().includes(search.toLowerCase()) ||
-      d.phone.includes(search) ||
+      d.name?.toLowerCase().includes(search.toLowerCase()) ||
+      d.phone?.includes(search) ||
       (d.cab_type && d.cab_type.toLowerCase().includes(search.toLowerCase())) ||
-      (d.car_number && d.car_number.toLowerCase().includes(search.toLowerCase()))
-  );
+      (d.car_number && d.car_number.toLowerCase().includes(search.toLowerCase()));
+    return matchesStatus && matchesSearch;
+  });
 
   async function handleSave() {
-    if (!form.name || !form.phone) { toast.error('Name and phone required'); return; }
+    if (!form.name || !form.phone) {
+      toast.error('Name and phone required');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
-        ...form,
-        experience_years: +form.experience_years,
-        license_expiry: form.license_expiry || null,
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        whatsapp: form.whatsapp?.trim() || null,
+        email: form.email?.trim() || null,
         cab_type: form.cab_type || null,
         car_number: form.car_number ? form.car_number.toUpperCase().trim() : null,
+        license_number: form.license_number?.trim() || null,
+        license_expiry: form.license_expiry || null,
+        experience_years: form.experience_years ? +form.experience_years : 0,
+        status: form.status || 'Available',
       };
 
       if (editId) {
         const { error } = await supabase.from('drivers').update(payload).eq('id', editId);
-        setDrivers(prev => {
-          const updated = prev.map(d => (d.id === editId ? { ...d, ...payload } : d));
-          localStorage.setItem('szt_admin_drivers_v2', JSON.stringify(updated));
-          return updated;
-        });
+        if (error) {
+          console.warn('Supabase update warning, falling back to local state:', error);
+          setDrivers(prev => {
+            const updated = prev.map(d => (d.id === editId ? { ...d, ...payload } : d));
+            localStorage.setItem('szt_admin_drivers_v2', JSON.stringify(updated));
+            return updated;
+          });
+        }
         toast.success('Driver updated');
       } else {
-        const newRecord: Driver = {
-          ...payload,
-          id: `drv-${Date.now()}`,
-          created_at: new Date().toISOString(),
-        };
-        const { error } = await supabase.from('drivers').insert(payload);
-        setDrivers(prev => {
-          const updated = [newRecord, ...prev];
-          localStorage.setItem('szt_admin_drivers_v2', JSON.stringify(updated));
-          return updated;
-        });
-        toast.success('Driver added');
+        const { data, error } = await supabase.from('drivers').insert(payload).select().single();
+        if (error) {
+          console.warn('Supabase insert warning, saving offline:', error);
+          const newRecord: Driver = {
+            ...payload,
+            id: `drv-${Date.now()}`,
+            created_at: new Date().toISOString(),
+          };
+          setDrivers(prev => {
+            const updated = [newRecord, ...prev];
+            localStorage.setItem('szt_admin_drivers_v2', JSON.stringify(updated));
+            return updated;
+          });
+          toast.success('Driver added');
+        } else if (data) {
+          setDrivers(prev => {
+            const updated = [data, ...prev.filter(d => d.id !== data.id)];
+            localStorage.setItem('szt_admin_drivers_v2', JSON.stringify(updated));
+            return updated;
+          });
+          toast.success('Driver added');
+        }
       }
-      setDialogOpen(false); setForm(emptyForm); setEditId(null); fetch();
-    } catch (e: any) { toast.error(e.message); }
-    finally { setSaving(false); }
+      setDialogOpen(false);
+      setForm(emptyForm);
+      setEditId(null);
+      await fetch();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || 'Failed to save driver');
+    } finally {
+      setSaving(false);
+    }
   }
 
   const counts = {
@@ -439,7 +471,10 @@ function DriversPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
-                await supabase.from('drivers').delete().eq('id', deleteId!);
+                const { error } = await supabase.from('drivers').delete().eq('id', deleteId!);
+                if (error) {
+                  console.warn('Supabase delete error:', error);
+                }
                 setDrivers(prev => {
                   const updated = prev.filter(d => d.id !== deleteId);
                   localStorage.setItem('szt_admin_drivers_v2', JSON.stringify(updated));
@@ -447,7 +482,7 @@ function DriversPage() {
                 });
                 toast.success('Driver deleted');
                 setDeleteId(null);
-                fetch();
+                await fetch();
               }}
               className="bg-red-500 hover:bg-red-600"
             >

@@ -51,6 +51,7 @@ export type Service = {
   order: number;
   published: boolean;
   featured: boolean;
+  pricingRows?: any[];
 };
 
 // Dynamic cache for admin-managed services
@@ -66,18 +67,7 @@ export function mapDbServiceToRecord(row: any, index: number = 0): Service {
   const existing = services.find((s) => {
     const sSlug = s.slug.toLowerCase();
     const sTitle = s.title.toLowerCase();
-    return (
-      sSlug === rowSlug ||
-      sTitle === rowName ||
-      (rowSlug.includes('wedding') && sSlug.includes('wedding')) ||
-      (rowSlug.includes('hotel') && sSlug.includes('hotel')) ||
-      (rowSlug.includes('outstation') && sSlug.includes('outstation')) ||
-      (rowSlug.includes('airport') && sSlug.includes('airport')) ||
-      (rowSlug.includes('corporate') && sSlug.includes('corporate')) ||
-      (rowSlug.includes('group') && sSlug.includes('group')) ||
-      (rowSlug.includes('pilgrim') && sSlug.includes('pilgrim')) ||
-      (rowSlug.includes('local') && sSlug.includes('local'))
-    );
+    return sSlug === rowSlug || sTitle === rowName;
   });
 
   const isWedding = rowSlug.includes('wedding') || rowName.includes('wedding');
@@ -95,23 +85,39 @@ export function mapDbServiceToRecord(row: any, index: number = 0): Service {
     ? '₹1,800 / night'
     : existing?.priceFrom || '₹14 / km';
 
+  let parsedPricingRows: any[] | undefined = undefined;
+  if (row.pricing_rows) {
+    if (typeof row.pricing_rows === 'string') {
+      try {
+        parsedPricingRows = JSON.parse(row.pricing_rows);
+      } catch {}
+    } else if (Array.isArray(row.pricing_rows)) {
+      parsedPricingRows = row.pricing_rows;
+    }
+  }
+
   return {
     id: row.id || existing?.id || `srv-${index}`,
     slug: row.slug || existing?.slug || (row.name || '').toLowerCase().replace(/\s+/g, '-'),
-    categorySlug: isHotel ? 'stays' : isWedding ? 'business' : existing?.categorySlug || 'cabs',
+    categorySlug: row.category_slug || (isHotel ? 'stays' : isWedding ? 'business' : existing?.categorySlug || 'cabs'),
     title: row.name || existing?.title || '',
-    icon: isHotel ? 'BedDouble' : isWedding ? 'HeartHandshake' : row.icon || existing?.icon || 'Car',
+    icon: row.icon || (isHotel ? 'BedDouble' : isWedding ? 'HeartHandshake' : existing?.icon || 'Car'),
     shortDescription: row.short_description || existing?.shortDescription || '',
     detailDescription: row.full_description || existing?.detailDescription || row.short_description || '',
     image: row.main_image || defaultImage,
-    imageAlt: row.name || existing?.imageAlt || '',
-    features: existing?.features || (isHotel ? ['Inspected Partner Resorts', 'Budget to 5-Star Stays', 'Verified Cleanliness'] : isWedding ? ['Decorated Bridal Cars', 'Mercedes, BMW & Audi', 'Uniformed Chauffeurs'] : ['Verified Chauffeurs', 'Transparent Pricing', '24x7 Support']),
-    benefits: existing?.benefits || (isHotel ? ['Negotiated Partner Rates', 'Free Cancellation Options', 'Instant Confirmation'] : isWedding ? ['Uniformed Chauffeurs', 'Punctual VIP Arrivals', 'Full Day Wedding Hire'] : ['No surge pricing', 'Clean vehicles', 'GST Invoices']),
-    priceFrom: defaultPrice,
-    showPricing: true,
+    imageAlt: row.image_alt || row.name || existing?.imageAlt || '',
+    features: row.features && Array.isArray(row.features) && row.features.length > 0
+      ? row.features
+      : existing?.features || ['Verified Chauffeurs', 'Transparent Pricing', '24x7 Support'],
+    benefits: row.benefits && Array.isArray(row.benefits) && row.benefits.length > 0
+      ? row.benefits
+      : existing?.benefits || ['No surge pricing', 'Clean vehicles', 'GST Invoices'],
+    priceFrom: row.price_from || existing?.priceFrom || defaultPrice,
+    showPricing: row.show_pricing !== undefined ? row.show_pricing : true,
     order: row.display_order || existing?.order || index + 1,
     published: row.active !== false,
-    featured: existing?.featured || false,
+    featured: row.featured !== undefined ? row.featured : (existing?.featured || false),
+    pricingRows: parsedPricingRows,
   };
 }
 
