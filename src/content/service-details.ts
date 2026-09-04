@@ -381,19 +381,37 @@ export function getServiceDetail(service: Service): ServiceDetail {
     .slice(0, 3)
     .map((s) => s.id);
 
+  const finalModules = (service.modules && service.modules.length > 0)
+    ? service.modules
+    : (override.modules ?? []);
+
+  const finalProcess = (service.processSteps && service.processSteps.length > 0)
+    ? service.processSteps
+    : (override.process ?? commonProcess);
+
+  const finalTerms = (service.terms && service.terms.length > 0)
+    ? service.terms
+    : (override.terms ?? commonTerms);
+
+  const finalFaqs = (service.faqs && service.faqs.length > 0)
+    ? service.faqs
+    : (override.faqs ?? []);
+
+  const pricingNote = service.pricingNote || override.pricing?.note || "Quoted rates include fuel and driver charges. Tolls and permits extra at actuals.";
+
   return {
     serviceId: service.id,
     sections: override.sections ?? defaultSections,
-    modules: override.modules ?? [],
-    process: override.process ?? commonProcess,
+    modules: finalModules,
+    process: finalProcess,
     gallery: override.gallery ?? commonGallery.slice(0, 3),
     pricing:
       service.pricingRows && service.pricingRows.length > 0
-        ? { showRates: service.showPricing, note: override.pricing?.note || "Quoted rates include fuel and driver charges. Tolls and permits extra at actuals.", rows: service.pricingRows }
-        : (override.pricing ?? { showRates: false, note: "Rates for this service are shared on enquiry.", rows: [] }),
-    terms: override.terms ?? commonTerms,
+        ? { showRates: service.showPricing, note: pricingNote, rows: service.pricingRows }
+        : (override.pricing ?? { showRates: false, note: pricingNote, rows: [] }),
+    terms: finalTerms,
     faqIds: override.faqIds ?? servicesFaqBlock.items.slice(0, 4).map((f) => f.id),
-    faqs: override.faqs ?? [],
+    faqs: finalFaqs,
     relatedIds: override.relatedIds ?? related,
   };
 }

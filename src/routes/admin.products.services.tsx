@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,10 +46,19 @@ import {
   Tag,
   Star,
   Layers,
+  Upload,
+  HelpCircle,
+  ShieldCheck,
+  ArrowRight,
+  FileQuestion,
+  ListOrdered,
 } from 'lucide-react';
 import { serviceCategories, setDynamicServices, mapDbServiceToRecord } from '@/content/services';
 
 export const Route = createFileRoute('/admin/products/services')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    edit: typeof search.edit === 'string' ? search.edit : undefined,
+  }),
   component: ServicesAdminPage,
 });
 
@@ -59,6 +68,18 @@ export type PricingRowItem = {
   unit: string;
   price: string;
   note?: string;
+};
+
+export type ProcessStepItem = {
+  id: string;
+  title: string;
+  description: string;
+};
+
+export type FaqItem = {
+  id: string;
+  question: string;
+  answer: string;
 };
 
 export type AdminService = {
@@ -79,6 +100,11 @@ export type AdminService = {
   features?: string[];
   benefits?: string[];
   pricing_rows?: PricingRowItem[];
+  pricing_note?: string;
+  process_steps?: ProcessStepItem[];
+  terms?: string[];
+  faqs?: FaqItem[];
+  modules?: any[];
   created_at?: string;
 };
 
@@ -99,6 +125,11 @@ const emptyForm: {
   features: string[];
   benefits: string[];
   pricing_rows: PricingRowItem[];
+  pricing_note: string;
+  process_steps: ProcessStepItem[];
+  terms: string[];
+  faqs: FaqItem[];
+  modules: any[];
 } = {
   name: '',
   slug: '',
@@ -116,6 +147,11 @@ const emptyForm: {
   features: [],
   benefits: [],
   pricing_rows: [],
+  pricing_note: 'Quoted fares include fuel, driver allowance, and vehicle maintenance. Tolls and state taxes at actuals.',
+  process_steps: [],
+  terms: [],
+  faqs: [],
+  modules: [],
 };
 
 const PRESET_IMAGES = [
@@ -132,6 +168,7 @@ const PRESET_IMAGES = [
 const PRESET_ICONS = ['🚕', '🛣️', '✈️', '💼', '👥', '🛕', '💐', '🏨', '✨', '🎫', '🛟', 'Car', 'Route', 'Plane', 'Briefcase', 'Users', 'Landmark', 'HeartHandshake', 'BedDouble', 'Sparkles', 'Ticket', 'LifeBuoy'];
 
 function ServicesAdminPage() {
+  const searchParams = Route.useSearch();
   const [services, setServices] = useState<AdminService[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -146,6 +183,12 @@ function ServicesAdminPage() {
   // Input states for bullet points & rate rows
   const [newFeature, setNewFeature] = useState('');
   const [newBenefit, setNewBenefit] = useState('');
+  const [newStepTitle, setNewStepTitle] = useState('');
+  const [newStepDesc, setNewStepDesc] = useState('');
+  const [newTerm, setNewTerm] = useState('');
+  const [newFaqQ, setNewFaqQ] = useState('');
+  const [newFaqA, setNewFaqA] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function fetchServices() {
     setLoading(true);
@@ -155,17 +198,24 @@ function ServicesAdminPage() {
         setServices(data);
         const mapped = data.map(mapDbServiceToRecord);
         setDynamicServices(mapped);
+        return data;
       }
     } catch (e) {
       console.error('Error fetching services:', e);
     } finally {
       setLoading(false);
     }
+    return [];
   }
 
   useEffect(() => {
-    fetchServices();
-  }, []);
+    fetchServices().then((list) => {
+      if (searchParams.edit && list && list.length > 0) {
+        const found = list.find((s) => s.slug === searchParams.edit || s.id === searchParams.edit);
+        if (found) openEditModal(found);
+      }
+    });
+  }, [searchParams.edit]);
 
   const filtered = services.filter((s) => {
     const matchesCategory = categoryFilter === 'all' || s.category_slug === categoryFilter;
@@ -197,6 +247,33 @@ function ServicesAdminPage() {
         }
       }
 
+      let parsedSteps: ProcessStepItem[] = [];
+      if (service.process_steps) {
+        if (typeof service.process_steps === 'string') {
+          try { parsedSteps = JSON.parse(service.process_steps); } catch {}
+        } else if (Array.isArray(service.process_steps)) {
+          parsedSteps = service.process_steps;
+        }
+      }
+
+      let parsedTerms: string[] = [];
+      if (service.terms) {
+        if (Array.isArray(service.terms)) {
+          parsedTerms = service.terms;
+        } else if (typeof service.terms === 'string') {
+          try { parsedTerms = JSON.parse(service.terms); } catch {}
+        }
+      }
+
+      let parsedFaqs: FaqItem[] = [];
+      if (service.faqs) {
+        if (typeof service.faqs === 'string') {
+          try { parsedFaqs = JSON.parse(service.faqs); } catch {}
+        } else if (Array.isArray(service.faqs)) {
+          parsedFaqs = service.faqs;
+        }
+      }
+
       setForm({
         name: service.name || '',
         slug: service.slug || '',
@@ -214,6 +291,11 @@ function ServicesAdminPage() {
         features: Array.isArray(service.features) ? [...service.features] : [],
         benefits: Array.isArray(service.benefits) ? [...service.benefits] : [],
         pricing_rows: parsedRows,
+        pricing_note: service.pricing_note || 'Quoted fares include fuel, driver allowance, and vehicle maintenance. Tolls and state taxes at actuals.',
+        process_steps: parsedSteps,
+        terms: parsedTerms,
+        faqs: parsedFaqs,
+        modules: Array.isArray(service.modules) ? service.modules : [],
       });
     } else {
       setEditId(null);
@@ -244,6 +326,64 @@ function ServicesAdminPage() {
 
   function removeBenefit(idx: number) {
     setForm((f) => ({ ...f, benefits: f.benefits.filter((_, i) => i !== idx) }));
+  }
+
+  function addStep() {
+    if (!newStepTitle.trim()) return;
+    const newStep: ProcessStepItem = {
+      id: `step-${Date.now()}`,
+      title: newStepTitle.trim(),
+      description: newStepDesc.trim(),
+    };
+    setForm((f) => ({ ...f, process_steps: [...f.process_steps, newStep] }));
+    setNewStepTitle('');
+    setNewStepDesc('');
+  }
+
+  function removeStep(idx: number) {
+    setForm((f) => ({ ...f, process_steps: f.process_steps.filter((_, i) => i !== idx) }));
+  }
+
+  function addTerm() {
+    if (!newTerm.trim()) return;
+    setForm((f) => ({ ...f, terms: [...f.terms, newTerm.trim()] }));
+    setNewTerm('');
+  }
+
+  function removeTerm(idx: number) {
+    setForm((f) => ({ ...f, terms: f.terms.filter((_, i) => i !== idx) }));
+  }
+
+  function addFaq() {
+    if (!newFaqQ.trim() || !newFaqA.trim()) return;
+    const newFaq: FaqItem = {
+      id: `faq-${Date.now()}`,
+      question: newFaqQ.trim(),
+      answer: newFaqA.trim(),
+    };
+    setForm((f) => ({ ...f, faqs: [...f.faqs, newFaq] }));
+    setNewFaqQ('');
+    setNewFaqA('');
+  }
+
+  function removeFaq(idx: number) {
+    setForm((f) => ({ ...f, faqs: f.faqs.filter((_, i) => i !== idx) }));
+  }
+
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Image must be under 3 MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setForm((f) => ({ ...f, main_image: dataUrl }));
+      toast.success('Image loaded successfully');
+    };
+    reader.readAsDataURL(file);
   }
 
   function addPricingRow() {
@@ -294,6 +434,11 @@ function ServicesAdminPage() {
         features: form.features,
         benefits: form.benefits,
         pricing_rows: form.pricing_rows,
+        pricing_note: form.pricing_note.trim(),
+        process_steps: form.process_steps,
+        terms: form.terms,
+        faqs: form.faqs,
+        modules: form.modules,
       };
 
       if (editId) {
@@ -520,30 +665,39 @@ function ServicesAdminPage() {
 
       {/* Complete Edit / Add Modal */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Edit2 size={18} className="text-orange-500" />
               {editId ? `Edit Service: ${form.name}` : 'Add New Service'}
             </DialogTitle>
             <DialogDescription>
-              Modify service identity, rate cards, public pricing, descriptions, and feature lists.
+              Modify service identity, rate cards, public pricing, descriptions, process steps, policies, and FAQs.
             </DialogDescription>
           </DialogHeader>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="general" className="text-xs">
-                General Info
+            <TabsList className="grid grid-cols-7 w-full h-auto p-1 bg-gray-100 rounded-lg">
+              <TabsTrigger value="general" className="text-xs py-1.5 font-medium">
+                General
               </TabsTrigger>
-              <TabsTrigger value="pricing" className="text-xs">
+              <TabsTrigger value="pricing" className="text-xs py-1.5 font-medium">
                 Pricing & Rates
               </TabsTrigger>
-              <TabsTrigger value="content" className="text-xs">
+              <TabsTrigger value="content" className="text-xs py-1.5 font-medium">
                 Content & Media
               </TabsTrigger>
-              <TabsTrigger value="features" className="text-xs">
-                Features & Benefits
+              <TabsTrigger value="features" className="text-xs py-1.5 font-medium">
+                Features & Perks
+              </TabsTrigger>
+              <TabsTrigger value="process" className="text-xs py-1.5 font-medium">
+                How It Works
+              </TabsTrigger>
+              <TabsTrigger value="terms" className="text-xs py-1.5 font-medium">
+                Terms & Policies
+              </TabsTrigger>
+              <TabsTrigger value="faqs" className="text-xs py-1.5 font-medium">
+                FAQs
               </TabsTrigger>
             </TabsList>
 
@@ -673,6 +827,20 @@ function ServicesAdminPage() {
                     onCheckedChange={(v) => setForm((f) => ({ ...f, show_pricing: v }))}
                   />
                 </div>
+
+                <div className="col-span-1 sm:col-span-2 space-y-1.5 pt-1">
+                  <Label className="text-xs font-semibold text-gray-800">Pricing Footnote & Terms Note</Label>
+                  <Textarea
+                    rows={2}
+                    placeholder="e.g. Quoted fares include fuel, driver allowance, and vehicle maintenance. Tolls and state taxes at actuals."
+                    className="text-xs bg-white"
+                    value={form.pricing_note}
+                    onChange={(e) => setForm((f) => ({ ...f, pricing_note: e.target.value }))}
+                  />
+                  <p className="text-[11px] text-gray-500">
+                    Displayed below the rate card on the public service detail page.
+                  </p>
+                </div>
               </div>
 
               {/* Rate Card Rows Editor */}
@@ -785,13 +953,33 @@ function ServicesAdminPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Main Hero Image URL</Label>
+                  <Label className="text-xs font-semibold">Service Image</Label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="gap-1.5 text-xs font-semibold text-orange-600 border-orange-300 hover:bg-orange-50"
+                    >
+                      <Upload size={14} /> Upload Image File...
+                    </Button>
+                    <span className="text-xs text-gray-400">or enter image URL:</span>
+                  </div>
                   <Input
                     placeholder="https://images.unsplash.com/..."
                     value={form.main_image}
                     onChange={(e) => setForm((f) => ({ ...f, main_image: e.target.value }))}
+                    className="mt-1"
                   />
-                  <div className="text-[11px] text-gray-500">Pick from curated presets below:</div>
+                  <div className="text-[11px] text-gray-500">Or pick from curated presets:</div>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {PRESET_IMAGES.map((img) => (
                       <button
@@ -911,6 +1099,190 @@ function ServicesAdminPage() {
                     <span className="text-xs text-gray-400 italic">No benefits added yet.</span>
                   )}
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* TAB 5: How It Works / Process Steps */}
+            <TabsContent value="process" className="space-y-4 pt-3">
+              <div className="p-3 border rounded-lg bg-orange-50/40 border-orange-200 space-y-2">
+                <h4 className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                  <ListOrdered size={14} className="text-orange-500" />
+                  Add a New Process Step ("How it works")
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Step Title (e.g. Share your plan)"
+                    value={newStepTitle}
+                    className="text-xs bg-white"
+                    onChange={(e) => setNewStepTitle(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Step Description (e.g. Send dates, pickup point, passengers...)"
+                    value={newStepDesc}
+                    className="text-xs bg-white"
+                    onChange={(e) => setNewStepDesc(e.target.value)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={addStep}
+                  className="bg-orange-500 hover:bg-orange-600 text-xs font-bold gap-1.5 mt-1"
+                >
+                  <Plus size={14} /> Add Step
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-gray-700">Current Steps ({form.process_steps.length}):</div>
+                {form.process_steps.length === 0 ? (
+                  <div className="text-center py-6 border border-dashed rounded-lg bg-gray-50 text-xs text-gray-400">
+                    No custom process steps added yet. Standard 4-step workflow applies.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {form.process_steps.map((step, idx) => (
+                      <div key={step.id || idx} className="flex items-start gap-3 p-3 border rounded-lg bg-white shadow-xs">
+                        <span className="grid h-7 w-7 place-items-center rounded-full bg-orange-100 text-xs font-bold text-orange-600 shrink-0">
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-xs text-gray-900">{step.title}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">{step.description}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeStep(idx)}
+                          className="text-red-400 hover:text-red-600 p-1 rounded"
+                          title="Remove Step"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* TAB 6: Terms & Policies */}
+            <TabsContent value="terms" className="space-y-4 pt-3">
+              <div className="p-3 border rounded-lg bg-gray-50 space-y-2">
+                <Label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-emerald-600" />
+                  Add a Term / Policy / Cancellation Rule
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="e.g. Free cancellation up to 2 hours before scheduled pickup..."
+                    value={newTerm}
+                    className="text-xs bg-white"
+                    onChange={(e) => setNewTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addTerm();
+                      }
+                    }}
+                  />
+                  <Button type="button" size="sm" onClick={addTerm} className="bg-emerald-600 hover:bg-emerald-700 text-xs font-bold">
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="text-xs font-bold text-gray-700">Published Terms & Policies ({form.terms.length}):</div>
+                {form.terms.length === 0 ? (
+                  <div className="text-center py-6 border border-dashed rounded-lg bg-gray-50 text-xs text-gray-400">
+                    No custom terms added yet. Standard commercial terms apply.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                    {form.terms.map((term, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg border bg-white text-xs gap-3">
+                        <span className="flex items-start gap-2 text-gray-800">
+                          <span className="text-emerald-500 font-bold">•</span>
+                          {term}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeTerm(idx)}
+                          className="text-red-400 hover:text-red-600 p-1 rounded shrink-0"
+                          title="Remove Term"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* TAB 7: FAQs */}
+            <TabsContent value="faqs" className="space-y-4 pt-3">
+              <div className="p-3 border rounded-lg bg-blue-50/40 border-blue-200 space-y-2">
+                <h4 className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                  <FileQuestion size={14} className="text-blue-600" />
+                  Add a Question & Answer for this Service
+                </h4>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Question (e.g. Can we make multiple stops along the route?)"
+                    value={newFaqQ}
+                    className="text-xs bg-white"
+                    onChange={(e) => setNewFaqQ(e.target.value)}
+                  />
+                  <Textarea
+                    rows={2}
+                    placeholder="Answer (e.g. Yes, custom stops are accommodated with extra mileage billed at the per-km rate.)"
+                    value={newFaqA}
+                    className="text-xs bg-white"
+                    onChange={(e) => setNewFaqA(e.target.value)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={addFaq}
+                  className="bg-blue-600 hover:bg-blue-700 text-xs font-bold gap-1.5"
+                >
+                  <Plus size={14} /> Add FAQ
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-gray-700">Service FAQs ({form.faqs.length}):</div>
+                {form.faqs.length === 0 ? (
+                  <div className="text-center py-6 border border-dashed rounded-lg bg-gray-50 text-xs text-gray-400">
+                    No custom FAQs added yet. Standard shared FAQs will be displayed.
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {form.faqs.map((faq, idx) => (
+                      <div key={faq.id || idx} className="p-3 border rounded-lg bg-white shadow-xs space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                            <span className="text-blue-600 font-extrabold">Q:</span>
+                            {faq.question}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeFaq(idx)}
+                            className="text-red-400 hover:text-red-600 p-1 rounded shrink-0"
+                            title="Remove FAQ"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-600 pl-4 border-l-2 border-blue-200 mt-1">
+                          {faq.answer}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

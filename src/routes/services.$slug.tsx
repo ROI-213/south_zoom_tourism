@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit2 } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -126,6 +126,13 @@ function ServiceDetailPage() {
   const [hotelBookingOpen, setHotelBookingOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<FleetVehicle | undefined>(undefined);
   const [selectedTripType, setSelectedTripType] = useState<"one-way" | "round-trip" | "local" | "airport">("one-way");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("admin_auth") === "true") {
+      setIsAdmin(true);
+    }
+  }, []);
 
   const detail = getServiceDetail(service);
   const sections = orderedSections(detail);
@@ -309,6 +316,16 @@ function ServiceDetailPage() {
         source={`service-detail:${service.slug}`}
       />
       <Toaster />
+
+      {isAdmin && (
+        <div className="fixed bottom-20 sm:bottom-6 right-6 z-40">
+          <Button asChild className="bg-orange-600 hover:bg-orange-700 text-white shadow-2xl gap-2 font-bold py-2.5 px-4 rounded-full border-2 border-white ring-2 ring-orange-500/30">
+            <Link to="/admin/products/services" search={{ edit: service.slug }}>
+              <Edit2 className="w-4 h-4" /> Edit Service in Admin
+            </Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

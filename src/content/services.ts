@@ -52,6 +52,11 @@ export type Service = {
   published: boolean;
   featured: boolean;
   pricingRows?: any[];
+  pricingNote?: string;
+  processSteps?: { id: string; title: string; description: string }[];
+  terms?: string[];
+  faqs?: { id: string; question: string; answer: string }[];
+  modules?: any[];
 };
 
 // Dynamic cache for admin-managed services
@@ -118,6 +123,11 @@ export function mapDbServiceToRecord(row: any, index: number = 0): Service {
     published: row.active !== false,
     featured: row.featured !== undefined ? row.featured : (existing?.featured || false),
     pricingRows: parsedPricingRows,
+    pricingNote: row.pricing_note || undefined,
+    processSteps: Array.isArray(row.process_steps) && row.process_steps.length > 0 ? row.process_steps : undefined,
+    terms: Array.isArray(row.terms) && row.terms.length > 0 ? row.terms : undefined,
+    faqs: Array.isArray(row.faqs) && row.faqs.length > 0 ? row.faqs : undefined,
+    modules: Array.isArray(row.modules) && row.modules.length > 0 ? row.modules : undefined,
   };
 }
 
