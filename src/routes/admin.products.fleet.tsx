@@ -70,6 +70,7 @@ import {
 } from '@/content/fleet-pricing';
 import {
   getFleetVehicles,
+  saveFleetVehicles,
   fetchFleetVehicles,
   addFleetVehicle,
   updateFleetVehicle,

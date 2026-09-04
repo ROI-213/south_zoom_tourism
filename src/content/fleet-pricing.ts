@@ -527,21 +527,27 @@ export function resetFleetFareSettings(): FleetFareConfig[] {
     );
     window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
 
-    const vehicles = getFleetVehicles();
-    const updatedVehicles = vehicles.map((v) => {
-      const match = memorySettings.find(
-        (s) => s.fleetId === v.id || s.vehicleSlug === v.slug || s.vehicleName.toLowerCase() === v.name.toLowerCase()
-      );
-      if (match && match.oneWayRatePerKm) {
-        return {
-          ...v,
-          pricePerKm: match.oneWayRatePerKm,
-          priceFromLabel: `₹${match.oneWayRatePerKm} / km`,
-        };
-      }
-      return v;
-    });
-    saveFleetVehicles(updatedVehicles);
+    import("@/content/fleet")
+      .then(({ getFleetVehicles, saveFleetVehicles }) => {
+        const vehicles = getFleetVehicles();
+        const updatedVehicles = vehicles.map((v) => {
+          const match = memorySettings.find(
+            (s) => s.fleetId === v.id || s.vehicleSlug === v.slug || s.vehicleName.toLowerCase() === v.name.toLowerCase()
+          );
+          if (match && match.oneWayRatePerKm) {
+            return {
+              ...v,
+              pricePerKm: match.oneWayRatePerKm,
+              priceFromLabel: `₹${match.oneWayRatePerKm} / km`,
+            };
+          }
+          return v;
+        });
+        saveFleetVehicles(updatedVehicles);
+      })
+      .catch((err) => {
+        console.error("Failed to sync fleet vehicles on reset:", err);
+      });
   }
   return memorySettings;
 }
