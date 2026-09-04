@@ -14,9 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { getPublishedServices } from "@/content/services";
 import { company } from "@/content/site";
+import { getEnquiryServiceOptions, generateEnquiryReference } from "@/content/contact";
+import { syncEnquiryToSupabase } from "@/lib/booking-sync";
 
 const enquirySchema = z.object({
   name: z.string().trim().min(2, "Please enter your name."),
@@ -44,7 +45,8 @@ export function EnquiryDialog({
   /** Where the enquiry was raised from — stored with the enquiry record. */
   source?: string;
 }) {
-  const options = getPublishedServices();
+  const publishedServices = getPublishedServices();
+  const serviceOptions = getEnquiryServiceOptions();
 
   const form = useForm<EnquiryValues>({
     resolver: zodResolver(enquirySchema),
@@ -70,7 +72,11 @@ export function EnquiryDialog({
     // WhatsApp so no request is ever lost. Swap this for a Cloud insert
     // once the enquiries table exists — the payload below is already the
     // shape the table expects (service_id, page_url, source).
-    const service = options.find((s) => s.slug === values.serviceSlug);
+    const service = publishedServices.find((s) => s.slug === values.serviceSlug);
+    const serviceLabel =
+      serviceOptions.find((s) => s.slug === values.serviceSlug)?.label ??
+      service?.title ??
+      values.serviceSlug;
     const pageUrl = typeof window !== "undefined" ? window.location.href : "";
 
     const payload = {
@@ -85,14 +91,24 @@ export function EnquiryDialog({
       message: values.message || null,
     };
 
+    const ref = generateEnquiryReference();
+    syncEnquiryToSupabase({
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email,
+      serviceType: serviceLabel,
+      message: `Travel Date: ${payload.travel_date || "Not specified"}\nDetails: ${payload.message || "None"}`,
+      reference: ref,
+    });
+
     const lines = [
-      `New enquiry — ${service?.title ?? "General"}`,
+      `New enquiry — ${serviceLabel}`,
       `Name: ${values.name}`,
       `Phone: ${values.phone}`,
       values.email ? `Email: ${values.email}` : null,
       values.travelDate ? `Travel date: ${values.travelDate}` : null,
       values.message ? `Details: ${values.message}` : null,
-      `Service ref: ${payload.service_id ?? values.serviceSlug}`,
+      `Service: ${serviceLabel}`,
       pageUrl ? `Page: ${pageUrl}` : null,
       `Source: ${source}`,
     ].filter(Boolean);
@@ -104,12 +120,11 @@ export function EnquiryDialog({
     );
 
     toast.success("Enquiry ready to send", {
-      description: `We've prepared your ${service?.title ?? "travel"} enquiry on WhatsApp. You can also call ${company.phone}.`,
+      description: `We've prepared your ${serviceLabel} enquiry on WhatsApp. You can also call ${company.phone}.`,
     });
     reset({ ...form.getValues(), name: "", phone: "", email: "", travelDate: "", message: "" });
     onOpenChange(false);
   };
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -129,9 +144,9 @@ export function EnquiryDialog({
               {...register("serviceSlug")}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
-              {options.map((service) => (
-                <option key={service.id} value={service.slug}>
-                  {service.title}
+              {serviceOptions.map((opt) => (
+                <option key={opt.slug} value={opt.slug}>
+                  {opt.label}
                 </option>
               ))}
             </select>

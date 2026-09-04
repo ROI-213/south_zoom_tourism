@@ -189,9 +189,17 @@ export function getContactChannels(): ContactChannel[] {
 
 /** Service options for the enquiry form — sourced from admin service records. */
 export function getEnquiryServiceOptions(): { slug: string; label: string }[] {
-  return [{ slug: "general", label: "General enquiry" }].concat(
-    getPublishedServices().map((s) => ({ slug: s.slug, label: s.title })),
-  );
+  const customOptions = [
+    { slug: "general", label: "General enquiry" },
+    { slug: "one-way-trip", label: "One way trip" },
+    { slug: "round-trip", label: "ROUND trip" },
+  ];
+  const published = getPublishedServices();
+  const existingSlugs = new Set(customOptions.map((o) => o.slug));
+  const serviceOptions = published
+    .filter((s) => !existingSlugs.has(s.slug))
+    .map((s) => ({ slug: s.slug, label: s.title }));
+  return [...customOptions, ...serviceOptions];
 }
 
 /** SZT-YYMMDD-XXXX reference shown to the customer after submission. */

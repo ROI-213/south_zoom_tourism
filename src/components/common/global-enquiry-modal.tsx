@@ -18,7 +18,9 @@ function buildPrefill(search: ContactSearch) {
     service = "custom-tour-planning";
   else if (search.tripType) {
     if (search.tripType === "local") service = "local-taxi";
-    else service = "outstation-trip";
+    else if (search.tripType === "round-trip" || search.tripType === "round") service = "round-trip";
+    else if (search.tripType === "one-way" || search.tripType === "oneway") service = "one-way-trip";
+    else service = "one-way-trip";
   }
 
   const bits: string[] = [];
