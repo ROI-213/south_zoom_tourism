@@ -158,14 +158,17 @@ const emptyForm: {
 };
 
 const PRESET_IMAGES = [
-  { label: 'Local City Taxi', url: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80' },
-  { label: 'Outstation Highway', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80' },
-  { label: 'Airport Terminal', url: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=1200&q=80' },
-  { label: 'Tempo & Group Tour', url: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80' },
-  { label: 'Temple & Pilgrimage', url: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&w=1200&q=80' },
-  { label: 'Wedding Bridal Car', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80' },
-  { label: 'Resorts & Stays', url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80' },
-  { label: 'Scenic Tour Planning', url: 'https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=1200&q=80' },
+  { label: 'Local City Taxi', url: '/assets/services/service-local-taxi.png' },
+  { label: 'Outstation Highway', url: '/assets/services/service-outstation.png' },
+  { label: 'Airport Terminal', url: '/assets/services/service-airport.png' },
+  { label: 'Corporate MPV', url: '/assets/services/service-corporate-new.png' },
+  { label: 'Tempo & Group Tour', url: '/assets/services/service-group-new.jpg' },
+  { label: 'Temple & Pilgrimage', url: '/assets/services/service-pilgrimage-new.png' },
+  { label: 'Wedding VIP Car', url: '/assets/services/service-wedding-vip.jpg' },
+  { label: 'Resorts & Stays', url: '/assets/services/service-hotel-stays.jpg' },
+  { label: 'Custom Tour Planning', url: '/assets/services/pkg-ooty.png' },
+  { label: 'Ticket Booking', url: '/assets/services/dest-bengaluru-new.jpg' },
+  { label: '24/7 Travel Desk', url: '/assets/services/team-1.jpg' },
 ];
 
 const PRESET_ICONS = ['🚕', '🛣️', '✈️', '💼', '👥', '🛕', '💐', '🏨', '✨', '🎫', '🛟', 'Car', 'Route', 'Plane', 'Briefcase', 'Users', 'Landmark', 'HeartHandshake', 'BedDouble', 'Sparkles', 'Ticket', 'LifeBuoy'];

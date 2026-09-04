@@ -101,6 +101,13 @@ export function mapDbServiceToRecord(row: any, index: number = 0): Service {
     }
   }
 
+  const isUnsplashStock = row.main_image && typeof row.main_image === 'string' && row.main_image.includes('unsplash.com');
+  const resolvedImage = isUnsplashStock || !row.main_image
+    ? defaultImage
+    : (existing?.image && typeof row.main_image === 'string' && row.main_image.includes(existing.slug))
+    ? existing.image
+    : row.main_image;
+
   return {
     id: row.id || existing?.id || `srv-${index}`,
     slug: row.slug || existing?.slug || (row.name || '').toLowerCase().replace(/\s+/g, '-'),
@@ -109,7 +116,7 @@ export function mapDbServiceToRecord(row: any, index: number = 0): Service {
     icon: row.icon || (isHotel ? 'BedDouble' : isWedding ? 'HeartHandshake' : existing?.icon || 'Car'),
     shortDescription: row.short_description || existing?.shortDescription || '',
     detailDescription: row.full_description || existing?.detailDescription || row.short_description || '',
-    image: row.main_image || defaultImage,
+    image: resolvedImage,
     imageAlt: row.image_alt || row.name || existing?.imageAlt || '',
     features: row.features && Array.isArray(row.features) && row.features.length > 0
       ? row.features
