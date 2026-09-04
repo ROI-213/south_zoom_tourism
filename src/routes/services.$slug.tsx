@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { Navbar } from "@/components/layout/navbar";
