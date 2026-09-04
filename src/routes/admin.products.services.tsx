@@ -47,6 +47,9 @@ import {
   Star,
   Layers,
   Upload,
+  UploadCloud,
+  Image as ImageIcon,
+  X,
   HelpCircle,
   ShieldCheck,
   ArrowRight,
@@ -188,6 +191,8 @@ function ServicesAdminPage() {
   const [newTerm, setNewTerm] = useState('');
   const [newFaqQ, setNewFaqQ] = useState('');
   const [newFaqA, setNewFaqA] = useState('');
+  const [imageUploadMode, setImageUploadMode] = useState<'upload' | 'url' | 'presets'>('upload');
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function fetchServices() {
@@ -370,20 +375,42 @@ function ServicesAdminPage() {
     setForm((f) => ({ ...f, faqs: f.faqs.filter((_, i) => i !== idx) }));
   }
 
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 3 * 1024 * 1024) {
-      toast.error('Image must be under 3 MB');
+  function processImageFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file (PNG, JPG, WEBP, etc.)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5 MB');
       return;
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
       setForm((f) => ({ ...f, main_image: dataUrl }));
-      toast.success('Image loaded successfully');
+      toast.success('Image loaded from device successfully!');
+    };
+    reader.onerror = () => {
+      toast.error('Failed to read image file');
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processImageFile(file);
+    // Reset file input so user can re-select same file if desired
+    e.target.value = '';
+  }
+
+  function handleFileDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file);
+    }
   }
 
   function addPricingRow() {
@@ -951,60 +978,197 @@ function ServicesAdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Service Image</Label>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="gap-1.5 text-xs font-semibold text-orange-600 border-orange-300 hover:bg-orange-50"
-                    >
-                      <Upload size={14} /> Upload Image File...
-                    </Button>
-                    <span className="text-xs text-gray-400">or enter image URL:</span>
+              {/* Service Hero Image & Upload */}
+              <div className="space-y-3 p-4 border rounded-xl bg-gray-50/70">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <Label className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                      <ImageIcon size={16} className="text-orange-600" />
+                      Main Hero Image *
+                    </Label>
+                    <p className="text-xs text-gray-500">
+                      Upload directly from your computer/mobile, enter an image link, or pick a preset.
+                    </p>
                   </div>
-                  <Input
-                    placeholder="https://images.unsplash.com/..."
-                    value={form.main_image}
-                    onChange={(e) => setForm((f) => ({ ...f, main_image: e.target.value }))}
-                    className="mt-1"
-                  />
-                  <div className="text-[11px] text-gray-500">Or pick from curated presets:</div>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {PRESET_IMAGES.map((img) => (
-                      <button
-                        key={img.label}
-                        type="button"
-                        className="text-[10px] px-2 py-0.5 rounded bg-gray-100 hover:bg-orange-100 hover:text-orange-700 border"
-                        onClick={() => setForm((f) => ({ ...f, main_image: img.url }))}
-                      >
-                        {img.label}
-                      </button>
-                    ))}
+
+                  {/* Mode switcher tabs */}
+                  <div className="flex items-center bg-gray-200/80 p-1 rounded-lg text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setImageUploadMode('upload')}
+                      className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+                        imageUploadMode === 'upload'
+                          ? 'bg-white text-orange-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      📁 Upload Image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageUploadMode('url')}
+                      className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+                        imageUploadMode === 'url'
+                          ? 'bg-white text-orange-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      🔗 Image URL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageUploadMode('presets')}
+                      className={`px-3 py-1.5 rounded-md font-semibold transition-all ${
+                        imageUploadMode === 'presets'
+                          ? 'bg-white text-orange-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      🖼️ Presets
+                    </button>
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Image Preview</Label>
-                  {form.main_image ? (
-                    <div className="relative h-28 rounded-lg overflow-hidden border">
-                      <img src={form.main_image} alt="Preview" className="w-full h-full object-cover" />
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                  {/* Left Column: Upload or URL Input or Presets */}
+                  <div className="md:col-span-7 space-y-3">
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+
+                    {imageUploadMode === 'upload' && (
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsDragging(true);
+                        }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={handleFileDrop}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
+                          isDragging
+                            ? 'border-orange-500 bg-orange-100/50 scale-[1.01]'
+                            : 'border-orange-300 hover:border-orange-500 bg-white hover:bg-orange-50/40'
+                        }`}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+                          <UploadCloud size={24} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">
+                            Click to upload or drag & drop image file here
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Supports PNG, JPG, JPEG, WEBP (Max 5 MB)
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold gap-1.5 mt-1 pointer-events-none"
+                        >
+                          <Upload size={13} /> Choose Image from Computer
+                        </Button>
+                      </div>
+                    )}
+
+                    {imageUploadMode === 'url' && (
+                      <div className="space-y-2 bg-white p-3 rounded-lg border">
+                        <Label className="text-xs font-semibold text-gray-700">Paste Image Web Address (URL)</Label>
+                        <Input
+                          placeholder="https://images.unsplash.com/... or https://..."
+                          value={form.main_image}
+                          onChange={(e) => setForm((f) => ({ ...f, main_image: e.target.value }))}
+                          className="text-xs"
+                        />
+                        <p className="text-[11px] text-gray-400">
+                          Direct links ending in .jpg, .png, .webp or hosted on image CDNs.
+                        </p>
+                      </div>
+                    )}
+
+                    {imageUploadMode === 'presets' && (
+                      <div className="space-y-2 bg-white p-3 rounded-lg border">
+                        <Label className="text-xs font-semibold text-gray-700">Choose from Curated Photos</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {PRESET_IMAGES.map((img) => (
+                            <button
+                              key={img.label}
+                              type="button"
+                              onClick={() => setForm((f) => ({ ...f, main_image: img.url }))}
+                              className={`p-1.5 rounded-lg border text-left transition-all flex items-center gap-2 hover:border-orange-400 ${
+                                form.main_image === img.url
+                                  ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-400'
+                                  : 'border-gray-200 bg-white'
+                              }`}
+                            >
+                              <img src={img.url} alt={img.label} className="w-10 h-10 object-cover rounded" />
+                              <span className="text-xs font-medium text-gray-800 line-clamp-1">{img.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold text-gray-700">Image Alt Description</Label>
+                      <Input
+                        placeholder="e.g. Luxury chauffeur driven outstation taxi cab"
+                        className="text-xs bg-white"
+                        value={form.image_alt}
+                        onChange={(e) => setForm((f) => ({ ...f, image_alt: e.target.value }))}
+                      />
                     </div>
-                  ) : (
-                    <div className="h-28 rounded-lg border border-dashed flex items-center justify-center text-xs text-gray-400 bg-gray-50">
-                      No image selected
+                  </div>
+
+                  {/* Right Column: Live Image Preview & Controls */}
+                  <div className="md:col-span-5 space-y-2">
+                    <Label className="text-xs font-semibold text-gray-700">Live Image Preview</Label>
+                    <div className="relative rounded-xl border bg-white overflow-hidden shadow-sm aspect-video flex items-center justify-center">
+                      {form.main_image ? (
+                        <>
+                          <img
+                            src={form.main_image}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setForm((f) => ({ ...f, main_image: '' }))}
+                            className="absolute top-2 right-2 p-1 rounded-full bg-red-600/90 hover:bg-red-700 text-white shadow-md transition-all"
+                            title="Remove image"
+                          >
+                            <X size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="text-center p-4">
+                          <ImageIcon size={32} className="mx-auto text-gray-300 mb-1" />
+                          <p className="text-xs text-gray-400 font-medium">No image selected</p>
+                          <p className="text-[11px] text-gray-400">Upload a file or enter a link</p>
+                        </div>
+                      )}
                     </div>
-                  )}
+                    {form.main_image && (
+                      <div className="flex items-center justify-between text-xs text-gray-500 px-1">
+                        <span className="text-green-600 font-medium flex items-center gap-1">
+                          <CheckCircle2 size={12} /> Image Ready
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="text-orange-600 hover:underline font-semibold"
+                        >
+                          Change image file
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </TabsContent>
