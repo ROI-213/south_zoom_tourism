@@ -270,47 +270,13 @@ function FleetProductPage() {
     };
   }, []);
 
-  function handleFareRateChange(fleetIdOrSlug: string, field: keyof FleetFareConfig, value: any) {
+  function handleFareRateChange(targetKey: string, field: keyof FleetFareConfig, value: any) {
     setFareSettings((prev) => {
       const idx = prev.findIndex(
-        (f) => f.fleetId === fleetIdOrSlug || f.vehicleSlug === fleetIdOrSlug || f.id === fleetIdOrSlug
+        (f) => f.id === targetKey || f.fleetId === targetKey || f.vehicleSlug === targetKey
       );
       if (idx === -1) {
-        const v = fleetList.find((item) => item.id === fleetIdOrSlug || item.slug === fleetIdOrSlug);
-        if (!v) return prev;
-        const newEntry: FleetFareConfig = {
-          id: `ffc-${v.slug}`,
-          fleetId: v.id,
-          vehicleSlug: v.slug,
-          vehicleName: v.name,
-          category: v.categorySlug,
-          oneWayRatePerKm: field === 'oneWayRatePerKm' ? Number(value) : v.pricePerKm,
-          oneWayMinimumKm: 150,
-          oneWayDriverAllowance: 300,
-          roundTripRatePerKm: field === 'roundTripRatePerKm' ? Number(value) : Math.max(10, v.pricePerKm - 1),
-          roundTripMinimumKmPerDay: 300,
-          roundTripDriverAllowancePerDay: 300,
-          tollRatePerKm: 1.5,
-          gstPercentage: 5,
-          tollMode: 'calculated',
-          stateTaxMode: 'extra',
-          isActive: true,
-          displayOrder: v.order || 99,
-          localBasePrice: 2200,
-          localBaseHours: 4,
-          localBaseKm: 40,
-          localExtraKmRate: field === 'oneWayRatePerKm' ? Number(value) : v.pricePerKm,
-          localExtraHourRate: 200,
-          localDriverAllowance: 400,
-          airportBasePrice: 1100,
-          airportBaseHours: 3,
-          airportBaseKm: 30,
-          airportExtraKmRate: field === 'oneWayRatePerKm' ? Number(value) : v.pricePerKm,
-          airportExtraHourRate: 200,
-        };
-        const next = [...prev, newEntry];
-        saveFleetFareSettings(next);
-        return next;
+        return prev;
       }
       const updated = [...prev];
       const val = typeof value === 'number' ? Number(value) : value;
@@ -960,6 +926,7 @@ function FleetProductPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {filteredPricing.map((fleet) => {
+                        const targetKey = fleet.id || fleet.fleetId || fleet.vehicleSlug;
                         const v = fleetList.find(
                           (item) => item.id === fleet.fleetId || item.slug === fleet.vehicleSlug || item.slug === fleet.id
                         );
@@ -969,7 +936,7 @@ function FleetProductPage() {
                           fleet.roundTripMinimumKmPerDay * fleet.roundTripRatePerKm + (fleet.roundTripDriverAllowancePerDay || 300);
 
                         return (
-                          <tr key={fleet.id || fleet.fleetId} className="hover:bg-orange-50/30 transition-colors">
+                          <tr key={targetKey} className="hover:bg-orange-50/30 transition-colors">
                             {/* Vehicle info */}
                             <td className="px-4 py-3.5">
                               <div className="flex items-center gap-3">
@@ -1003,7 +970,7 @@ function FleetProductPage() {
                                   min={1}
                                   value={fleet.oneWayRatePerKm}
                                   onChange={(e) =>
-                                    handleFareRateChange(fleet.fleetId, 'oneWayRatePerKm', Number(e.target.value))
+                                    handleFareRateChange(targetKey, 'oneWayRatePerKm', Number(e.target.value))
                                   }
                                   className="h-9 pl-6 pr-8 text-xs sm:text-sm font-extrabold text-primary border-primary/40 focus-visible:ring-primary/30 w-full"
                                 />
@@ -1020,7 +987,7 @@ function FleetProductPage() {
                                   min={1}
                                   value={fleet.roundTripRatePerKm}
                                   onChange={(e) =>
-                                    handleFareRateChange(fleet.fleetId, 'roundTripRatePerKm', Number(e.target.value))
+                                    handleFareRateChange(targetKey, 'roundTripRatePerKm', Number(e.target.value))
                                   }
                                   className="h-9 pl-6 pr-8 text-xs sm:text-sm font-extrabold text-emerald-700 border-emerald-300 focus-visible:ring-emerald-200 w-full"
                                 />
@@ -1036,7 +1003,7 @@ function FleetProductPage() {
                                   min={10}
                                   value={fleet.oneWayMinimumKm}
                                   onChange={(e) =>
-                                    handleFareRateChange(fleet.fleetId, 'oneWayMinimumKm', Number(e.target.value))
+                                    handleFareRateChange(targetKey, 'oneWayMinimumKm', Number(e.target.value))
                                   }
                                   className="h-9 pr-7 text-xs font-semibold text-gray-800 w-full"
                                 />
@@ -1052,7 +1019,7 @@ function FleetProductPage() {
                                   min={50}
                                   value={fleet.roundTripMinimumKmPerDay}
                                   onChange={(e) =>
-                                    handleFareRateChange(fleet.fleetId, 'roundTripMinimumKmPerDay', Number(e.target.value))
+                                    handleFareRateChange(targetKey, 'roundTripMinimumKmPerDay', Number(e.target.value))
                                   }
                                   className="h-9 pr-9 text-xs font-semibold text-gray-800 w-full"
                                 />
@@ -1070,8 +1037,8 @@ function FleetProductPage() {
                                   value={fleet.roundTripDriverAllowancePerDay}
                                   onChange={(e) => {
                                     const val = Number(e.target.value);
-                                    handleFareRateChange(fleet.fleetId, 'roundTripDriverAllowancePerDay', val);
-                                    handleFareRateChange(fleet.fleetId, 'oneWayDriverAllowance', val);
+                                    handleFareRateChange(targetKey, 'roundTripDriverAllowancePerDay', val);
+                                    handleFareRateChange(targetKey, 'oneWayDriverAllowance', val);
                                   }}
                                   className="h-9 pl-6 pr-2 text-xs font-semibold text-gray-800 w-full"
                                 />
@@ -1087,7 +1054,7 @@ function FleetProductPage() {
                                   min={100}
                                   value={fleet.localBasePrice ?? 2200}
                                   onChange={(e) =>
-                                    handleFareRateChange(fleet.fleetId, 'localBasePrice', Number(e.target.value))
+                                    handleFareRateChange(targetKey, 'localBasePrice', Number(e.target.value))
                                   }
                                   className="h-9 pl-6 pr-2 text-xs font-extrabold text-amber-800 border-amber-300 focus-visible:ring-amber-200 w-full"
                                 />
@@ -1103,7 +1070,7 @@ function FleetProductPage() {
                                   min={1}
                                   value={fleet.localExtraKmRate ?? 18}
                                   onChange={(e) =>
-                                    handleFareRateChange(fleet.fleetId, 'localExtraKmRate', Number(e.target.value))
+                                    handleFareRateChange(targetKey, 'localExtraKmRate', Number(e.target.value))
                                   }
                                   className="h-9 pl-6 pr-7 text-xs font-semibold text-gray-800 w-full"
                                 />
@@ -1120,7 +1087,7 @@ function FleetProductPage() {
                                   min={100}
                                   value={fleet.airportBasePrice ?? 1100}
                                   onChange={(e) =>
-                                    handleFareRateChange(fleet.fleetId, 'airportBasePrice', Number(e.target.value))
+                                    handleFareRateChange(targetKey, 'airportBasePrice', Number(e.target.value))
                                   }
                                   className="h-9 pl-6 pr-2 text-xs font-extrabold text-blue-800 border-blue-300 focus-visible:ring-blue-200 w-full"
                                 />
@@ -1131,7 +1098,7 @@ function FleetProductPage() {
                             <td className="px-3 py-3.5 text-center">
                               <Switch
                                 checked={fleet.isActive !== false}
-                                onCheckedChange={(checked) => handleFareRateChange(fleet.fleetId, 'isActive', checked)}
+                                onCheckedChange={(checked) => handleFareRateChange(targetKey, 'isActive', checked)}
                               />
                             </td>
 

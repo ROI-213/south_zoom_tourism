@@ -467,8 +467,8 @@ export function getVehicleBySlug(slug: string): FleetVehicle | undefined {
   return getPublishedVehicles().find((v) => v.slug === slug);
 }
 
-const STORAGE_KEY_FLEET_DATA = "szt_fleet_data_v1";
-const STORAGE_KEY_FLEET_PRICING = "szt_fleet_fare_settings_v4";
+const STORAGE_KEY_FLEET_DATA = "szt_fleet_data_v2";
+const STORAGE_KEY_FLEET_PRICING = "szt_fleet_fare_settings_v5";
 
 let memoryFleetVehicles: FleetVehicle[] = [...fleetVehicles];
 
@@ -480,18 +480,28 @@ export function getFleetVehicles(): FleetVehicle[] {
 
   if (isBrowser()) {
     try {
+      // Purge legacy storage keys
+      try {
+        window.localStorage.removeItem("szt_fleet_data_v1");
+        window.localStorage.removeItem("szt_fleet_fare_settings_v4");
+        window.localStorage.removeItem("szt_fleet_fare_settings_v3");
+      } catch {}
+
       // 1. Merge vehicle listing data overrides (e.g. from Edit Vehicle dialog)
       const raw = window.localStorage.getItem(STORAGE_KEY_FLEET_DATA);
       if (raw) {
         const stored: Partial<FleetVehicle>[] = JSON.parse(raw);
-        list = list.map((def) => {
-          const found = stored.find((s) => s.id === def.id || s.slug === def.slug);
-          return found ? { ...def, ...found } : def;
-        });
-        // Include any newly created vehicles from admin
-        for (const s of stored) {
-          if (s.id && !list.some((item) => item.id === s.id || item.slug === s.slug)) {
-            list.push(s as FleetVehicle);
+        const storedIds = stored.map((s) => s.id).filter(Boolean);
+        if (new Set(storedIds).size === storedIds.length) {
+          list = list.map((def) => {
+            const found = stored.find((s) => s.id === def.id || s.slug === def.slug);
+            return found ? { ...def, ...found } : def;
+          });
+          // Include any newly created vehicles from admin
+          for (const s of stored) {
+            if (s.id && !list.some((item) => item.id === s.id || item.slug === s.slug)) {
+              list.push(s as FleetVehicle);
+            }
           }
         }
       }
@@ -501,17 +511,20 @@ export function getFleetVehicles(): FleetVehicle[] {
       const fareRaw = window.localStorage.getItem(STORAGE_KEY_FLEET_PRICING);
       if (fareRaw) {
         const fareConfigs: any[] = JSON.parse(fareRaw);
-        list = list.map((v) => {
-          const fareMatch = matchVehicleToFareConfig(v.slug || v.id || v.name, fareConfigs);
-          if (fareMatch && fareMatch.oneWayRatePerKm) {
-            return {
-              ...v,
-              pricePerKm: fareMatch.oneWayRatePerKm,
-              priceFromLabel: `₹${fareMatch.oneWayRatePerKm} / km`,
-            };
-          }
-          return v;
-        });
+        const fareIds = fareConfigs.map((f) => f.fleetId).filter(Boolean);
+        if (new Set(fareIds).size === fareIds.length) {
+          list = list.map((v) => {
+            const fareMatch = matchVehicleToFareConfig(v.slug || v.id || v.name, fareConfigs);
+            if (fareMatch && fareMatch.oneWayRatePerKm) {
+              return {
+                ...v,
+                pricePerKm: fareMatch.oneWayRatePerKm,
+                priceFromLabel: `₹${fareMatch.oneWayRatePerKm} / km`,
+              };
+            }
+            return v;
+          });
+        }
       }
     } catch (err) {
       console.error("Error loading fleet overrides:", err);

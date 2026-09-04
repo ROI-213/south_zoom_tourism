@@ -364,10 +364,10 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
   },
 ];
 
-const STORAGE_KEY_FLEET_PRICING = "szt_fleet_fare_settings_v4";
+const STORAGE_KEY_FLEET_PRICING = "szt_fleet_fare_settings_v5";
 const STORAGE_KEY_CALC_LOGS = "szt_fare_calculations_log_v1";
 
-let memorySettings: FleetFareConfig[] = DEFAULT_FLEET_FARE_SETTINGS;
+let memorySettings: FleetFareConfig[] = DEFAULT_FLEET_FARE_SETTINGS.map((d) => ({ ...d }));
 let memoryLogs: FareCalculationLog[] = [];
 
 const isBrowser = () => typeof window !== "undefined";
@@ -382,29 +382,49 @@ import { matchVehicleToFareConfig } from "@/lib/fleet-matcher";
 export function getFleetFareSettings(): FleetFareConfig[] {
   if (!isBrowser()) return memorySettings;
   try {
+    // Purge old corrupted v4/v3 storage keys if present
+    try {
+      window.localStorage.removeItem("szt_fleet_fare_settings_v4");
+      window.localStorage.removeItem("szt_fleet_fare_settings_v3");
+      window.localStorage.removeItem("szt_fleet_fare_settings_v2");
+    } catch {}
+
     const raw = window.localStorage.getItem(STORAGE_KEY_FLEET_PRICING);
-    if (!raw) return memorySettings;
+    if (!raw) {
+      memorySettings = DEFAULT_FLEET_FARE_SETTINGS.map((d) => ({ ...d }));
+      return memorySettings;
+    }
     const parsed: Partial<FleetFareConfig>[] = JSON.parse(raw);
-    
-    // Ensure all default fleets and newly added fields are present with updated rates
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      memorySettings = DEFAULT_FLEET_FARE_SETTINGS.map((d) => ({ ...d }));
+      return memorySettings;
+    }
+
+    // Safety check: If parsed data contains duplicate fleetIds, discard corrupt data
+    const fleetIds = parsed.map((p) => p.fleetId).filter(Boolean);
+    if (new Set(fleetIds).size < fleetIds.length) {
+      console.warn("Detected corrupted fare settings in localStorage with duplicate fleet IDs, resetting to clean defaults.");
+      window.localStorage.removeItem(STORAGE_KEY_FLEET_PRICING);
+      memorySettings = DEFAULT_FLEET_FARE_SETTINGS.map((d) => ({ ...d }));
+      return memorySettings;
+    }
+
+    // Ensure each default vehicle maintains its distinct identity and rates
     const merged = DEFAULT_FLEET_FARE_SETTINGS.map((def) => {
       const found = parsed.find(
         (p) =>
-          p.fleetId === def.fleetId ||
-          p.id === def.id ||
-          p.vehicleSlug === def.vehicleSlug ||
-          (p.vehicleName && def.vehicleName && p.vehicleName.toLowerCase() === def.vehicleName.toLowerCase()) ||
-          matchVehicleToFareConfig(p.fleetId || p.vehicleSlug || p.id, [def]) !== undefined
+          (p.fleetId && p.fleetId === def.fleetId) ||
+          (p.id && p.id === def.id) ||
+          (p.vehicleSlug && p.vehicleSlug === def.vehicleSlug) ||
+          (p.vehicleName && def.vehicleName && p.vehicleName.toLowerCase() === def.vehicleName.toLowerCase())
       );
-      if (!found) return def;
+      if (!found) return { ...def };
 
       const oneWay = typeof found.oneWayRatePerKm === 'number' && found.oneWayRatePerKm > 0 ? found.oneWayRatePerKm : def.oneWayRatePerKm;
-      // Extra KM rate strictly follows the one-way price per km
-      const extraKm = oneWay;
+      const extraKm = typeof found.localExtraKmRate === 'number' && found.localExtraKmRate > 0 ? found.localExtraKmRate : oneWay;
 
       return {
         ...def,
-        ...found,
         oneWayRatePerKm: oneWay,
         roundTripRatePerKm: typeof found.roundTripRatePerKm === 'number' && found.roundTripRatePerKm > 0 ? found.roundTripRatePerKm : def.roundTripRatePerKm,
         oneWayMinimumKm: typeof found.oneWayMinimumKm === 'number' && found.oneWayMinimumKm > 0 ? found.oneWayMinimumKm : def.oneWayMinimumKm,
@@ -420,14 +440,16 @@ export function getFleetFareSettings(): FleetFareConfig[] {
         airportBasePrice: typeof found.airportBasePrice === 'number' && found.airportBasePrice > 0 ? found.airportBasePrice : def.airportBasePrice,
         airportBaseHours: typeof found.airportBaseHours === 'number' ? found.airportBaseHours : def.airportBaseHours,
         airportBaseKm: typeof found.airportBaseKm === 'number' ? found.airportBaseKm : def.airportBaseKm,
-        airportExtraKmRate: extraKm,
+        airportExtraKmRate: typeof found.airportExtraKmRate === 'number' ? found.airportExtraKmRate : extraKm,
         airportExtraHourRate: typeof found.airportExtraHourRate === 'number' ? found.airportExtraHourRate : def.airportExtraHourRate,
+        isActive: found.isActive !== undefined ? Boolean(found.isActive) : def.isActive,
       };
     });
     memorySettings = merged.sort((a, b) => a.displayOrder - b.displayOrder);
     return memorySettings;
   } catch (err) {
     console.error("Failed to load fleet fare settings:", err);
+    memorySettings = DEFAULT_FLEET_FARE_SETTINGS.map((d) => ({ ...d }));
     return memorySettings;
   }
 }
@@ -492,16 +514,24 @@ export function saveFleetFareSettings(settings: FleetFareConfig[]): void {
  * Reset fleet fare settings back to factory defaults.
  */
 export function resetFleetFareSettings(): FleetFareConfig[] {
-  memorySettings = DEFAULT_FLEET_FARE_SETTINGS;
+  memorySettings = DEFAULT_FLEET_FARE_SETTINGS.map((d) => ({ ...d }));
   if (isBrowser()) {
-    window.localStorage.removeItem(STORAGE_KEY_FLEET_PRICING);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY_FLEET_PRICING);
+      window.localStorage.removeItem("szt_fleet_fare_settings_v4");
+      window.localStorage.removeItem("szt_fleet_fare_settings_v3");
+      window.localStorage.removeItem("szt_fleet_fare_settings_v2");
+    } catch {}
     window.dispatchEvent(
-      new CustomEvent("fleetFareSettingsUpdated", { detail: DEFAULT_FLEET_FARE_SETTINGS }),
+      new CustomEvent("fleetFareSettingsUpdated", { detail: memorySettings }),
     );
+    window.dispatchEvent(new CustomEvent("fleetDataUpdated"));
 
     const vehicles = getFleetVehicles();
     const updatedVehicles = vehicles.map((v) => {
-      const match = DEFAULT_FLEET_FARE_SETTINGS.find((s) => s.fleetId === v.id || s.vehicleSlug === v.slug);
+      const match = memorySettings.find(
+        (s) => s.fleetId === v.id || s.vehicleSlug === v.slug || s.vehicleName.toLowerCase() === v.name.toLowerCase()
+      );
       if (match && match.oneWayRatePerKm) {
         return {
           ...v,
@@ -513,7 +543,7 @@ export function resetFleetFareSettings(): FleetFareConfig[] {
     });
     saveFleetVehicles(updatedVehicles);
   }
-  return DEFAULT_FLEET_FARE_SETTINGS;
+  return memorySettings;
 }
 
 /**
