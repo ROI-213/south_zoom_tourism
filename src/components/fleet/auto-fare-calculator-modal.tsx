@@ -414,7 +414,7 @@ export function AutoFareCalculatorModal({
       returnDate: tripType === "round-trip" ? returnDate : null,
       passengers: currentVehicle.seats,
       tripType: tripTypeLabel,
-      notes: `15% Advance Payment (₹${advanceAmount.toLocaleString("en-IN")}) initiated. Total Quoted Fare: ₹${fareResult.totalEstimatedFare.toLocaleString("en-IN")}, Balance to driver: ₹${balanceToDriver.toLocaleString("en-IN")}${addonsNote}`,
+      notes: `${fareResult.advancePercentage || 15}% Advance Payment (₹${advanceAmount.toLocaleString("en-IN")}) initiated. Total Quoted Fare: ₹${fareResult.totalEstimatedFare.toLocaleString("en-IN")}, Balance to driver: ₹${balanceToDriver.toLocaleString("en-IN")}${addonsNote}`,
     });
 
     saveLatestTravelSearch({
@@ -429,7 +429,7 @@ export function AutoFareCalculatorModal({
 
     onOpenChange(false);
 
-    // Navigate to QR payment page with pre-filled 15% advance amount and booking reference
+    // Navigate to QR payment page with pre-filled advance amount and booking reference
     navigate({
       to: "/qr-payment",
       search: {
@@ -440,7 +440,7 @@ export function AutoFareCalculatorModal({
       },
     });
 
-    toast.success("Proceeding to 15% Advance Payment", {
+    toast.success(`Proceeding to ${fareResult.advancePercentage || 15}% Advance Payment`, {
       description: `Paying ₹${advanceAmount.toLocaleString("en-IN")} advance for ${currentVehicle.name}. Scan UPI QR code to complete.`,
     });
   };
@@ -486,7 +486,7 @@ export function AutoFareCalculatorModal({
       returnDate: tripType === "round-trip" ? returnDate : null,
       passengers: currentVehicle.seats,
       tripType: tripTypeLabel,
-      notes: `Quoted Estimated Fare: ₹${fareResult.totalEstimatedFare.toLocaleString("en-IN")} (${fareResult.packageName || `${fareResult.billableDistanceKm} km @ ₹${fareResult.ratePerKm}/km`}). 15% Advance: ₹${advanceAmount.toLocaleString("en-IN")}, Balance to driver: ₹${balanceToDriver.toLocaleString("en-IN")}${addonsNote}`,
+      notes: `Quoted Estimated Fare: ₹${fareResult.totalEstimatedFare.toLocaleString("en-IN")} (${fareResult.packageName || `${fareResult.billableDistanceKm} km @ ₹${fareResult.ratePerKm}/km`}). ${fareResult.advancePercentage || 15}% Advance: ₹${advanceAmount.toLocaleString("en-IN")}, Balance to driver: ₹${balanceToDriver.toLocaleString("en-IN")}${addonsNote}`,
     });
 
     saveLatestTravelSearch({
@@ -504,7 +504,7 @@ export function AutoFareCalculatorModal({
     }
 
     toast.success("Booking Request Prepared!", {
-      description: `Quoted ₹${fareResult.totalEstimatedFare.toLocaleString("en-IN")} (15% Advance: ₹${advanceAmount.toLocaleString("en-IN")}) for ${currentVehicle.name}. Opening WhatsApp and booking section.`,
+      description: `Quoted ₹${fareResult.totalEstimatedFare.toLocaleString("en-IN")} (${fareResult.advancePercentage || 15}% Advance: ₹${advanceAmount.toLocaleString("en-IN")}) for ${currentVehicle.name}. Opening WhatsApp and booking section.`,
     });
 
     const message = formatWhatsAppQuoteMessage(fareResult);
@@ -1284,20 +1284,21 @@ export function AutoFareCalculatorModal({
                   </div>
                 </div>
 
-                {/* 15% ADVANCE PAYMENT OPTION CARD */}
+                {/* ADVANCE PAYMENT OPTION CARD */}
                 {(() => {
                   const advanceAmount = fareResult.advanceAmount;
                   const balanceToDriver = fareResult.balanceToDriver;
+                  const advancePercent = fareResult.advancePercentage || 15;
                   return (
                     <>
                       <div className="p-3.5 sm:p-4 bg-primary/5 border-t border-b border-primary/20 space-y-2.5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
                             <CreditCard className="h-4 w-4" />
-                            <span>15% Advance Booking Option</span>
+                            <span>{advancePercent}% Advance Booking Option</span>
                           </div>
                           <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] font-semibold">
-                            Pay 15% to Block Vehicle
+                            Pay {advancePercent}% to Block Vehicle
                           </Badge>
                         </div>
 
@@ -1309,7 +1310,7 @@ export function AutoFareCalculatorModal({
                             </span>
                           </div>
                           <div className="bg-primary/10 rounded-lg p-2.5 border border-primary/40">
-                            <span className="text-[10px] text-primary font-bold block">15% Advance to Pay Now:</span>
+                            <span className="text-[10px] text-primary font-bold block">{advancePercent}% Advance to Pay Now:</span>
                             <span className="font-extrabold text-primary text-sm sm:text-base">
                               ₹{advanceAmount.toLocaleString("en-IN")}
                             </span>
@@ -1323,7 +1324,7 @@ export function AutoFareCalculatorModal({
                         </div>
 
                         <p className="text-[11px] text-muted-foreground">
-                          Pay ₹{advanceAmount.toLocaleString("en-IN")} (15%) online via UPI / QR code to instantly secure your cab. Pay the remaining ₹{balanceToDriver.toLocaleString("en-IN")} directly to the driver during your trip.
+                          Pay ₹{advanceAmount.toLocaleString("en-IN")} ({advancePercent}%) online via UPI / QR code to instantly secure your cab. Pay the remaining ₹{balanceToDriver.toLocaleString("en-IN")} directly to the driver during your trip.
                         </p>
                       </div>
 
@@ -1353,7 +1354,7 @@ export function AutoFareCalculatorModal({
                             className="flex-1 sm:flex-initial text-xs font-bold gap-1.5 h-11 px-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
                           >
                             <QrCode className="h-4 w-4" />
-                            Pay 15% Advance (₹{advanceAmount.toLocaleString("en-IN")})
+                            Pay {advancePercent}% Advance (₹{advanceAmount.toLocaleString("en-IN")})
                           </Button>
                           <Button
                             type="button"

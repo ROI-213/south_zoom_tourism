@@ -23,6 +23,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { BookingPoliciesCard } from "@/components/common/booking-policies";
 import { downloadTripTicketPdf, generateTicketWhatsAppShare, type TripTicketData } from "@/lib/trip-ticket-pdf";
 import { supabase } from "@/lib/supabase";
+import { getFleetAdvancePercentage } from "@/content/fleet-pricing";
 
 export function buildBookingSchema(maxPassengers: number) {
   return z
@@ -160,10 +161,19 @@ export function VehicleBookingForm({
 
   const availability = checkAvailability(detail, vehicle, pickupDate, returnDate);
 
-  // Compute 15% advance amount with add-on charges included
+  const [advancePercent, setAdvancePercent] = useState<number>(() => getFleetAdvancePercentage());
+
+  useEffect(() => {
+    const handler = () => setAdvancePercent(getFleetAdvancePercentage());
+    window.addEventListener("fleetFareSettingsUpdated", handler);
+    return () => window.removeEventListener("fleetFareSettingsUpdated", handler);
+  }, []);
+
+  // Compute dynamic advance amount with add-on charges included
+  const advanceRate = advancePercent / 100;
   const baseEstimatedFare = prefillFare || vehicle.pricePerKm * 150 + 300 + 225;
   const estimatedFare = baseEstimatedFare + addonTotal;
-  const advanceAmount = prefillAdvance ? prefillAdvance + Math.round(addonTotal * 0.15) : Math.round(estimatedFare * 0.15);
+  const advanceAmount = prefillAdvance ? prefillAdvance + Math.round(addonTotal * advanceRate) : Math.round(estimatedFare * advanceRate);
   const balanceToDriver = estimatedFare - advanceAmount;
 
   const onSubmit = async (values: BookingValues) => {
@@ -482,19 +492,19 @@ export function VehicleBookingForm({
         </div>
       </div>
 
-      {/* 15% Advance Payment Option Box */}
+      {/* Advance Payment Option Box */}
       <div className="rounded-xl border border-primary/30 bg-primary/5 p-3.5 space-y-2 text-xs">
         <div className="flex items-center justify-between">
           <span className="font-bold text-primary flex items-center gap-1.5">
-            <CreditCard className="h-4 w-4" /> 15% Advance Booking Option
+            <CreditCard className="h-4 w-4" /> {advancePercent}% Advance Booking Option
           </span>
           <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
-            Pay 15% to Block Vehicle
+            Pay {advancePercent}% to Block Vehicle
           </Badge>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="bg-card p-2 rounded-lg border border-border">
-            <span className="text-[10px] text-muted-foreground block">15% Advance:</span>
+            <span className="text-[10px] text-muted-foreground block">{advancePercent}% Advance:</span>
             <span className="font-bold text-primary text-sm">₹{advanceAmount.toLocaleString("en-IN")}</span>
           </div>
           <div className="bg-card p-2 rounded-lg border border-border">
@@ -503,7 +513,7 @@ export function VehicleBookingForm({
           </div>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          Pay ₹{advanceAmount.toLocaleString("en-IN")} online via UPI / QR code to instantly secure this {vehicle.name}. Balance of ₹{balanceToDriver.toLocaleString("en-IN")} is paid directly to the driver during your trip.
+          Pay ₹{advanceAmount.toLocaleString("en-IN")} ({advancePercent}%) online via UPI / QR code to instantly secure this {vehicle.name}. Balance of ₹{balanceToDriver.toLocaleString("en-IN")} is paid directly to the driver during your trip.
         </p>
       </div>
 
@@ -552,10 +562,10 @@ export function VehicleBookingForm({
                 returnDate: values.returnDate || null,
                 passengers: values.passengers,
                 tripType: values.tripType,
-                notes: `15% Advance Payment: ₹${advanceAmount.toLocaleString("en-IN")}. Balance: ₹${balanceToDriver.toLocaleString("en-IN")}. Special: ${values.request || ""}`,
+                notes: `${advancePercent}% Advance Payment: ₹${advanceAmount.toLocaleString("en-IN")}. Balance: ₹${balanceToDriver.toLocaleString("en-IN")}. Special: ${values.request || ""}`,
               });
 
-              toast.success("Opening 15% Advance QR Payment...", {
+              toast.success(`Opening ${advancePercent}% Advance QR Payment...`, {
                 description: `Paying ₹${advanceAmount.toLocaleString("en-IN")} advance for ${vehicle.name}.`,
               });
 
@@ -574,7 +584,7 @@ export function VehicleBookingForm({
           className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-md"
         >
           <QrCode className="h-4 w-4" />
-          Pay 15% Advance (₹{advanceAmount.toLocaleString("en-IN")})
+          Pay {advancePercent}% Advance (₹{advanceAmount.toLocaleString("en-IN")})
         </Button>
         <Button
           type="submit"
@@ -647,7 +657,7 @@ export function VehicleBookingForm({
                   <span className="font-bold text-base text-gray-900">₹{ticketData.totalAmount.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs text-emerald-700 font-medium">
-                  <span>15% Advance:</span>
+                  <span>{advancePercent}% Advance:</span>
                   <span>₹{(ticketData.advanceAmount || 0).toLocaleString('en-IN')}</span>
                 </div>
               </div>

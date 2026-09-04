@@ -60,12 +60,16 @@ import {
   ArrowLeftRight,
   Sliders,
   Check,
+  CreditCard,
+  Percent,
 } from 'lucide-react';
 import {
   getFleetFareSettings,
   saveFleetFareSettings,
   resetFleetFareSettings,
   matchVehicleToFareConfig,
+  getFleetAdvancePercentage,
+  saveFleetAdvancePercentage,
   type FleetFareConfig,
 } from '@/content/fleet-pricing';
 import {
@@ -242,6 +246,7 @@ function FleetProductPage() {
 
   // All-Fleet pricing state
   const [fareSettings, setFareSettings] = useState<FleetFareConfig[]>(() => getFleetFareSettings());
+  const [advancePercent, setAdvancePercent] = useState<number>(() => getFleetAdvancePercentage());
   const [activeMainTab, setActiveMainTab] = useState<'pricing' | 'vehicles'>('pricing');
   const [isSavingPrices, setIsSavingPrices] = useState(false);
   const [fareResetConfirm, setFareResetConfirm] = useState(false);
@@ -250,6 +255,7 @@ function FleetProductPage() {
   function loadFleetAndPrices() {
     setFleetList(getFleetVehicles());
     setFareSettings(getFleetFareSettings());
+    setAdvancePercent(getFleetAdvancePercentage());
   }
 
   useEffect(() => {
@@ -296,6 +302,7 @@ function FleetProductPage() {
     setIsSavingPrices(true);
     try {
       saveFleetFareSettings(fareSettings);
+      saveFleetAdvancePercentage(advancePercent);
 
       // Also synchronize vehicle pricePerKm & priceFromLabel in fleet vehicles list
       const vehicles = getFleetVehicles();
@@ -313,8 +320,8 @@ function FleetProductPage() {
       saveFleetVehicles(updatedVehicles);
 
       loadFleetAndPrices();
-      toast.success('All Fleet Prices Saved Successfully!', {
-        description: 'Rates immediately updated across all frontend cards, calculator & booking forms.',
+      toast.success('All Fleet Prices & Advance % Saved Successfully!', {
+        description: `Fleet rates and ${advancePercent}% advance booking fee updated across all frontend cards, calculator & booking forms.`,
       });
     } catch (err) {
       toast.error('Failed to save fleet prices');
@@ -885,6 +892,75 @@ function FleetProductPage() {
                 <span>Live Frontend Sync</span>
               </div>
               <span className="text-[10px] text-gray-500 mt-0.5">Rates immediately reflect on all cards & calculator</span>
+            </div>
+          </div>
+
+          {/* Booking Advance Percentage Setting Card */}
+          <div className="p-4 bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent border-2 border-orange-300 dark:border-orange-700/60 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-1 max-w-xl">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="p-1.5 bg-orange-500 text-white rounded-lg inline-flex">
+                  <CreditCard size={18} />
+                </span>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">
+                  Online Booking Advance Percentage
+                </h3>
+                <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 border-orange-300 font-bold text-xs">
+                  Currently {advancePercent}%
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Set the advance percentage required to lock/confirm vehicles. Dynamic calculations in the fare calculator, WhatsApp quotes, and booking forms will instantly use this percentage (e.g. 15%, 20%, 30%).
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 shadow-inner">
+                <Percent size={15} className="text-gray-400" />
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={advancePercent}
+                  onChange={(e) => {
+                    const val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                    setAdvancePercent(val);
+                  }}
+                  className="w-16 h-8 text-center font-extrabold text-base border-none focus-visible:ring-0 p-0"
+                />
+                <span className="font-bold text-gray-500 text-sm">%</span>
+              </div>
+
+              {/* Quick Presets */}
+              <div className="flex items-center gap-1">
+                {[10, 15, 20, 25, 30, 40].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setAdvancePercent(preset)}
+                    className={`text-xs px-2.5 py-1.5 rounded-lg font-bold transition-all ${
+                      advancePercent === preset
+                        ? 'bg-orange-500 text-white shadow-sm'
+                        : 'bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-700'
+                    }`}
+                  >
+                    {preset}%
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                type="button"
+                onClick={() => {
+                  saveFleetAdvancePercentage(advancePercent);
+                  toast.success(`Advance percentage saved as ${advancePercent}%!`, {
+                    description: 'Fare calculator, booking forms, and WhatsApp quotes are updated immediately.',
+                  });
+                }}
+                className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-9 px-4 text-xs gap-1.5 shadow-sm"
+              >
+                <Save size={14} /> Save Advance %
+              </Button>
             </div>
           </div>
 

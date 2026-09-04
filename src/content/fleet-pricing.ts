@@ -103,7 +103,8 @@ export type FareCalculationResult = {
   gstPercentage: number;
   gstAmount: number;
   totalEstimatedFare: number;
-  advanceAmount: number; // 15%
+  advancePercentage: number; // e.g. 15, 20
+  advanceAmount: number; // calculated percentage
   balanceToDriver: number; // Remaining
   routeDuration?: string;
   isInterstate?: boolean;
@@ -366,11 +367,78 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
 
 const STORAGE_KEY_FLEET_PRICING = "szt_fleet_fare_settings_v5";
 const STORAGE_KEY_CALC_LOGS = "szt_fare_calculations_log_v1";
+export const STORAGE_KEY_ADVANCE_PERCENT = "szt_booking_advance_percent_v1";
 
 let memorySettings: FleetFareConfig[] = DEFAULT_FLEET_FARE_SETTINGS.map((d) => ({ ...d }));
 let memoryLogs: FareCalculationLog[] = [];
+let memoryAdvancePercent = 15;
 
 const isBrowser = () => typeof window !== "undefined";
+
+/**
+ * Get current configured advance payment percentage (default 15%).
+ */
+export function getFleetAdvancePercentage(): number {
+  if (!isBrowser()) return memoryAdvancePercent;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY_ADVANCE_PERCENT);
+    if (raw !== null) {
+      const parsed = Number(raw);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+        memoryAdvancePercent = parsed;
+        return parsed;
+      }
+    }
+  } catch {}
+  return memoryAdvancePercent;
+}
+
+export const getBookingAdvancePercentage = getFleetAdvancePercentage;
+
+/**
+ * Set and persist advance payment percentage in localStorage and Supabase.
+ */
+export function saveFleetAdvancePercentage(percentage: number): void {
+  const safeVal = Math.min(100, Math.max(0, Math.round(Number(percentage) || 15)));
+  memoryAdvancePercent = safeVal;
+
+  if (isBrowser()) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY_ADVANCE_PERCENT, String(safeVal));
+      window.dispatchEvent(new CustomEvent("fleetFareSettingsUpdated"));
+      window.dispatchEvent(new CustomEvent("bookingSettingsUpdated", { detail: { advance_percentage: safeVal } }));
+    } catch (e) {
+      console.error("Failed to save advance percent:", e);
+    }
+
+    // Also synchronize asynchronously to Supabase website_settings `booking_settings`
+    import("@/lib/supabase")
+      .then(({ supabase }) => {
+        supabase
+          .from("website_settings")
+          .select("value")
+          .eq("key", "booking_settings")
+          .single()
+          .then(({ data }) => {
+            const currentVal = data?.value || {};
+            const updatedVal = { ...currentVal, advance_percentage: safeVal };
+            supabase
+              .from("website_settings")
+              .upsert({
+                key: "booking_settings",
+                value: updatedVal,
+                updated_at: new Date().toISOString(),
+              })
+              .then(() => {})
+              .catch(() => {});
+          })
+          .catch(() => {});
+      })
+      .catch(() => {});
+  }
+}
+
+export const saveBookingAdvancePercentage = saveFleetAdvancePercentage;
 
 export { matchVehicleToFareConfig } from "@/lib/fleet-matcher";
 import { matchVehicleToFareConfig } from "@/lib/fleet-matcher";
@@ -585,6 +653,8 @@ export function calculateCalendarDays(startDateStr: string, returnDateStr?: stri
 export function calculateFleetFare(input: FareCalculationInput): FareCalculationResult {
   const config = getFleetFareConfig(input.fleetId);
   const tollRate = config.tollRatePerKm ?? 1.5;
+  const advancePercentage = getFleetAdvancePercentage();
+  const advanceRate = advancePercentage / 100;
 
   // Add-on options: Luggage Carrier ₹250, Pet Traveling ₹900
   const luggageCarrier = Boolean(input.luggageCarrier);
@@ -617,7 +687,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
     const gstPercentage = config.gstPercentage || 5;
     const gstAmount = Math.round((subtotal * gstPercentage) / 100);
     const totalEstimatedFare = subtotal + gstAmount;
-    const advanceAmount = Math.round(totalEstimatedFare * 0.15);
+    const advanceAmount = Math.round(totalEstimatedFare * advanceRate);
     const balanceToDriver = totalEstimatedFare - advanceAmount;
 
     return {
@@ -648,6 +718,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
       gstPercentage,
       gstAmount,
       totalEstimatedFare,
+      advancePercentage,
       advanceAmount,
       balanceToDriver,
       routeDuration: `${pkgHours} hours package`,
@@ -670,7 +741,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
     const gstPercentage = config.gstPercentage || 5;
     const gstAmount = Math.round((subtotal * gstPercentage) / 100);
     const totalEstimatedFare = subtotal + gstAmount;
-    const advanceAmount = Math.round(totalEstimatedFare * 0.15);
+    const advanceAmount = Math.round(totalEstimatedFare * advanceRate);
     const balanceToDriver = totalEstimatedFare - advanceAmount;
 
     return {
@@ -701,6 +772,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
       gstPercentage,
       gstAmount,
       totalEstimatedFare,
+      advancePercentage,
       advanceAmount,
       balanceToDriver,
       routeDuration: "Airport Transfer (3 Hours)",
@@ -732,7 +804,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
     const gstPercentage = config.gstPercentage;
     const gstAmount = Math.round((subtotal * gstPercentage) / 100);
     const totalEstimatedFare = subtotal + gstAmount;
-    const advanceAmount = Math.round(totalEstimatedFare * 0.15);
+    const advanceAmount = Math.round(totalEstimatedFare * advanceRate);
     const balanceToDriver = totalEstimatedFare - advanceAmount;
 
     return {
@@ -762,6 +834,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
       gstPercentage,
       gstAmount,
       totalEstimatedFare,
+      advancePercentage,
       advanceAmount,
       balanceToDriver,
       routeDuration: input.routeDuration,
@@ -795,7 +868,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
   const gstPercentage = config.gstPercentage;
   const gstAmount = Math.round((subtotal * gstPercentage) / 100);
   const totalEstimatedFare = subtotal + gstAmount;
-  const advanceAmount = Math.round(totalEstimatedFare * 0.15);
+  const advanceAmount = Math.round(totalEstimatedFare * advanceRate);
   const balanceToDriver = totalEstimatedFare - advanceAmount;
 
   return {
@@ -826,6 +899,7 @@ export function calculateFleetFare(input: FareCalculationInput): FareCalculation
     gstPercentage,
     gstAmount,
     totalEstimatedFare,
+    advancePercentage,
     advanceAmount,
     balanceToDriver,
     routeDuration: input.routeDuration,
@@ -913,9 +987,9 @@ export function formatWhatsAppQuoteMessage(calc: FareCalculationResult): string 
     `• *Subtotal:* ₹${calc.subtotal.toLocaleString("en-IN")}`,
     `• *GST (${calc.gstPercentage}%):* ₹${calc.gstAmount.toLocaleString("en-IN")}`,
     `\n💰 *ESTIMATED TOTAL: ₹${calc.totalEstimatedFare.toLocaleString("en-IN")}*`,
-    `💳 *15% Advance to Pay:* ₹${calc.advanceAmount.toLocaleString("en-IN")}`,
+    `💳 *${calc.advancePercentage || 15}% Advance to Pay:* ₹${calc.advanceAmount.toLocaleString("en-IN")}`,
     `💵 *Balance (Pay to Driver):* ₹${calc.balanceToDriver.toLocaleString("en-IN")}`,
-    `\n_Note: Toll, parking, state tax at actuals where applicable. Complete advance payment online to lock vehicle._`,
+    `\n_Note: Toll, parking, state tax at actuals where applicable. Complete ${calc.advancePercentage || 15}% advance payment online to lock vehicle._`,
   ].filter(Boolean);
 
   return lines.join("\n");

@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, TriangleAlert, CreditCard, QrCode, Sparkles } from "lucide-react";
+import { getFleetAdvancePercentage } from "@/content/fleet-pricing";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -122,8 +123,16 @@ export function PackageBookingPanel({
     (spokenLang ? 200 : 0) +
     (newModel ? 200 : 0);
 
+  const [advancePercent, setAdvancePercent] = useState<number>(() => getFleetAdvancePercentage());
+
+  useEffect(() => {
+    const handler = () => setAdvancePercent(getFleetAdvancePercentage());
+    window.addEventListener("fleetFareSettingsUpdated", handler);
+    return () => window.removeEventListener("fleetFareSettingsUpdated", handler);
+  }, []);
+
   const finalTotal = estimate.available ? estimate.total + addOnsTotal : 0;
-  const advanceAmount = Math.round(finalTotal * 0.15);
+  const advanceAmount = Math.round(finalTotal * (advancePercent / 100));
   const balanceToDriver = finalTotal - advanceAmount;
 
   const departureSoldOut = Boolean(departure?.soldOut);
@@ -140,7 +149,7 @@ export function PackageBookingPanel({
     luggageCarrier ? "Luggage carrier: +₹250" : null,
     petTravelling ? "Pet travelling: +₹900" : null,
     spokenLang ? `Language: ${spokenLang} (+₹200)` : null,
-    estimate.available ? `Total: ${formatRupees(finalTotal)} (15% Advance: ₹${advanceAmount.toLocaleString("en-IN")})` : "Estimate: on request",
+    estimate.available ? `Total: ${formatRupees(finalTotal)} (${advancePercent}% Advance: ₹${advanceAmount.toLocaleString("en-IN")})` : "Estimate: on request",
   ].filter(Boolean) as string[];
 
   const handlePayAdvance = form.handleSubmit(async (values) => {
@@ -179,7 +188,7 @@ export function PackageBookingPanel({
           { label: "Tour Package", value: pkg.title },
           { label: "Pickup", value: values.pickup },
           { label: "Total Quoted Fare", value: `₹${finalTotal.toLocaleString("en-IN")}` },
-          { label: "15% Advance Paid", value: `₹${advanceAmount.toLocaleString("en-IN")}` },
+          { label: `${advancePercent}% Advance Paid`, value: `₹${advanceAmount.toLocaleString("en-IN")}` },
           { label: "Balance to driver", value: `₹${balanceToDriver.toLocaleString("en-IN")}` },
           { label: "Options", value: notesSummary },
         ],
@@ -200,7 +209,7 @@ export function PackageBookingPanel({
       },
     });
 
-    toast.success("Proceeding to 15% Advance Payment", {
+    toast.success(`Proceeding to ${advancePercent}% Advance Payment`, {
       description: `Paying ₹${advanceAmount.toLocaleString("en-IN")} advance for ${pkg.title}.`,
     });
   });
@@ -462,20 +471,20 @@ export function PackageBookingPanel({
           </div>
         </div>
 
-        {/* 15% Advance Payment Box */}
+        {/* Advance Payment Box */}
         {estimate.available && (
           <div className="rounded-xl border border-primary/40 bg-primary/5 p-3 space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <span className="font-bold text-primary flex items-center gap-1.5">
-                <CreditCard className="h-4 w-4" /> 15% Advance Booking Option
+                <CreditCard className="h-4 w-4" /> {advancePercent}% Advance Booking Option
               </span>
               <Badge className="bg-primary text-primary-foreground text-[10px]">
-                Pay 15% to Block
+                Pay {advancePercent}% to Block
               </Badge>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-card p-2 rounded-lg border border-border">
-                <span className="text-[10px] text-muted-foreground block">15% Advance:</span>
+                <span className="text-[10px] text-muted-foreground block">{advancePercent}% Advance:</span>
                 <span className="font-bold text-primary text-sm">₹{advanceAmount.toLocaleString("en-IN")}</span>
               </div>
               <div className="bg-card p-2 rounded-lg border border-border">
@@ -503,7 +512,7 @@ export function PackageBookingPanel({
             onClick={handlePayAdvance}
           >
             <QrCode className="h-4 w-4" />
-            Pay 15% Advance (₹{advanceAmount.toLocaleString("en-IN")}) Online
+            Pay {advancePercent}% Advance (₹{advanceAmount.toLocaleString("en-IN")}) Online
           </Button>
         )}
 

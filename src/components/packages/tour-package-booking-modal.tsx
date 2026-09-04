@@ -37,6 +37,7 @@ import { downloadTripTicketPdf, generateTicketWhatsAppShare, type TripTicketData
 import { supabase } from "@/lib/supabase";
 import { upsertRegistryEntry } from "@/content/customer-data";
 import { BookingPoliciesCard } from "@/components/common/booking-policies";
+import { getFleetAdvancePercentage } from "@/content/fleet-pricing";
 
 export type TourPackageBookingModalProps = {
   open: boolean;
@@ -90,6 +91,13 @@ export function TourPackageBookingModal({
   // Ticket Voucher Dialog State
   const [ticketData, setTicketData] = useState<TripTicketData | null>(null);
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
+  const [advancePercent, setAdvancePercent] = useState<number>(() => getFleetAdvancePercentage());
+
+  useEffect(() => {
+    const handler = () => setAdvancePercent(getFleetAdvancePercentage());
+    window.addEventListener("fleetFareSettingsUpdated", handler);
+    return () => window.removeEventListener("fleetFareSettingsUpdated", handler);
+  }, []);
 
   // Reset/sync form state whenever a new packageItem is opened
   useEffect(() => {
@@ -113,6 +121,21 @@ export function TourPackageBookingModal({
   // Price Calculation Logic
   // Flow: Choose Options -> Add Charges -> Generate Final Estimate -> Show Total -> Advance Payment
   const pricing = useMemo(() => {
+    if (!packageItem) {
+      return {
+        basePerPerson: 0,
+        baseTotal: 0,
+        hotelSurcharge: 0,
+        vehicleSurcharge: 0,
+        addOnsTotal: 0,
+        subTotal: 0,
+        gst: 0,
+        finalTotal: 0,
+        advanceAmount: 0,
+        balanceToDriver: 0,
+      };
+    }
+
     const basePerPerson = packageItem?.priceFrom || 8999;
     const travellersCount = Math.max(1, adults + (children > 0 ? children * 0.6 : 0));
     const baseTotal = Math.round(basePerPerson * travellersCount);
@@ -140,7 +163,7 @@ export function TourPackageBookingModal({
     const subTotal = baseTotal + hotelSurcharge + vehicleSurcharge + addOnsTotal;
     const gst = Math.round(subTotal * 0.05); // 5% GST
     const finalTotal = subTotal + gst;
-    const advanceAmount = Math.round(finalTotal * 0.15); // 15% Advance
+    const advanceAmount = Math.round(finalTotal * (advancePercent / 100));
     const balanceToDriver = finalTotal - advanceAmount;
 
     return {
@@ -165,6 +188,7 @@ export function TourPackageBookingModal({
     petTravelling,
     spokenLang,
     newModel,
+    advancePercent,
   ]);
 
   if (!packageItem) return null;
@@ -247,7 +271,7 @@ export function TourPackageBookingModal({
           { label: "Hotel Category", value: stayLabel },
           { label: "Vehicle Type", value: `${vehicleTier.toUpperCase()} Cab` },
           { label: "Total Quoted Fare", value: `₹${pricing.finalTotal.toLocaleString("en-IN")}` },
-          { label: "15% Advance Paid", value: `₹${pricing.advanceAmount.toLocaleString("en-IN")}` },
+          { label: `${advancePercent}% Advance Paid`, value: `₹${pricing.advanceAmount.toLocaleString("en-IN")}` },
           { label: "Balance to driver", value: `₹${pricing.balanceToDriver.toLocaleString("en-IN")}` },
           { label: "Special notes", value: notesSummary },
         ],
@@ -288,7 +312,7 @@ export function TourPackageBookingModal({
     return { ref, ticket };
   };
 
-  // Flow: Pay 15% Advance Online (QR)
+  // Flow: Pay Advance Online (QR)
   const handlePayAdvanceOnline = async () => {
     const result = await createBookingRecord();
     if (!result) return;
@@ -308,7 +332,7 @@ export function TourPackageBookingModal({
       },
     });
 
-    toast.success("Proceeding to 15% Advance Payment", {
+    toast.success(`Proceeding to ${advancePercent}% Advance Payment`, {
       description: `Paying ₹${pricing.advanceAmount.toLocaleString("en-IN")} advance for ${packageItem.title}. Scan QR code to complete.`,
     });
   };
@@ -340,7 +364,7 @@ export function TourPackageBookingModal({
               Book {packageItem.title}
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
-              Complete your journey details. Choose options to generate your instant estimate and proceed to 15% advance booking.
+              Complete your journey details. Choose options to generate your instant estimate and proceed to {advancePercent}% advance booking.
             </DialogDescription>
           </DialogHeader>
 
@@ -657,11 +681,11 @@ export function TourPackageBookingModal({
               </div>
             </div>
 
-            {/* 5. Live Bill / Estimate & 15% Advance Section (Flow: Choose Options -> Add Charges -> Final Estimate -> Show Total -> Advance Payment) */}
+            {/* 5. Live Bill / Estimate & Advance Section (Flow: Choose Options -> Add Charges -> Final Estimate -> Show Total -> Advance Payment) */}
             <div className="rounded-xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-card to-background p-4 space-y-3">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
                 <span className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                  <CreditCard className="h-4 w-4 text-primary" /> Final Bill / Estimate & 15% Advance
+                  <CreditCard className="h-4 w-4 text-primary" /> Final Bill / Estimate & {advancePercent}% Advance
                 </span>
                 <Badge className="bg-emerald-600 text-white text-[10px]">
                   Instant Total Generated
@@ -707,7 +731,7 @@ export function TourPackageBookingModal({
                   </span>
                 </div>
                 <div className="bg-primary/10 p-2 rounded-lg border border-primary/30">
-                  <span className="text-[10px] text-primary block font-bold">15% Advance</span>
+                  <span className="text-[10px] text-primary block font-bold">{advancePercent}% Advance</span>
                   <span className="font-extrabold text-primary text-sm sm:text-base">
                     ₹{pricing.advanceAmount.toLocaleString("en-IN")}
                   </span>
@@ -735,7 +759,7 @@ export function TourPackageBookingModal({
               onClick={handlePayAdvanceOnline}
             >
               <QrCode className="h-4 w-4" />
-              Pay 15% Advance (₹{pricing.advanceAmount.toLocaleString("en-IN")}) Online
+              Pay {advancePercent}% Advance (₹{pricing.advanceAmount.toLocaleString("en-IN")}) Online
             </Button>
             <Button
               type="button"
@@ -785,7 +809,7 @@ export function TourPackageBookingModal({
                   <span className="font-bold text-foreground">₹{ticketData.totalAmount.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between text-primary font-bold">
-                  <span>15% Advance:</span>
+                  <span>{advancePercent}% Advance:</span>
                   <span>₹{(ticketData.advanceAmount || 0).toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
@@ -837,7 +861,7 @@ export function TourPackageBookingModal({
                   });
                 }}
               >
-                Proceed to 15% Advance Payment (QR)
+                Proceed to {advancePercent}% Advance Payment (QR)
               </Button>
             </DialogFooter>
           </DialogContent>

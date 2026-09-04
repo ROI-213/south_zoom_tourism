@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Loader2, Save } from 'lucide-react';
+import { saveFleetAdvancePercentage, getFleetAdvancePercentage } from '@/content/fleet-pricing';
 
 export const Route = createFileRoute('/admin/settings/booking')({
   component: BookingSettingsPage,
@@ -33,7 +34,12 @@ function BookingSettingsPage() {
 
   useEffect(() => {
     supabase.from('website_settings').select('value').eq('key', 'booking_settings').single().then(({ data }) => {
-      if (data?.value) setForm({ ...defaults, ...data.value });
+      const currentAdvance = getFleetAdvancePercentage();
+      if (data?.value) {
+        setForm({ ...defaults, advance_percentage: currentAdvance, ...data.value });
+      } else {
+        setForm({ ...defaults, advance_percentage: currentAdvance });
+      }
       setLoading(false);
     });
   }, []);
@@ -42,7 +48,8 @@ function BookingSettingsPage() {
     setSaving(true);
     try {
       await supabase.from('website_settings').upsert({ key: 'booking_settings', value: form, updated_at: new Date().toISOString() });
-      toast.success('Booking settings saved');
+      saveFleetAdvancePercentage(form.advance_percentage);
+      toast.success('Booking settings saved and fleet pricing synced');
     } catch (e: any) { toast.error(e.message); }
     finally { setSaving(false); }
   }
