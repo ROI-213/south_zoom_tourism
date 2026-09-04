@@ -150,8 +150,8 @@ export async function downloadTripTicketPdf(data: TripTicketData) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(20, 80, 160);
-    doc.text(title, MARGIN + 3, y + 5);
-    y += 9;
+    doc.text(title, MARGIN + 3, y + 4.8);
+    y += 12.5;
   };
 
   // ─── Helper: key-value row ────────────────────────────────────────────────────
@@ -162,15 +162,17 @@ export async function downloadTripTicketPdf(data: TripTicketData) {
     doc.text(label, MARGIN + 2, y);
     doc.setFont('helvetica', bold ? 'bold' : 'normal');
     doc.setTextColor(20, 20, 20);
-    doc.text(value || '—', MARGIN + 55, y);
-    y += 6;
+    const maxValW = CONTENT_W - 57;
+    const lines = doc.splitTextToSize(value || '—', maxValW);
+    doc.text(lines, MARGIN + 55, y);
+    y += Math.max(lines.length * 5, 5.5);
   };
 
   const thinLine = () => {
     doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.2);
     doc.line(MARGIN, y, PAGE_W - MARGIN, y);
-    y += 4;
+    y += 4.5;
   };
 
   // ─── 1. PASSENGER DETAILS ────────────────────────────────────────────────────
@@ -207,9 +209,10 @@ export async function downloadTripTicketPdf(data: TripTicketData) {
   sectionHeader('4.  FARE & PAYMENT SUMMARY');
 
   // Fare box
+  const fareBoxY = y - 2.5;
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(200, 215, 230);
-  doc.roundedRect(MARGIN, y, CONTENT_W, 22, 2, 2, 'FD');
+  doc.roundedRect(MARGIN, fareBoxY, CONTENT_W, 22, 2, 2, 'FD');
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -217,22 +220,22 @@ export async function downloadTripTicketPdf(data: TripTicketData) {
   const col2 = MARGIN + 62;
   const col3 = MARGIN + 120;
 
-  doc.text('Total Estimated Fare', MARGIN + 4, y + 7);
-  doc.text('Advance Paid', col2, y + 7);
-  doc.text('Balance to Driver', col3, y + 7);
+  doc.text('Total Estimated Fare', MARGIN + 4, fareBoxY + 7);
+  doc.text('Advance Paid', col2, fareBoxY + 7);
+  doc.text('Balance to Driver', col3, fareBoxY + 7);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(20, 20, 20);
-  doc.text(inr(total), MARGIN + 4, y + 16);
+  doc.text(inr(total), MARGIN + 4, fareBoxY + 16);
 
   doc.setTextColor(34, 139, 34);
-  doc.text(inr(advance), col2, y + 16);
+  doc.text(inr(advance), col2, fareBoxY + 16);
 
   doc.setTextColor(balance > 0 ? 180 : 34, balance > 0 ? 40 : 139, balance > 0 ? 40 : 34);
-  doc.text(inr(balance), col3, y + 16);
+  doc.text(inr(balance), col3, fareBoxY + 16);
 
-  y += 26;
+  y = fareBoxY + 26;
 
   if (data.notes) {
     doc.setFont('helvetica', 'italic');
