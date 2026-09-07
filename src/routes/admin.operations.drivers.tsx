@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Search, UserCheck, Loader2, Edit2, Trash2, AlertTriangle, Car, Hash, ShieldCheck } from 'lucide-react';
+import { Plus, Search, UserCheck, Loader2, Edit2, Trash2, AlertTriangle, Car, Hash, ShieldCheck, X } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { getFleetVehicles } from '@/content/fleet';
 
@@ -38,12 +38,12 @@ type Driver = {
   id: string;
   name: string;
   phone: string;
-  whatsapp?: string;
-  email?: string;
-  cab_type?: string;
-  car_number?: string;
-  license_number?: string;
-  license_expiry?: string;
+  whatsapp?: string | null;
+  email?: string | null;
+  cab_type?: string | null;
+  car_number?: string | null;
+  license_number?: string | null;
+  license_expiry?: string | null;
   experience_years?: number;
   status: string;
   rating?: number;
@@ -220,6 +220,8 @@ function DriversPage() {
       setDialogOpen(false);
       setForm(emptyForm);
       setEditId(null);
+      setSearch('');
+      setStatusFilter('all');
       await fetch();
     } catch (e: any) {
       console.error(e);
@@ -239,7 +241,7 @@ function DriversPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div><h1 className="text-xl font-bold">Drivers</h1><p className="text-sm text-gray-500">Manage driver profiles, cab assignments, and documents</p></div>
-        <Button onClick={() => { setForm(emptyForm); setEditId(null); setDialogOpen(true); }} className="bg-orange-500 hover:bg-orange-600 gap-2">
+        <Button onClick={() => { setForm(emptyForm); setEditId(null); setSearch(''); setDialogOpen(true); }} className="bg-orange-500 hover:bg-orange-600 gap-2">
           <Plus size={16} /> Add Driver
         </Button>
       </div>
@@ -251,8 +253,27 @@ function DriversPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <Input placeholder="Search by name, phone, cab type or car number..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Input
+            type="search"
+            name="admin_driver_search"
+            autoComplete="off"
+            placeholder="Search by name, phone, cab type or car number..."
+            className="pl-9 pr-9"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 rounded"
+              title="Clear search"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-48"><SelectValue placeholder="All Statuses" /></SelectTrigger>
@@ -352,6 +373,8 @@ function DriversPage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Name *</Label>
               <Input
+                name="new_driver_name"
+                autoComplete="off"
                 placeholder="Driver full name"
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -360,6 +383,9 @@ function DriversPage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Phone *</Label>
               <Input
+                name="new_driver_phone"
+                type="tel"
+                autoComplete="off"
                 placeholder="+91 98765 43210"
                 value={form.phone}
                 onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
@@ -368,6 +394,9 @@ function DriversPage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">WhatsApp</Label>
               <Input
+                name="new_driver_whatsapp"
+                type="tel"
+                autoComplete="off"
                 placeholder="WhatsApp contact number"
                 value={form.whatsapp}
                 onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))}
@@ -376,6 +405,9 @@ function DriversPage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Email</Label>
               <Input
+                name="new_driver_email"
+                type="email"
+                autoComplete="off"
                 placeholder="driver@sztourism.com"
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
@@ -412,6 +444,8 @@ function DriversPage() {
                 <span>Car Number (Vehicle Plate)</span>
               </Label>
               <Input
+                name="new_driver_plate"
+                autoComplete="off"
                 placeholder="e.g. KA 01 AB 1234"
                 className="uppercase font-mono text-xs"
                 value={form.car_number}
@@ -422,6 +456,8 @@ function DriversPage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">License Number</Label>
               <Input
+                name="new_driver_license"
+                autoComplete="off"
                 placeholder="e.g. KA0120180009871"
                 className="uppercase font-mono text-xs"
                 value={form.license_number}

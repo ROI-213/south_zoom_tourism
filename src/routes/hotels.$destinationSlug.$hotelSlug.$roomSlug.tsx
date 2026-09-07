@@ -19,6 +19,7 @@ import {
 } from "@/components/hotels/listing-search";
 import type { ListingStay } from "@/content/hotel-listing";
 import { getPublishedHotels, getCategoryLabel, getRoomTypeLabel } from "@/content/hotels";
+import { syncLiveHotelsCache } from "@/lib/hotel-service";
 import { getHotelProfile, getRoomDetailAttributes, mapsLink } from "@/content/hotel-details";
 import {
   buildRoomQuotes,
@@ -46,20 +47,53 @@ const stayObj = (stay: ListingStay): Record<string, string> => ({
 
 function findHotel(destinationSlug: string, hotelSlug: string) {
   return (
+    getPublishedHotels().find((h) => {
+      const matchHotel =
+        h.slug === hotelSlug ||
+        h.id === hotelSlug ||
+        slugify(h.name) === hotelSlug;
+      const matchDest =
+        slugify(h.city) === destinationSlug ||
+        slugify(h.state) === destinationSlug ||
+        destinationSlug === "all";
+      return matchHotel && matchDest;
+    }) ??
     getPublishedHotels().find(
-      (h) => h.slug === hotelSlug && slugify(h.city) === destinationSlug,
-    ) ?? null
+      (h) =>
+        h.slug === hotelSlug ||
+        h.id === hotelSlug ||
+        slugify(h.name) === hotelSlug,
+    ) ??
+    null
   );
 }
 
 export const Route = createFileRoute("/hotels/$destinationSlug/$hotelSlug/$roomSlug")({
   validateSearch: (search: Record<string, unknown>): ListingSearch =>
     validateListingSearch(search),
-  loader: ({ params }) => {
-    const hotel = findHotel(params.destinationSlug, params.hotelSlug);
+  loader: async ({ params }) => {
+    let hotel = findHotel(params.destinationSlug, params.hotelSlug);
+    if (!hotel) {
+      try {
+        await syncLiveHotelsCache();
+        hotel = findHotel(params.destinationSlug, params.hotelSlug);
+      } catch (err) {
+        console.error("Failed to sync hotels in room loader:", err);
+      }
+    }
     if (!hotel) throw notFound();
-    const room = resolveRoom(hotel, params.roomSlug);
+
+    let room = resolveRoom(hotel, params.roomSlug);
+    if (!room) {
+      try {
+        await syncLiveHotelsCache();
+        room = resolveRoom(hotel, params.roomSlug);
+      } catch (err) {
+        console.error("Failed to sync room inventory in room loader:", err);
+      }
+    }
     if (!room) throw notFound();
+
     return {
       hotelName: hotel.name,
       city: hotel.city,

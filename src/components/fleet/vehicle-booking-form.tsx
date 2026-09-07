@@ -17,7 +17,8 @@ import {
   makeBookingReference,
   type VehicleDetail,
 } from "@/content/vehicle-details";
-import { company } from "@/content/site";
+import { company, redirectToWhatsApp } from "@/content/site";
+import { syncEnquiryToSupabase } from "@/lib/booking-sync";
 import { getLatestTravelSearch, saveLatestTravelSearch } from "@/lib/search-storage";
 import { useNavigate } from "@tanstack/react-router";
 import { BookingPoliciesCard } from "@/components/common/booking-policies";
@@ -309,10 +310,25 @@ export function VehicleBookingForm({
       notes: values.request || "",
     });
 
+    // Sync to Supabase Enquiries for Admin CRM visibility
+    await syncEnquiryToSupabase({
+      reference: ref,
+      name: values.name,
+      phone: values.phone,
+      email: values.email || undefined,
+      serviceType: values.tripType || "Fleet Cab",
+      travelDate: values.pickupDate,
+      message: `Vehicle: ${vehicle.name} (${vehicle.brand} ${vehicle.model})\nPickup: ${values.pickup} at ${values.pickupTime}\nDrop: ${values.destination}${values.returnDate ? ` (Return: ${values.returnDate})` : ""}\nPassengers: ${values.passengers}\nEst Total: ₹${totalEst.toLocaleString("en-IN")}\nNotes: ${ticket.notes || "None"}`,
+    });
+
+    // Auto-redirect to WhatsApp (+91 8884015512)
+    const waMessage = generateTicketWhatsAppShare(ticket);
+    redirectToWhatsApp(waMessage);
+
     setReference(ref);
 
-    toast.success(`Booking ${ref} confirmed!`, {
-      description: `Your trip ticket is ready to download. You can also share it on WhatsApp.`,
+    toast.success(`Booking ${ref} confirmed! Redirecting to WhatsApp...`, {
+      description: `Your trip ticket is ready to download.`,
     });
   };
 

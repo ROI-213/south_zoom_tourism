@@ -77,13 +77,42 @@ export const setDynamicGalleryMedia = (media: GalleryMedia[]) => {
   dynamicGalleryMedia = media;
 };
 
+// Map DB category slug to a real album slug
+const CATEGORY_TO_ALBUM_SLUG: Record<string, string> = {
+  "fleet": "our-fleet",
+  "vehicles": "our-fleet",
+  "destinations": "hill-stations",
+  "tamil-nadu": "hill-stations",
+  "kerala": "hill-stations",
+  "karnataka": "hill-stations",
+  "andhra-pradesh": "hill-stations",
+  "goa": "hill-stations",
+  "puducherry": "hill-stations",
+  "hotels": "partner-hotels",
+  "rooms": "room-categories",
+  "customer-trips": "traveller-moments",
+  "group-tours": "group-departures",
+  "corporate-travel": "corporate-accounts",
+  "events": "weddings-and-events",
+  "videos": "trip-films",
+};
+
 export function mapDbGalleryToMedia(row: any, index: number = 0): GalleryMedia {
-  const catSlug = (row.category || "fleet").toLowerCase().replace(/\s+/g, "-");
+  const rawCat = (row.category || "fleet").toLowerCase().replace(/\s+/g, "-");
+  // Normalize specific sub-categories to parent
+  const catSlug =
+    rawCat === "tamil-nadu" || rawCat === "kerala" || rawCat === "karnataka" ||
+    rawCat === "andhra-pradesh" || rawCat === "goa" || rawCat === "puducherry"
+      ? "destinations"
+      : rawCat === "vehicles" ? "fleet" : rawCat;
+
+  const albumSlug = CATEGORY_TO_ALBUM_SLUG[catSlug] ?? CATEGORY_TO_ALBUM_SLUG[rawCat] ?? "traveller-moments";
+
   return {
     id: row.id || `gm-${index}`,
     type: row.video_url ? "video" : "image",
-    albumSlug: "customer-trips",
-    categorySlug: catSlug === "tamil-nadu" ? "destinations" : catSlug === "kerala" ? "destinations" : catSlug === "karnataka" ? "destinations" : catSlug === "vehicles" ? "fleet" : catSlug,
+    albumSlug,
+    categorySlug: catSlug,
     image: row.image_url || "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80",
     alt: row.alt_text || "South Zoom Tourism travel photo",
     caption: row.alt_text || "South India travel with South Zoom Tourism",
@@ -128,7 +157,7 @@ export const galleryAlbums: GalleryAlbum[] = [
   { id: "a2", slug: "hill-stations", title: "Hill Stations", description: "Ooty, Munnar, Coorg and Kodaikanal.", coverImage: heroTours, coverAlt: "Misty tea plantations on a hill station tour", categorySlug: "destinations", order: 2, published: true },
   { id: "a3", slug: "partner-hotels", title: "Partner Hotels", description: "Properties we book across South India.", coverImage: heroHotels, coverAlt: "Partner hotel exterior with hill views", categorySlug: "hotels", order: 3, published: true },
   { id: "a4", slug: "room-categories", title: "Room Categories", description: "Deluxe, premium and family rooms.", coverImage: aboutBanner, coverAlt: "Deluxe hotel room with a valley-facing window", categorySlug: "rooms", order: 4, published: true },
-  { id: "a5", slug: "traveller-moments", title: "Traveller Moments", description: "Photos shared by our customers.", coverImage: team1, coverAlt: "Family on a South Zoom tour at a viewpoint", categorySlug: "customer-trips", order: 5, published: false },
+  { id: "a5", slug: "traveller-moments", title: "Traveller Moments", description: "Photos shared by our customers.", coverImage: team1, coverAlt: "Family on a South Zoom tour at a viewpoint", categorySlug: "customer-trips", order: 5, published: true },
   { id: "a6", slug: "group-departures", title: "Group Departures", description: "Large groups travelling with our tempo fleet.", coverImage: servicePilgrimage, coverAlt: "Group of pilgrims boarding a tempo traveller", categorySlug: "group-tours", order: 6, published: true },
   { id: "a7", slug: "corporate-accounts", title: "Corporate Accounts", description: "Employee shuttles and business transfers.", coverImage: serviceCorporate, coverAlt: "Executive MPV used for employee and business transfers", categorySlug: "corporate-travel", order: 7, published: true },
   { id: "a8", slug: "weddings-and-events", title: "Weddings & Events", description: "Wedding fleets and conference logistics.", coverImage: serviceWedding, coverAlt: "Decorated wedding car arranged by South Zoom", categorySlug: "events", order: 8, published: true },

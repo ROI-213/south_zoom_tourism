@@ -73,7 +73,7 @@ export const Route = createFileRoute("/faqs")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          mainEntity: publishedFaqs.map((f) => ({
+          mainEntity: getPublishedFaqs().map((f) => ({
             "@type": "Question",
             name: f.question,
             acceptedAnswer: { "@type": "Answer", text: f.answer },
@@ -187,7 +187,7 @@ function FaqsPage() {
             <FaqCategoryTabs
               categories={categories}
               active={category}
-              total={publishedFaqs.length}
+              total={faqsList.length}
               onSelect={(slug) => setParam({ category: slug === "all" ? undefined : slug, question: undefined })}
             />
           </div>

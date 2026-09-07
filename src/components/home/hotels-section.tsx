@@ -36,9 +36,9 @@ export function HotelsSection() {
       try {
         const dbHotels = await fetchLiveHotels();
         if (dbHotels && dbHotels.length > 0) {
-          // Filter to featured hotels first, or take top 8 active
-          const featuredDb = dbHotels.filter((h) => h.featured);
-          const listToUse = featuredDb.length > 0 ? featuredDb : dbHotels.slice(0, 8);
+          // Prioritize featured hotels, then newly added active hotels (up to 8)
+          const sorted = [...dbHotels].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+          const listToUse = sorted.slice(0, 8);
           const mapped = mapDbHotelsToHomeList(listToUse);
           if (mapped.length > 0) {
             setItems(mapped);
@@ -49,6 +49,8 @@ export function HotelsSection() {
       }
     }
     loadDynamicHotels();
+    window.addEventListener("hotelsUpdated", loadDynamicHotels);
+    return () => window.removeEventListener("hotelsUpdated", loadDynamicHotels);
   }, []);
 
   if (!featuredHotels.meta.visible) return null;

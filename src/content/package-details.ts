@@ -212,7 +212,7 @@ const sharedPolicies = (pkg: {
     "Commercial KA registered yellow-board fleet with verified, background-checked professional chauffeur",
     "GPS live tracked vehicle with 24/7 on-trip assistance from South Zoom Tourism",
     "All applicable travel taxes and standard itinerary inclusions (zero hidden costs)",
-    "Dedicated travel coordinator available on WhatsApp & Call (+91 6366357757)",
+    "Dedicated travel coordinator available on WhatsApp (+91 8884015512) & Call (+91 6366357757)",
   ],
   exclusions: [
     "Lunch, dinner, room service, alcoholic beverages and personal food orders",

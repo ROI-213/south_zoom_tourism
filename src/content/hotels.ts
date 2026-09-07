@@ -739,12 +739,66 @@ export function getRoomAvailability(
   };
 }
 
-let dynamicHotelRecords: HotelRecord[] | null = null;
-let dynamicRoomRecords: RoomRecord[] | null = null;
+export const STORAGE_KEY_HOTELS = "szt_hotels_cache_v2";
+export const STORAGE_KEY_ROOMS = "szt_rooms_cache_v2";
+
+const isBrowser = () => typeof window !== "undefined";
+
+function loadCachedHotels(): HotelRecord[] | null {
+  if (!isBrowser()) return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_HOTELS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn("Failed to load cached hotels:", e);
+  }
+  return null;
+}
+
+function loadCachedRooms(): RoomRecord[] | null {
+  if (!isBrowser()) return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ROOMS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn("Failed to load cached rooms:", e);
+  }
+  return null;
+}
+
+let dynamicHotelRecords: HotelRecord[] | null = loadCachedHotels();
+let dynamicRoomRecords: RoomRecord[] | null = loadCachedRooms();
 
 export function setDynamicHotelsAndRooms(hotels: HotelRecord[], rooms: RoomRecord[]) {
   dynamicHotelRecords = hotels;
   dynamicRoomRecords = rooms;
+  if (isBrowser()) {
+    try {
+      localStorage.setItem(STORAGE_KEY_HOTELS, JSON.stringify(hotels));
+      localStorage.setItem(STORAGE_KEY_ROOMS, JSON.stringify(rooms));
+      window.dispatchEvent(new CustomEvent("hotelsUpdated", { detail: { hotels, rooms } }));
+    } catch (e) {
+      console.warn("Failed to persist hotels cache:", e);
+    }
+  }
+}
+
+export function inferHotelCategory(name: string, description: string = "", starRating: number = 3): string {
+  const text = `${name} ${description}`.toLowerCase();
+  if (text.includes("resort")) return "resorts";
+  if (text.includes("homestay") || text.includes("home stay")) return "homestays";
+  if (text.includes("apartment") || text.includes("suites") || text.includes("suite")) return "service-apartments";
+  if (text.includes("yatri") || text.includes("temple") || text.includes("ashram") || text.includes("dharamsala") || text.includes("pilgrim")) return "pilgrimage";
+  if (starRating >= 5 || text.includes("palace") || text.includes("luxury") || text.includes("5 star")) return "luxury";
+  if (starRating === 4 || text.includes("grand") || text.includes("premium") || text.includes("4 star")) return "premium";
+  if (text.includes("budget") || text.includes("lodge") || text.includes("inn") || starRating <= 2) return "budget";
+  return "standard";
 }
 
 export function mapDbHotelToHotelRecord(h: any, index: number = 0): HotelRecord {
@@ -754,13 +808,15 @@ export function mapDbHotelToHotelRecord(h: any, index: number = 0): HotelRecord 
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+  const category = inferHotelCategory(h.name, h.description, h.star_rating);
+
   return {
     id: h.id,
     slug: slug,
     name: h.name,
     city: h.city,
     state: h.destinations?.state || "South India",
-    categorySlug: "standard",
+    categorySlug: category,
     starRating: h.star_rating || 3,
     shortDescription: h.description || `${h.name} in ${h.city}`,
     address: `${h.name}, ${h.city}`,
@@ -811,9 +867,31 @@ export const getHotelRooms = (hotelId: string) => {
     const list = dynamicRoomRecords.filter((r) => r.published && r.hotelId === hotelId);
     if (list.length > 0) return list.sort((a, b) => a.order - b.order);
   }
-  return roomRecords
+  const staticRooms = roomRecords
     .filter((r) => r.published && r.hotelId === hotelId)
     .sort((a, b) => a.order - b.order);
+  if (staticRooms.length > 0) return staticRooms;
+
+  return [
+    {
+      id: `room-fallback-${hotelId}`,
+      hotelId,
+      name: "Standard Deluxe Room",
+      roomTypeSlug: "deluxe",
+      maxAdults: 2,
+      maxChildren: 1,
+      basePricePerNight: 2500,
+      bedType: "1 Queen Bed",
+      sizeSqft: 280,
+      amenities: ["Wi-Fi", "AC", "Hot Water", "Room Service"],
+      image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+      imageAlt: "Standard Deluxe Room",
+      published: true,
+      featured: true,
+      order: 1,
+      inventory: rule(8, 6),
+    },
+  ];
 };
 
 export const getVisibleCategories = () =>

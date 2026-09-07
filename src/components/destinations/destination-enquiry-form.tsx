@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { company } from "@/content/site";
+import { company, redirectToWhatsApp } from "@/content/site";
+import { syncEnquiryToSupabase } from "@/lib/booking-sync";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Please enter your name.").max(100, "Name is too long."),
@@ -48,23 +49,20 @@ export function DestinationEnquiryForm({
 
   const fieldId = (name: string) => `dest-enq-${destinationSlug}-${name}`;
 
-  const onSubmit = (values: Values) => {
-    // No backend connected yet: the enquiry is handed to the team over
-    // WhatsApp so nothing is lost. The payload below already matches the
-    // shape the future `enquiries` table expects.
+  const onSubmit = async (values: Values) => {
     const pageUrl = typeof window !== "undefined" ? window.location.href : "";
-    const payload = {
-      destination_id: destinationId,
-      destination_slug: destinationSlug,
-      page_url: pageUrl,
-      source: "destination-detail",
+    const ref = `SZT-DST-${Date.now().toString(36).toUpperCase()}`;
+
+    // Store in Supabase Admin CRM
+    await syncEnquiryToSupabase({
+      reference: ref,
       name: values.name,
       phone: values.phone,
-      email: values.email || null,
-      travel_date: values.travelDate || null,
-      travellers: values.travellers ? Number(values.travellers) : null,
-      message: values.message || null,
-    };
+      email: values.email || undefined,
+      serviceType: "Tour Package",
+      travelDate: values.travelDate || undefined,
+      message: `Destination: ${destinationName}${values.travellers ? ` | Travellers: ${values.travellers}` : ""}${values.message ? `\nDetails: ${values.message}` : ""}`,
+    });
 
     const lines = [
       `New destination enquiry — ${destinationName}`,
@@ -74,18 +72,15 @@ export function DestinationEnquiryForm({
       values.travelDate ? `Travel date: ${values.travelDate}` : null,
       values.travellers ? `Travellers: ${values.travellers}` : null,
       values.message ? `Details: ${values.message}` : null,
-      `Destination ref: ${payload.destination_id}`,
+      `Destination ref: ${destinationId}`,
       pageUrl ? `Page: ${pageUrl}` : null,
-    ].filter(Boolean);
+    ].filter(Boolean) as string[];
 
-    window.open(
-      `https://wa.me/${company.whatsappRaw}?text=${encodeURIComponent(lines.join("\n"))}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    // Redirect to WhatsApp (8884015512)
+    redirectToWhatsApp(lines.join("\n"));
 
-    toast.success("Enquiry ready to send", {
-      description: `We've prepared your ${destinationName} enquiry on WhatsApp. You can also call ${company.phone}.`,
+    toast.success("Enquiry submitted!", {
+      description: `We've redirected you to WhatsApp. You can also call ${company.phone}.`,
     });
     reset();
   };

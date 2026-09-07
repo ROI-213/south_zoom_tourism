@@ -1,16 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { SlidersHorizontal } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { KarnatakaSlider } from "@/components/home/karnataka-slider";
 import { PageBanner } from "@/components/common/page-banner";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PackageCard } from "@/components/packages/package-card";
 import {
-  PackageFilters,
   durationOptions,
   type PackageFilterState,
 } from "@/components/packages/package-filters";
@@ -20,6 +17,8 @@ import { ActiveFilterChips, type Chip } from "@/components/fleet/active-filter-c
 import {
   getPackageCategoryLabel,
   getPublishedPackages,
+  getAllPackages,
+  fetchTourPackages,
   isPackageAvailableOn,
   mapDbPackageToRecord,
   packageBudgetBounds,
@@ -137,21 +136,27 @@ function matchesDuration(pkg: TourPackageRecord, duration: string) {
 
 function TourPackagesPage() {
   const search = Route.useSearch();
+  const [packagesList, setPackagesList] = useState<TourPackageRecord[]>(() => getPublishedPackages());
 
   useEffect(() => {
-    (async () => {
-      const { data, error } = await supabase.from('tour_packages').select('*');
-      if (error) {
-        console.error('Error fetching packages', error);
-        return;
-      }
-      const mapped = (data as any[]).map(mapDbPackageToRecord);
-      setDynamicPackages(mapped);
-    })();
+    // Initial fetch from Supabase
+    fetchTourPackages().then((all) => {
+      setPackagesList(all.filter((p) => p.published !== false));
+    });
+
+    // Listen to live updates from admin or cache changes
+    const onPackagesUpdated = (e: any) => {
+      const updated = e.detail || getAllPackages();
+      setPackagesList(updated.filter((p: TourPackageRecord) => p.published !== false));
+    };
+
+    window.addEventListener("tourPackagesUpdated", onPackagesUpdated);
+    return () => {
+      window.removeEventListener("tourPackagesUpdated", onPackagesUpdated);
+    };
   }, []);
 
   const navigate = useNavigate({ from: "/tour-packages/" });
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [enquiry, setEnquiry] = useState<{ open: boolean; slug: string }>({
     open: false,
     slug: "",
@@ -214,22 +219,22 @@ function TourPackagesPage() {
     });
 
   const packages = useMemo(() => {
-    const list = getPublishedPackages().filter((pkg) => {
+    const list = packagesList.filter((pkg) => {
       if (
         filters.categories.length &&
         !filters.categories.some((slug) => pkg.categorySlugs.includes(slug))
       )
         return false;
-      if (filters.state !== "all" && pkg.state !== filters.state) return false;
-      if (filters.destination !== "all" && pkg.destination !== filters.destination) return false;
-      if (filters.startingCity !== "all" && pkg.startingCity !== filters.startingCity) return false;
+      if (filters.state !== "all" && pkg.state && pkg.state !== filters.state) return false;
+      if (filters.destination !== "all" && pkg.destination && pkg.destination !== filters.destination) return false;
+      if (filters.startingCity !== "all" && pkg.startingCity && pkg.startingCity !== filters.startingCity) return false;
       if (!matchesDuration(pkg, filters.duration)) return false;
       if (filters.travelDate && !isPackageAvailableOn(pkg, filters.travelDate)) return false;
-      if (pkg.showPrice && pkg.price > filters.maxBudget) return false;
+      if (pkg.showPrice && pkg.price > 0 && pkg.price > filters.maxBudget) return false;
       if (filters.travellers > 0 && pkg.maxTravellers < filters.travellers) return false;
-      if (filters.hotelCategory !== "all" && pkg.hotelCategory !== filters.hotelCategory)
+      if (filters.hotelCategory !== "all" && pkg.hotelCategory && pkg.hotelCategory !== filters.hotelCategory)
         return false;
-      if (filters.vehicleCategory !== "all" && pkg.vehicleCategory !== filters.vehicleCategory)
+      if (filters.vehicleCategory !== "all" && pkg.vehicleCategory && pkg.vehicleCategory !== filters.vehicleCategory)
         return false;
       return true;
     });
@@ -251,7 +256,7 @@ function TourPackagesPage() {
             a.order - b.order,
         );
     }
-  }, [filters, sort]);
+  }, [packagesList, filters, sort]);
 
   const visible = packages.slice(0, shown);
 
@@ -393,44 +398,15 @@ function TourPackagesPage() {
             </ul>
           </nav>
 
-          <div className="mt-8 grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <aside className="hidden lg:block">
-              <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-xl border border-border bg-card p-5">
-                <h2 className="mb-4 text-base font-bold">Filters</h2>
-                <PackageFilters value={filters} onChange={apply} onClear={clearAll} />
-              </div>
-            </aside>
-
+          <div className="mt-8">
             <section aria-label="Package results" className="min-w-0">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground" role="status">
-                  {packages.length} package{packages.length === 1 ? "" : "s"}
+                <p className="text-sm font-medium text-muted-foreground" role="status">
+                  Showing {packages.length} tour package{packages.length === 1 ? "" : "s"}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-                    <SheetTrigger asChild>
-                      <Button variant="outline" className="lg:hidden">
-                        <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                        Filters{chips.length ? ` (${chips.length})` : ""}
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="w-[88vw] max-w-sm overflow-y-auto">
-                      <SheetHeader>
-                        <SheetTitle>Filters</SheetTitle>
-                      </SheetHeader>
-                      <div className="p-4">
-                        <PackageFilters
-                          idPrefix="mpf"
-                          value={filters}
-                          onChange={apply}
-                          onClear={clearAll}
-                        />
-                      </div>
-                    </SheetContent>
-                  </Sheet>
-
-                  <label htmlFor="packages-sort" className="sr-only">
-                    Sort packages
+                  <label htmlFor="packages-sort" className="text-sm text-muted-foreground">
+                    Sort by:
                   </label>
                   <select
                     id="packages-sort"
@@ -477,7 +453,7 @@ function TourPackagesPage() {
                 </div>
               ) : (
                 <>
-                  <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <ul className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {visible.map((pkg, index) => (
                       <li key={pkg.id}>
                         <PackageCard

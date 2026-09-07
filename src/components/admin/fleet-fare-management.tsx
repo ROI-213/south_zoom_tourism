@@ -332,6 +332,19 @@ export function AdminFleetFareManagementDialog({
                             className="h-8 text-xs"
                           />
                         </div>
+
+                        {/* Extra KM Rate (Modal Header) */}
+                        <div>
+                          <Label className="text-[10px] font-semibold text-orange-600 dark:text-orange-400 block mb-1">
+                            Extra / KM (₹)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={fleet.extraKmRate ?? fleet.oneWayRatePerKm}
+                            onChange={(e) => handleRateChange(idx, "extraKmRate", Number(e.target.value))}
+                            className="h-8 text-xs font-bold text-orange-600 dark:text-orange-400"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

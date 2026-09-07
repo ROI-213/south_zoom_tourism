@@ -35,42 +35,37 @@ import fleetBmw from '@/assets/fleet-bmw-new.png';
 import fleetBus from '@/assets/fleet-bus-ka.jpg';
 
 export const originalHeroPresets = [
-  { label: 'Original Fleet Banner (Sedan/SUV/Innova)', value: heroFleet, filename: 'hero-fleet.jpg' },
-  { label: 'Original Tours Banner (Hill Temple/Tea Gardens)', value: heroTours, filename: 'hero-tours.jpg' },
-  { label: 'Original Hotels Banner (Resort View/Room)', value: heroHotels, filename: 'hero-hotels.jpg' },
-  { label: 'Original About Banner', value: aboutBanner, filename: 'about-banner.jpg' },
-  { label: 'Original Services Banner', value: servicesBanner, filename: 'services-banner.jpg' },
+  { label: 'Fleet Banner (Sedans, SUVs, Cabs)', value: heroFleet, filename: 'hero-fleet.jpg' },
+  { label: 'Tours Banner (Hill stations, Packages)', value: heroTours, filename: 'hero-tours.jpg' },
+  { label: 'Hotels Banner (Resorts, Rooms)', value: heroHotels, filename: 'hero-hotels.jpg' },
+  { label: 'Airport Transfers Banner', value: heroAirport, filename: 'hero-airport.jpg' },
+  { label: 'About / Services Banner', value: servicesBanner, filename: 'services-banner.jpg' },
 ];
 
 export function resolveHeroImage(src?: string, heading?: string): string {
+  // 1. Uploaded base64 image — always use it as-is
+  if (src && src.startsWith('data:')) return src;
+
+  // 2. External / Supabase URL — use it directly
+  if (src && (src.startsWith('http://') || src.startsWith('https://'))) return src;
+
+  // 3. Named asset filename mapping
+  if (src) {
+    if (src.includes('hero-airport')) return heroAirport;
+    if (src.includes('hero-fleet')) return heroFleet;
+    if (src.includes('hero-tours')) return heroTours;
+    if (src.includes('hero-hotels')) return heroHotels;
+    if (src.includes('about-banner')) return aboutBanner;
+    if (src.includes('services-banner')) return servicesBanner;
+  }
+
+  // 4. Keyword fallback based on heading (only when no custom image provided)
   const h = (heading || '').toLowerCase();
-  const s = (src || '').toLowerCase();
+  if (h.includes('airport') || h.includes('transfer') || h.includes('flight')) return heroAirport;
+  if (h.includes('car') || h.includes('cab') || h.includes('rental') || h.includes('fleet')) return heroFleet;
+  if (h.includes('tour') || h.includes('package')) return heroTours;
+  if (h.includes('hotel') || h.includes('resort') || h.includes('stay')) return heroHotels;
 
-  // If the slide is about Airport transfers -> use Kempegowda Airport white cab image
-  if (h.includes('airport') || h.includes('transfer') || h.includes('flight track') || s.includes('airport')) {
-    return heroAirport;
-  }
-  // If the slide is about Car rentals / Cabs / Fleet -> use the new Bengaluru Vidhana Soudha white fleet image
-  if (h.includes('car') || h.includes('cab') || h.includes('rental') || h.includes('fleet') || s.includes('fleet') || s.includes('car')) {
-    return heroFleet;
-  }
-  // If the slide is about Tour packages -> use Karnataka Western Ghats & Mysore white cab image
-  if (h.includes('tour') || h.includes('package') || s.includes('tour') || s.includes('package')) {
-    return heroTours;
-  }
-  // If the slide is about Hotels -> use Karnataka luxury resort with white sedan image
-  if (h.includes('hotel') || h.includes('resort') || h.includes('stay') || s.includes('hotel')) {
-    return heroHotels;
-  }
-
-  if (!src) return heroFleet;
-  if (src.startsWith('data:')) return src;
-  if (src.includes('hero-airport')) return heroAirport;
-  if (src.includes('hero-fleet')) return heroFleet;
-  if (src.includes('hero-tours')) return heroTours;
-  if (src.includes('hero-hotels')) return heroHotels;
-  if (src.includes('about-banner')) return aboutBanner;
-  if (src.includes('services-banner')) return servicesBanner;
   return heroFleet;
 }
 

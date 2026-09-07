@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Plus, Search, Image, Loader2, Edit2, Trash2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AdminImageUpload } from '@/components/admin/admin-image-upload';
 
 export const Route = createFileRoute('/admin/content/gallery')({
   component: GalleryPage,
@@ -100,8 +101,12 @@ function GalleryPage() {
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{editId ? 'Edit Image' : 'Add Gallery Image'}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-1"><Label>Image URL *</Label><Input value={form.image_url} placeholder="https://..." onChange={e => setForm(f => ({...f, image_url: e.target.value}))}/></div>
-            {form.image_url && <img src={form.image_url} alt="preview" className="w-full h-40 object-cover rounded-lg" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}/>}
+            <AdminImageUpload
+              label="Gallery Image *"
+              value={form.image_url || ''}
+              onChange={(url) => setForm(f => ({ ...f, image_url: url }))}
+              placeholder="https://... or upload image"
+            />
             <div className="space-y-1"><Label>Alt Text</Label><Input value={form.alt_text} placeholder="Image description" onChange={e => setForm(f => ({...f, alt_text: e.target.value}))}/></div>
             <div className="space-y-1"><Label>Category</Label>
               <Select value={form.category} onValueChange={v => setForm(f => ({...f, category: v}))}>

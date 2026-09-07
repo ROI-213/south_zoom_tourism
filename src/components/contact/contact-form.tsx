@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { company, waLink } from "@/content/site";
+import { company, waLink, redirectToWhatsApp } from "@/content/site";
 import {
   contactFormBlock,
   generateEnquiryReference,
@@ -80,7 +80,7 @@ export function ContactForm({
     setValue("service", serviceSlug, { shouldValidate: false });
   }, [serviceSlug, setValue]);
 
-  const onSubmit = (values: Values) => {
+  const onSubmit = async (values: Values) => {
     const hash = JSON.stringify(values);
     const now = Date.now();
     if (
@@ -98,9 +98,6 @@ export function ContactForm({
     const ref = generateEnquiryReference();
     const pageUrl = typeof window !== "undefined" ? window.location.href : "";
 
-    // No backend connected yet: the enquiry is handed to the team over
-    // WhatsApp so nothing is lost. The payload below already matches the
-    // shape the future `contact_enquiries` table expects.
     const payload: ContactEnquiryPayload = {
       reference: ref,
       source: "contact-us",
@@ -132,7 +129,7 @@ export function ContactForm({
     });
 
     // Persist directly into Supabase backend database for admin & operations
-    syncEnquiryToSupabase({
+    await syncEnquiryToSupabase({
       name: payload.name,
       phone: payload.phone,
       email: payload.email,
@@ -152,11 +149,12 @@ export function ContactForm({
       pageUrl ? `Page: ${pageUrl}` : null,
     ].filter(Boolean) as string[];
 
-    window.open(waLink(lines.join("\n")), "_blank", "noopener,noreferrer");
+    // Redirect to WhatsApp number (8884015512)
+    redirectToWhatsApp(lines.join("\n"));
 
     setReference(ref);
     toast.success(`Enquiry ${ref} created`, {
-      description: `We've prepared it on WhatsApp. You can also call ${company.phone}.`,
+      description: `We've redirected you to WhatsApp. You can also call ${company.phone}.`,
     });
     reset({
       name: "",

@@ -11,16 +11,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Plus, Search, Package, Loader2, Edit2, Trash2, Star, Upload, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
+import { Plus, Search, Package, Loader2, Edit2, Trash2, Star, Upload, Link as LinkIcon, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { fetchTourPackages } from '@/content/tour-packages';
 
 export const Route = createFileRoute('/admin/products/packages')({
   component: PackagesPage,
 });
 
-const CATEGORIES = ['Nature', 'Heritage', 'Beach', 'Pilgrimage', 'Adventure', 'Backwater', 'Hill Station', 'Custom'];
-type Package_ = { id: string; title: string; slug?: string; category?: string; nights: number; days: number; price_from: number; main_image?: string; active: boolean; featured: boolean; display_order?: number; created_at: string; destinations?: { name: string } | null; };
+const CATEGORIES = ['Nature', 'Heritage', 'Beach', 'Pilgrimage', 'Adventure', 'Backwater', 'Hill Station', 'Custom', 'Karnataka', 'Kerala', 'Tamil Nadu', 'Andhra Pradesh', 'Goa'];
+type Package_ = { id: string; title: string; slug?: string; destination_id?: string | null; category?: string; nights: number; days: number; price_from: number; main_image?: string; active: boolean; featured: boolean; display_order?: number; created_at: string; destinations?: { name: string; state?: string } | null; highlights?: string[]; };
 type Destination = { id: string; name: string; state: string; };
-const emptyForm = { title: '', category: 'Nature', destination_id: '', nights: 1, days: 2, price_from: 0, main_image: '', highlights: '', active: true, featured: false, display_order: 0 };
+const emptyForm = { title: '', slug: '', category: 'Nature', destination_id: '', nights: 1, days: 2, price_from: 0, main_image: '', highlights: '', active: true, featured: false, display_order: 0 };
 
 function PackagesPage() {
   const [packages, setPackages] = useState<Package_[]>([]);
@@ -71,23 +72,51 @@ function PackagesPage() {
   const filtered = packages.filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()));
 
   async function handleSave() {
-    if (!form.title) { toast.error('Title required'); return; }
+    if (!form.title.trim()) { toast.error('Title required'); return; }
     setSaving(true);
     try {
-      const slug = form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const generatedSlug = form.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const finalSlug = form.slug?.trim() ? form.slug.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : generatedSlug;
+
       const payload = {
-        title: form.title, slug, category: form.category,
+        title: form.title.trim(),
+        slug: finalSlug,
+        category: form.category,
         destination_id: form.destination_id || null,
-        nights: +form.nights, days: +form.days, price_from: +form.price_from,
-        main_image: form.main_image || null,
-        highlights: form.highlights ? form.highlights.split(',').map(h => h.trim()) : [],
-        active: form.active, featured: form.featured, display_order: +form.display_order,
+        nights: Math.max(1, Number(form.nights) || 1),
+        days: Math.max(1, Number(form.days) || 1),
+        price_from: Math.max(0, Number(form.price_from) || 0),
+        main_image: form.main_image?.trim() || null,
+        highlights: form.highlights
+          ? form.highlights.split(',').map(h => h.trim()).filter(Boolean)
+          : [],
+        active: form.active,
+        featured: form.featured,
+        display_order: Number(form.display_order) || 0,
       };
-      if (editId) { await supabase.from('tour_packages').update(payload).eq('id', editId); toast.success('Package updated'); }
-      else { await supabase.from('tour_packages').insert(payload); toast.success('Package created'); }
-      setDialogOpen(false); setForm(emptyForm); setEditId(null); fetchAll();
-    } catch (e: any) { toast.error(e.message); }
-    finally { setSaving(false); }
+
+      if (editId) {
+        const { error } = await supabase.from('tour_packages').update(payload).eq('id', editId);
+        if (error) throw error;
+        toast.success('Package updated successfully');
+      } else {
+        const { error } = await supabase.from('tour_packages').insert(payload);
+        if (error) throw error;
+        toast.success('Package created successfully');
+      }
+
+      setDialogOpen(false);
+      setForm(emptyForm);
+      setEditId(null);
+      await fetchAll();
+      // Re-fetch tour packages cache for public pages
+      fetchTourPackages();
+    } catch (e: any) {
+      console.error('Error saving package:', e);
+      toast.error(e.message || 'Failed to save package');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function toggleFeatured(id: string, current: boolean) {
@@ -147,27 +176,49 @@ function PackagesPage() {
                     </td>
                     <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${p.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{p.active ? 'Active' : 'Draft'}</span></td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-1">
-                        <button className="p-1.5 rounded hover:bg-gray-100" onClick={() => {
-                          setEditId(p.id);
-                          const img = p.main_image || '';
-                          setImageSourceMode(img.startsWith('http') ? 'url' : 'upload');
-                          setForm({
-                            title: p.title,
-                            category: p.category || 'Nature',
-                            destination_id: (p as any).destination_id || '',
-                            nights: p.nights,
-                            days: p.days,
-                            price_from: p.price_from,
-                            main_image: img,
-                            highlights: Array.isArray((p as any).highlights) ? (p as any).highlights.join(', ') : '',
-                            active: p.active,
-                            featured: p.featured,
-                            display_order: p.display_order || 0,
-                          });
-                          setDialogOpen(true);
-                        }}><Edit2 size={13}/></button>
-                        <button className="p-1.5 rounded hover:bg-red-50 text-red-500" onClick={() => setDeleteId(p.id)}><Trash2 size={13}/></button>
+                      <div className="flex justify-end gap-1 items-center">
+                        <a
+                          href={`/tour-packages/${p.slug || p.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="View on site"
+                          className="p-1.5 rounded hover:bg-orange-50 text-orange-600 inline-flex items-center"
+                        >
+                          <ExternalLink size={13} />
+                        </a>
+                        <button
+                          title="Edit package"
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-700"
+                          onClick={() => {
+                            setEditId(p.id);
+                            const img = p.main_image || '';
+                            setImageSourceMode(img.startsWith('http') ? 'url' : 'upload');
+                            setForm({
+                              title: p.title || '',
+                              slug: p.slug || '',
+                              category: p.category || 'Nature',
+                              destination_id: (p as any).destination_id || '',
+                              nights: p.nights || 1,
+                              days: p.days || 2,
+                              price_from: p.price_from || 0,
+                              main_image: img,
+                              highlights: Array.isArray((p as any).highlights) ? (p as any).highlights.join(', ') : '',
+                              active: p.active !== false,
+                              featured: p.featured || false,
+                              display_order: p.display_order || 0,
+                            });
+                            setDialogOpen(true);
+                          }}
+                        >
+                          <Edit2 size={13}/>
+                        </button>
+                        <button
+                          title="Delete package"
+                          className="p-1.5 rounded hover:bg-red-50 text-red-500"
+                          onClick={() => setDeleteId(p.id)}
+                        >
+                          <Trash2 size={13}/>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -181,7 +232,32 @@ function PackagesPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editId ? 'Edit Package' : 'Add Tour Package'}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
-            <div className="col-span-2 space-y-1"><Label>Package Title *</Label><Input value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))}/></div>
+            <div className="col-span-2 space-y-1">
+              <Label>Package Title *</Label>
+              <Input
+                value={form.title}
+                placeholder="e.g. Coorg Nature & Coffee Retreat"
+                onChange={e => {
+                  const title = e.target.value;
+                  setForm(f => ({
+                    ...f,
+                    title,
+                    slug: !editId ? title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : f.slug
+                  }));
+                }}
+              />
+            </div>
+            <div className="col-span-2 space-y-1">
+              <div className="flex items-center justify-between">
+                <Label>URL Slug</Label>
+                <span className="text-[11px] text-gray-400">Public path: /tour-packages/{form.slug || 'package-slug'}</span>
+              </div>
+              <Input
+                value={form.slug}
+                placeholder="coorg-nature-retreat"
+                onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
+              />
+            </div>
             <div className="space-y-1"><Label>Category</Label>
               <Select value={form.category} onValueChange={v => setForm(f => ({...f, category: v}))}>
                 <SelectTrigger><SelectValue/></SelectTrigger>

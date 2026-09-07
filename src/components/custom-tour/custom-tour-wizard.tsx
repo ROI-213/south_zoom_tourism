@@ -25,7 +25,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AppLink } from "@/components/common/app-link";
-import { company, waLink } from "@/content/site";
+import { company, waLink, redirectToWhatsApp } from "@/content/site";
 import {
   budgetBands,
   customTourFormBlock,
@@ -177,7 +177,7 @@ export function CustomTourWizard() {
       .filter(Boolean)
       .join("\n");
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Re-validate every step so a jump-back edit can't skip a rule.
     for (let i = 0; i < customTourSteps.length; i += 1) {
       const e = validateStep(i, state);
@@ -232,7 +232,7 @@ export function CustomTourWizard() {
     });
 
     // Persist directly into Supabase backend database for admin & operations
-    syncEnquiryToSupabase({
+    await syncEnquiryToSupabase({
       name: payload.name,
       phone: payload.phone,
       email: payload.email,
@@ -242,16 +242,17 @@ export function CustomTourWizard() {
       reference: ref,
     });
 
-    window.setTimeout(() => {
-      setSubmitting(false);
-      setReference(ref);
-      try {
-        window.localStorage.removeItem(DRAFT_KEY);
-      } catch {
-        /* ignore */
-      }
-      requestAnimationFrame(() => headingRef.current?.focus());
-    }, 500);
+    // Redirect to WhatsApp (8884015512)
+    redirectToWhatsApp(summaryMessage(ref));
+
+    setSubmitting(false);
+    setReference(ref);
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* ignore */
+    }
+    requestAnimationFrame(() => headingRef.current?.focus());
   };
 
   /* ---------------------------------------------------------------- */

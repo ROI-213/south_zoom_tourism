@@ -22,6 +22,7 @@ import {
 import type { ListingStay } from "@/content/hotel-listing";
 import { getPublishedHotels, getCategoryLabel } from "@/content/hotels";
 import { getListingAttributes } from "@/content/hotel-listing";
+import { syncLiveHotelsCache } from "@/lib/hotel-service";
 import {
   buildRoomSelections,
   getHotelProfile,
@@ -71,8 +72,16 @@ function findHotel(destinationSlug: string, hotelSlug: string) {
 export const Route = createFileRoute("/hotels/$destinationSlug/$hotelSlug/")({
   validateSearch: (search: Record<string, unknown>): ListingSearch =>
     validateListingSearch(search),
-  loader: ({ params }) => {
-    const hotel = findHotel(params.destinationSlug, params.hotelSlug);
+  loader: async ({ params }) => {
+    let hotel = findHotel(params.destinationSlug, params.hotelSlug);
+    if (!hotel) {
+      try {
+        await syncLiveHotelsCache();
+        hotel = findHotel(params.destinationSlug, params.hotelSlug);
+      } catch (err) {
+        console.error("Failed to sync hotels in route loader:", err);
+      }
+    }
     if (!hotel) throw notFound();
     return { hotelId: hotel.id, name: hotel.name, city: hotel.city, image: hotel.image };
   },

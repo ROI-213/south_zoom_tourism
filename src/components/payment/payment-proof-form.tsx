@@ -22,6 +22,7 @@ import {
   makePaymentReference,
   paymentMethodOptions,
   paymentSettings,
+  paymentWhatsAppMessage,
   queuePaymentNotifications,
   savePaymentSubmission,
   screenshotStoragePath,
@@ -30,7 +31,9 @@ import {
   type PaymentScreenshotRef,
   type PaymentSubmissionRecord,
 } from "@/content/payment";
-import { company } from "@/content/site";
+import { company, redirectToWhatsApp } from "@/content/site";
+import { syncEnquiryToSupabase } from "@/lib/booking-sync";
+import { supabase } from "@/lib/supabase";
 
 const maxBytes = paymentSettings.upload.maxMb * 1024 * 1024;
 
@@ -232,7 +235,49 @@ export function PaymentProofForm({
 
     const record = { ...base, ...queuePaymentNotifications(base) };
     savePaymentSubmission(record);
-    toast.success("Payment proof submitted — pending verification.", {
+
+    // 1. Sync to Supabase `payments` table
+    try {
+      await supabase.from('payments').insert({
+        booking_number: values.bookingNumber.trim().toUpperCase(),
+        amount: Number(values.amount),
+        payment_method: paymentMethodOptions.find((m) => m.id === values.method)?.label ?? values.method,
+        transaction_id: values.transactionId.trim(),
+        status: 'Advance Paid',
+        notes: `Ref: ${reference} | Payer: ${values.customerName} (${values.phone})${values.remarks ? ` | ${values.remarks}` : ''}${screenshot ? ` | Proof: ${screenshot.fileName}` : ''}`,
+      });
+    } catch (e) {
+      console.warn('Payment insert warning:', e);
+    }
+
+    // 2. Sync to Supabase `enquiries` table for Admin CRM visibility
+    await syncEnquiryToSupabase({
+      name: values.customerName,
+      phone: values.phone,
+      serviceType: "QR / UPI Payment",
+      travelDate: values.paidOn,
+      message: `Payment Proof Submitted!\nBooking Ref: ${values.bookingNumber}\nAmount Paid: ₹${Number(values.amount).toLocaleString('en-IN')}\nTxn/UTR ID: ${values.transactionId}\nMethod: ${values.method}${values.remarks ? `\nRemarks: ${values.remarks}` : ''}`,
+      reference,
+    });
+
+    // 3. Auto-redirect to WhatsApp (+91 8884015512)
+    const waText = [
+      `*Payment Proof Submitted — ${record.reference}*`,
+      `Booking Number: *${record.bookingNumber}*`,
+      `Amount Paid: *₹${Number(record.amount).toLocaleString("en-IN")}*`,
+      `Transaction/UTR ID: *${record.transactionId}*`,
+      `Payment Date: ${record.paidOn}`,
+      `Method: ${record.method}`,
+      `Customer: ${record.customerName} (${record.phone})`,
+      record.remarks ? `Remarks: ${record.remarks}` : null,
+      screenshot ? `Proof: Attached in browser (${screenshot.fileName})` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    redirectToWhatsApp(waText);
+
+    toast.success("Payment proof submitted! Redirecting to WhatsApp...", {
       description: `Reference: ${record.reference}. Our accounts team will verify shortly.`,
     });
     onSubmitted(record);

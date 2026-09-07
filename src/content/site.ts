@@ -68,22 +68,38 @@ export const company = {
   msmeUrn: "UDYAM-KR-03-0750906",
   phone: "+91 6366357757",
   phoneRaw: "+916366357757",
-  whatsapp: "+91 6366357757",
-  whatsappRaw: "916366357757",
+  whatsapp: "+91 8884015512",
+  whatsappRaw: "918884015512",
   email: "bookings@southzoomtourism.com",
   officeTimings: "Mon – Sun · 24×7 Service",
   address: "South Zoom Tourism, #8, Srinivasa Building, Anchepalya Main Road, TG Halli, Bengaluru – 560073, Karnataka.",
   headOffice: "Bangalore in Karnataka",
   areasOfOperation: "Karnataka, Tamilnadu, Kerala, Andhra Pradesh, Goa, Puducherry",
   socials: [
-    { label: "Facebook", href: "https://facebook.com" },
-    { label: "Instagram", href: "https://instagram.com" },
+    { label: "Facebook", href: "https://www.facebook.com/share/1Na54BKBY9/" },
+    { label: "Instagram", href: "https://www.instagram.com/southzoomtourism?stkn=MXJ3ODh0eG43dDFhNQ==" },
     { label: "YouTube", href: "https://youtube.com" },
   ],
 };
 
-export function waLink(message: string) {
-  return `https://wa.me/${company.whatsappRaw}?text=${encodeURIComponent(message)}`;
+export const ENQUIRY_WHATSAPP_NUMBER = "8884015512";
+export const ENQUIRY_WHATSAPP_RAW = "918884015512";
+
+export function waLink(message: string, number: string = company.whatsappRaw) {
+  const digits = number.replace(/\D/g, "");
+  const target = digits.length === 10 ? `91${digits}` : digits;
+  return `https://wa.me/${target}?text=${encodeURIComponent(message)}`;
+}
+
+export function redirectToWhatsApp(message: string, number: string = company.whatsappRaw) {
+  const url = waLink(message, number);
+  if (typeof window !== "undefined") {
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    if (!win || win.closed || typeof win.closed === "undefined") {
+      window.location.href = url;
+    }
+  }
+  return url;
 }
 
 export function telLink() {

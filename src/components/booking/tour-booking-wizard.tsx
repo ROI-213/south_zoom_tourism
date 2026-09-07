@@ -21,7 +21,8 @@ import { AppLink } from "@/components/common/app-link";
 import { BookingStepIndicator } from "@/components/booking/booking-step-indicator";
 import { PriceBreakdown } from "@/components/booking/price-breakdown";
 import { cn } from "@/lib/utils";
-import { waLink } from "@/content/site";
+import { waLink, redirectToWhatsApp } from "@/content/site";
+import { syncPackageBookingToSupabase, syncEnquiryToSupabase } from "@/lib/booking-sync";
 import { getPublishedPackages, type TourPackageRecord } from "@/content/tour-packages";
 import {
   formatRupees,
@@ -460,15 +461,51 @@ export function TourBookingWizard({
       return;
     }
     const record = buildRecord();
-    if (!record) return;
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
     saveBookingRecord(record);
     try {
       window.localStorage.removeItem(DRAFT_KEY);
     } catch {
       /* ignore */
     }
+
+    // 1. Sync to Supabase Bookings & Enquiries for Admin visibility
+    await syncPackageBookingToSupabase({
+      bookingNumber: record.bookingNumber,
+      packageTitle: record.packageTitle,
+      customerName: record.contact.name,
+      phone: record.contact.phone,
+      email: record.contact.email,
+      city: record.contact.city,
+      travelDate: record.departureDate,
+      adults: record.passengers.adults,
+      children: record.passengers.children,
+      totalAmount: record.estimatedTotal,
+      advanceAmount: record.advanceDue,
+      hotelCategory: record.hotelOption.category,
+      vehicleCategory: record.vehicleOption.category,
+      paymentMode: record.paymentMode,
+      notes: `Requirements: ${record.requirements.tags.join(", ") || "Standard"}\nNotes: ${record.requirements.notes || "None"}`,
+    });
+
+    await syncEnquiryToSupabase({
+      reference: record.bookingNumber,
+      name: record.contact.name,
+      phone: record.contact.phone,
+      email: record.contact.email,
+      serviceType: "Tour Package Booking",
+      travelDate: record.departureDate,
+      message: `Package: ${record.packageTitle}\nDate: ${record.departureDate}\nGuests: ${record.passengers.adults} Adults, ${record.passengers.children} Children\nHotel: ${record.hotelOption.category} | Vehicle: ${record.vehicleOption.category}\nEst Total: ₹${record.estimatedTotal.toLocaleString("en-IN")}\nNotes: ${record.requirements.notes || ""}`,
+    });
+
+    // 2. Auto-redirect to WhatsApp (+91 8884015512)
+    const waText = buildWhatsAppSummary(record);
+    redirectToWhatsApp(waText);
+
+    toast.success("Tour package booking submitted! Redirecting to WhatsApp...", {
+      description: `Booking #${record.bookingNumber}`,
+    });
+
     setSubmitting(false);
     navigate({ to: "/book/tour-package/confirmation", search: { ref: record.bookingNumber } });
   }

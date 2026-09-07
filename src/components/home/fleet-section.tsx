@@ -3,19 +3,27 @@ import { Users, Briefcase, Snowflake, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { featuredFleet, waLink } from "@/content/site";
-import { getFleetVehicles, fetchFleetVehicles, getVehicleCategoryLabel, type FleetVehicle } from "@/content/fleet";
+import { getFleetVehicles, fetchFleetVehicles, fleetVehicles, getVehicleCategoryLabel, type FleetVehicle } from "@/content/fleet";
+import { getFleetFareConfig } from "@/content/fleet-pricing";
+import { AutoFareCalculatorModal } from "@/components/fleet/auto-fare-calculator-modal";
 import { SectionHeader, ViewAllMobile } from "@/components/common/section-header";
 import { AppLink } from "@/components/common/app-link";
 
 export function FleetSection() {
-  const [vehiclesList, setVehiclesList] = useState<FleetVehicle[]>([]);
+  function getInitialVehicles(): FleetVehicle[] {
+    const all = getFleetVehicles().filter((v) => v.published);
+    const featured = all.filter((v) => v.featured);
+    return featured.length > 0 ? featured : (all.length > 0 ? all : fleetVehicles);
+  }
+
+  const [vehiclesList, setVehiclesList] = useState<FleetVehicle[]>(getInitialVehicles);
   const [selectedVehicle, setSelectedVehicle] = useState<FleetVehicle | null>(null);
+  const [bookingVehicle, setBookingVehicle] = useState<FleetVehicle | null>(null);
 
   function loadVehicles() {
     const all = getFleetVehicles().filter((v) => v.published);
-    // Prefer featured vehicles first, or fallback to all published
     const featured = all.filter((v) => v.featured);
-    setVehiclesList(featured.length > 0 ? featured : all);
+    setVehiclesList(featured.length > 0 ? featured : (all.length > 0 ? all : fleetVehicles));
   }
 
   useEffect(() => {
@@ -68,51 +76,74 @@ export function FleetSection() {
 
               {/* Vehicle Card Body */}
               <div className="flex flex-1 flex-col p-2.5 sm:p-5">
-                <div className="flex items-start justify-between gap-1 sm:gap-2">
-                  <div className="min-w-0">
-                    <h3 className="text-xs sm:text-base font-bold group-hover:text-primary transition-colors truncate">{v.name}</h3>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{getVehicleCategoryLabel(v.categorySlug)}</p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-primary/10 px-1.5 sm:px-2.5 py-0.5 text-[9px] sm:text-xs font-bold text-primary">
-                    ₹{v.pricePerKm}/km
-                  </span>
-                </div>
+                {(() => {
+                  const fare = getFleetFareConfig(v.slug || v.id, v.name);
+                  const displayRate = fare?.oneWayRatePerKm || v.pricePerKm || 14;
 
-                <ul className="mt-2 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-3 text-[9px] sm:text-xs text-muted-foreground border-t border-b border-border/60 py-1.5 sm:py-3">
-                  <li className="inline-flex items-center gap-1 font-medium">
-                    <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> {v.seats}s
-                  </li>
-                  <li className="inline-flex items-center gap-1 font-medium">
-                    <Briefcase className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> {v.luggage}b
-                  </li>
-                  {v.ac ? (
-                    <li className="inline-flex items-center gap-1 font-medium">
-                      <Snowflake className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> AC
-                    </li>
-                  ) : null}
-                </ul>
+                  return (
+                    <>
+                      <div className="flex items-start justify-between gap-1 sm:gap-2">
+                        <div className="min-w-0">
+                          <AppLink href={`/fleet/${v.slug}`}>
+                            <h3 className="text-xs sm:text-base font-bold group-hover:text-primary transition-colors truncate">{v.name}</h3>
+                          </AppLink>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{getVehicleCategoryLabel(v.categorySlug)}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-primary/10 px-1.5 sm:px-2.5 py-0.5 text-[9px] sm:text-xs font-bold text-primary">
+                          ₹{displayRate}/km
+                        </span>
+                      </div>
 
-                <div className="mt-2.5 sm:mt-5 flex gap-1.5 pt-1">
-                  <Button asChild size="sm" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
-                    <AppLink href="/contact-us">Book</AppLink>
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3">
-                    <a
-                      href={waLink(
-                        `Hi South Zoom Tourism, I'd like a quote for the ${v.name} (${getVehicleCategoryLabel(v.categorySlug)}, ${v.seats} seats).`,
-                      )}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                    >
-                      WhatsApp
-                    </a>
-                  </Button>
-                </div>
+                      <ul className="mt-2 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-3 text-[9px] sm:text-xs text-muted-foreground border-t border-b border-border/60 py-1.5 sm:py-3">
+                        <li className="inline-flex items-center gap-1 font-medium">
+                          <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> {v.seats}s
+                        </li>
+                        <li className="inline-flex items-center gap-1 font-medium">
+                          <Briefcase className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> {v.luggage}b
+                        </li>
+                        {v.ac ? (
+                          <li className="inline-flex items-center gap-1 font-medium">
+                            <Snowflake className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" aria-hidden="true" /> AC
+                          </li>
+                        ) : null}
+                      </ul>
+
+                      <div className="mt-2.5 sm:mt-5 flex gap-1.5 pt-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => setBookingVehicle(v)}
+                          className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-bold px-1 sm:px-3 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-transform active:scale-95 cursor-pointer"
+                        >
+                          Book Now
+                        </Button>
+                        <Button asChild size="sm" variant="outline" className="h-7 sm:h-8 flex-1 text-[10px] sm:text-xs font-semibold px-1 sm:px-3 border-emerald-600/30 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400">
+                          <a
+                            href={waLink(
+                              `Hi South Zoom Tourism, I'd like a quote for the ${v.name} (${getVehicleCategoryLabel(v.categorySlug)}, ${v.seats} seats, ₹${displayRate}/km).`,
+                            )}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                          >
+                            WhatsApp
+                          </a>
+                        </Button>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </li>
           ))}
         </ul>
       )}
+
+      {/* Auto Fare Calculator / Fleet Booking Enquiry Modal */}
+      <AutoFareCalculatorModal
+        open={Boolean(bookingVehicle)}
+        onOpenChange={(open) => !open && setBookingVehicle(null)}
+        initialVehicle={bookingVehicle ?? undefined}
+      />
 
       {/* Full-Screen Image Lightbox Modal */}
       <Dialog open={Boolean(selectedVehicle)} onOpenChange={(open) => !open && setSelectedVehicle(null)}>

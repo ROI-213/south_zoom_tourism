@@ -12,18 +12,18 @@ import {
 } from "@/content/package-details";
 import {
   formatPackagePrice,
+  getPackageBySlug,
+  fetchPackageBySlug,
   getPublishedPackages,
   type TourPackageRecord,
 } from "@/content/tour-packages";
 
-function findPackage(slug: string) {
-  return getPublishedPackages().find((p) => p.slug === slug);
-}
-
-
 export const Route = createFileRoute("/tour-packages/$slug")({
-  loader: ({ params }) => {
-    const pkg = findPackage(params.slug);
+  loader: async ({ params }) => {
+    let pkg = getPackageBySlug(params.slug);
+    if (!pkg) {
+      pkg = await fetchPackageBySlug(params.slug);
+    }
     if (!pkg) throw notFound();
     return {
       pkg,

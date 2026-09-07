@@ -607,14 +607,18 @@ export function AutoFareCalculatorModal({
                 </div>
                 <div className="h-6 w-[1px] bg-border hidden sm:block" />
                 <div className={`text-center px-2 py-1 rounded-lg ${tripType === "local" ? "bg-amber-500/10 ring-1 ring-amber-500/40" : ""}`}>
-                  <span className="text-[9px] text-muted-foreground block font-medium">Local (4h/40k)</span>
+                  <span className="text-[9px] text-muted-foreground block font-medium">
+                    Local ({currentFareConfig.localBaseHours || 4}h/{currentFareConfig.localBaseKm || 40}k)
+                  </span>
                   <span className="text-xs sm:text-sm font-extrabold text-amber-700 dark:text-amber-400">
                     ₹{currentFareConfig.localBasePrice || 2200}
                   </span>
                 </div>
                 <div className="h-6 w-[1px] bg-border hidden sm:block" />
                 <div className={`text-center px-2 py-1 rounded-lg ${tripType === "airport" ? "bg-blue-500/10 ring-1 ring-blue-500/40" : ""}`}>
-                  <span className="text-[9px] text-muted-foreground block font-medium">Airport (3h/30k)</span>
+                  <span className="text-[9px] text-muted-foreground block font-medium">
+                    Airport ({currentFareConfig.airportBaseHours || 3}h/{currentFareConfig.airportBaseKm || 30}k)
+                  </span>
                   <span className="text-xs sm:text-sm font-extrabold text-blue-700 dark:text-blue-400">
                     ₹{currentFareConfig.airportBasePrice || 1100}
                   </span>
@@ -623,7 +627,7 @@ export function AutoFareCalculatorModal({
                 <div className="text-center px-2 py-1 rounded-lg">
                   <span className="text-[9px] text-muted-foreground block font-medium">Extra/km</span>
                   <span className="text-xs sm:text-sm font-extrabold text-orange-600 dark:text-orange-400">
-                    ₹{currentFareConfig.oneWayRatePerKm}<span className="text-[9px] font-normal">/km</span>
+                    ₹{currentFareConfig.extraKmRate ?? currentFareConfig.localExtraKmRate ?? currentFareConfig.oneWayRatePerKm}<span className="text-[9px] font-normal">/km</span>
                   </span>
                 </div>
               </div>

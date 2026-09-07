@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { getPublishedServices } from "@/content/services";
-import { company } from "@/content/site";
+import { company, redirectToWhatsApp } from "@/content/site";
 import { getEnquiryServiceOptions, generateEnquiryReference } from "@/content/contact";
 import { syncEnquiryToSupabase } from "@/lib/booking-sync";
 
@@ -93,7 +93,7 @@ export function EnquiryDialog({
     };
 
     const ref = generateEnquiryReference();
-    syncEnquiryToSupabase({
+    await syncEnquiryToSupabase({
       name: payload.name,
       phone: payload.phone,
       email: payload.email,
@@ -112,16 +112,13 @@ export function EnquiryDialog({
       `Service: ${serviceLabel}`,
       pageUrl ? `Page: ${pageUrl}` : null,
       `Source: ${source}`,
-    ].filter(Boolean);
+    ].filter(Boolean) as string[];
 
-    window.open(
-      `https://wa.me/${company.whatsappRaw}?text=${encodeURIComponent(lines.join("\n"))}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    // Redirect to WhatsApp (8884015512)
+    redirectToWhatsApp(lines.join("\n"));
 
-    toast.success("Enquiry ready to send", {
-      description: `We've prepared your ${serviceLabel} enquiry on WhatsApp. You can also call ${company.phone}.`,
+    toast.success("Enquiry submitted!", {
+      description: `We've redirected you to WhatsApp. You can also call ${company.phone}.`,
     });
     reset({ ...form.getValues(), name: "", phone: "", email: "", travelDate: "", message: "" });
     onOpenChange(false);

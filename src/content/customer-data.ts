@@ -24,7 +24,7 @@ import { loadBookingRecord } from "@/content/package-booking";
 import { loadBookingSummary, type BookingSummary } from "@/content/booking-summary";
 import { listPaymentSubmissions, type PaymentSubmissionRecord } from "@/content/payment";
 import type { CustomerProfile } from "@/content/customer-auth";
-import { syncVehicleBookingToSupabase } from "@/lib/booking-sync";
+import { syncVehicleBookingToSupabase, syncEnquiryToSupabase } from "@/lib/booking-sync";
 
 /* --------------------------------------------------------------- storage io */
 
@@ -245,6 +245,16 @@ export function registerVehicleBooking(input: {
     passengers: input.passengers,
     tripType: input.tripType,
     notes: input.notes,
+  });
+
+  syncEnquiryToSupabase({
+    reference: input.reference,
+    name: input.customerName,
+    phone: input.phone,
+    email: input.email || undefined,
+    serviceType: input.tripType || "Fleet Booking",
+    travelDate: input.pickupDate,
+    message: `Vehicle: ${input.vehicleName}\nPickup: ${input.pickup} at ${input.pickupTime}\nDestination: ${input.destination}${input.returnDate ? ` (Return: ${input.returnDate})` : ""}\nPassengers: ${input.passengers}\nNotes: ${input.notes || "None"}`,
   });
 }
 

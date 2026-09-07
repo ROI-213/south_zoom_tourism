@@ -9,7 +9,6 @@ import {
   acknowledgementFileName,
   buildAcknowledgementLines,
   resolveBookingBalance,
-  standardPaymentTerms,
 } from "@/content/payment-documents";
 import {
   formatPaidOn,
@@ -133,20 +132,6 @@ export function PaymentAcknowledgement({
         </p>
       </div>
 
-      <details className="mt-4 rounded-lg border border-border/80 bg-muted/30 p-3 text-xs text-muted-foreground group">
-        <summary className="cursor-pointer font-semibold text-foreground flex items-center justify-between list-none select-none">
-          <span className="flex items-center gap-2">
-            <span>📋</span>
-            <span>Terms & Conditions for Booking & Payments</span>
-          </span>
-          <span className="text-[11px] text-primary font-medium group-open:rotate-180 transition-transform">▼</span>
-        </summary>
-        <ul className="mt-2.5 list-decimal list-inside space-y-1 text-[11px] leading-relaxed border-t border-border/60 pt-2 text-foreground/85">
-          {standardPaymentTerms.map((term, i) => (
-            <li key={i}>{term}</li>
-          ))}
-        </ul>
-      </details>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <Button

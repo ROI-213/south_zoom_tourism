@@ -12,15 +12,20 @@ import { TourPackageBookingModal } from "@/components/packages/tour-package-book
 
 export function PackagesSection() {
   const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string; title: string } | null>(null);
-  const [livePackages, setLivePackages] = useState<any[]>([]);
+
+  const defaultItems = featuredPackages.itemIds
+    .map((id) => tourPackages.find((p) => p.id === id))
+    .filter((p): p is (typeof tourPackages)[number] => Boolean(p));
+
+  const [livePackages, setLivePackages] = useState<any[]>(defaultItems);
   const [bookingPackage, setBookingPackage] = useState<any | null>(null);
 
   useEffect(() => {
-    (async () => {
+    const loadData = async () => {
       try {
         const { data, error } = await supabase
           .from('tour_packages')
-          .select('*')
+          .select('*, destinations(name, state)')
           .eq('active', true)
           .order('display_order');
         if (!error && data && data.length > 0) {
@@ -34,7 +39,7 @@ export function PackagesSection() {
             priceFrom: p.price_from || 7999,
             image: resolvePackageImage(p.main_image, `${p.slug} ${p.title}`),
             alt: p.title,
-            highlights: Array.isArray(p.highlights) ? p.highlights : ['Sightseeing', 'Stay Included', 'Private Cab'],
+            highlights: Array.isArray(p.highlights) && p.highlights.length > 0 ? p.highlights : ['Sightseeing', 'Stay Included', 'Private Cab'],
             featured: p.featured,
           }));
           const featured = mapped.filter((p: any) => p.featured);
@@ -43,16 +48,32 @@ export function PackagesSection() {
       } catch (e) {
         console.error('Failed to load packages:', e);
       }
-    })();
+    };
+
+    loadData();
+
+    const onUpdated = () => {
+      loadData();
+    };
+
+    window.addEventListener("tourPackagesUpdated", onUpdated);
+    return () => {
+      window.removeEventListener("tourPackagesUpdated", onUpdated);
+    };
   }, []);
 
   if (!featuredPackages.meta.visible) return null;
 
-  const defaultItems = featuredPackages.itemIds
-    .map((id) => tourPackages.find((p) => p.id === id))
-    .filter((p): p is (typeof tourPackages)[number] => Boolean(p));
-
   const items = livePackages.length > 0 ? livePackages : defaultItems;
+
+  const gridColsClass =
+    items.length === 4
+      ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+      : items.length === 3
+      ? "grid-cols-1 sm:grid-cols-3 lg:grid-cols-3"
+      : items.length >= 5
+      ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
+      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4";
 
   return (
     <section
@@ -68,7 +89,7 @@ export function PackagesSection() {
         {items.length === 0 ? (
           <EmptyState message="No packages are featured right now." />
         ) : (
-          <ul className="mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <ul className={`mt-6 sm:mt-8 grid gap-3 sm:gap-5 ${gridColsClass}`}>
             {items.map((p) => (
               <li
                 key={p.id}

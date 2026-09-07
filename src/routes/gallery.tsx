@@ -142,13 +142,13 @@ function GalleryPage() {
 
   const items = useMemo(
     () => filterMedia({ category, album: album?.slug }),
-    [category, album?.slug],
+    [category, album?.slug, galleryVersion],
   );
   const visible = items.slice(0, shown);
 
   const visibleAlbums = useMemo(
     () => (category === "all" ? albums : albums.filter((a) => a.categorySlug === category)),
-    [albums, category],
+    [albums, category, galleryVersion],
   );
 
   const setCategory = (slug: string) =>

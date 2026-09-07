@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Check, Copy, ShieldAlert, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { buildUpiPayload, paymentSettings } from "@/content/payment";
+import { buildUpiPayload, fetchLivePaymentSettings, paymentSettings } from "@/content/payment";
 
 function CopyRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -44,7 +44,25 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 }
 
 export function PaymentInstructions({ amount, note }: { amount?: number; note?: string }) {
-  const { upi, bank, instructions, warnings } = paymentSettings;
+  const [settings, setSettings] = useState(() => ({ ...paymentSettings }));
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    fetchLivePaymentSettings().then((s) => {
+      setSettings({ ...s });
+      setImgError(false);
+    });
+
+    const onUpdate = (e: any) => {
+      setSettings(e.detail ? { ...e.detail } : { ...paymentSettings });
+      setImgError(false);
+    };
+
+    window.addEventListener("paymentSettingsUpdated", onUpdate);
+    return () => window.removeEventListener("paymentSettingsUpdated", onUpdate);
+  }, []);
+
+  const { upi, bank, instructions, warnings } = settings;
   const payload = buildUpiPayload(amount, note);
 
   return (
@@ -56,21 +74,24 @@ export function PaymentInstructions({ amount, note }: { amount?: number; note?: 
         </p>
 
         <div className="mt-5 flex flex-col items-center gap-4">
-          <div className="rounded-2xl border border-border bg-card p-4">
-            {upi.qrImageUrl ? (
+          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm flex items-center justify-center min-h-[212px] min-w-[212px]">
+            {upi.qrImageUrl && !imgError ? (
               <img
                 src={upi.qrImageUrl}
                 alt={upi.qrAlt}
                 width={220}
                 height={220}
                 loading="lazy"
-                className="h-[180px] w-[180px] sm:h-[220px] sm:w-[220px]"
+                onError={() => setImgError(true)}
+                className="h-[180px] w-[180px] sm:h-[220px] sm:w-[220px] object-contain rounded-xl"
               />
             ) : (
               <QRCodeSVG
                 value={payload}
-                size={180}
+                size={220}
                 marginSize={2}
+                bgColor="#ffffff"
+                fgColor="#000000"
                 role="img"
                 aria-label={upi.qrAlt}
                 className="h-[180px] w-[180px] sm:h-[220px] sm:w-[220px]"

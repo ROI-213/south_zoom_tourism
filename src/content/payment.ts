@@ -45,23 +45,50 @@ export type UpiSetting = {
   qrAlt: string;
 };
 
-export const paymentSettings = {
+export const STORAGE_KEY_PAYMENT_SETTINGS = "szt_payment_settings_cache_v1";
+
+const isBrowser = () => typeof window !== "undefined";
+
+function loadCachedPaymentSettings(): any {
+  if (!isBrowser()) return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PAYMENT_SETTINGS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch (e) {
+    console.warn("Failed to load cached payment settings:", e);
+  }
+  return null;
+}
+
+function saveCachedPaymentSettings(val: any): void {
+  if (!isBrowser()) return;
+  try {
+    localStorage.setItem(STORAGE_KEY_PAYMENT_SETTINGS, JSON.stringify(val));
+  } catch (e) {
+    console.warn("Failed to save payment settings cache:", e);
+  }
+}
+
+const defaultPaymentSettings = {
   published: true,
   heading: "Pay by QR / UPI / Bank Transfer",
   intro:
     "Scan the QR or transfer to the account below, then upload your payment screenshot so our accounts team can verify it against your booking.",
   upi: {
-    upiId: "southzoomtourism@okicici",
-    payeeName: "South Zoom Tourism",
-    qrImageUrl: null,
+    upiId: "southzoom@upi",
+    payeeName: "South Zoom Tourism Pvt Ltd",
+    qrImageUrl: null as string | null,
     qrAlt: "UPI QR code for South Zoom Tourism payments",
   } satisfies UpiSetting,
   bank: {
     accountHolder: "South Zoom Tourism Pvt Ltd",
-    bankName: "ICICI Bank",
-    accountNumber: "004705001234",
-    ifsc: "ICIC0000047",
-    branch: "Anna Salai, Chennai",
+    bankName: "HDFC Bank",
+    accountNumber: "50200088991234",
+    ifsc: "HDFC0001234",
+    branch: "Electronic City, Bengaluru",
     accountType: "Current Account",
   } satisfies BankAccountSetting,
   instructions: [
@@ -93,6 +120,67 @@ export const paymentSettings = {
   /** Verification desk hours shown next to the SLA. */
   deskHours: "Mon–Sat, 9:00 AM – 8:00 PM IST",
 };
+
+export const paymentSettings = { ...defaultPaymentSettings };
+
+// Apply cached values immediately if present (cleaning up any accidental large image data)
+const initialCached = loadCachedPaymentSettings();
+if (initialCached) {
+  if (initialCached.qr_image_url && initialCached.qr_image_url.length > 50000) {
+    initialCached.qr_image_url = '';
+  }
+  applyDbPaymentSettingsToMemory(initialCached);
+}
+
+export function applyDbPaymentSettingsToMemory(val: any) {
+  if (!val) return;
+  if (val.upi_id) paymentSettings.upi.upiId = val.upi_id;
+  if (val.account_holder) {
+    paymentSettings.bank.accountHolder = val.account_holder;
+    paymentSettings.upi.payeeName = val.account_holder;
+  }
+  if (val.bank_name) paymentSettings.bank.bankName = val.bank_name;
+  if (val.account_number) paymentSettings.bank.accountNumber = val.account_number;
+  if (val.ifsc_code || val.ifsc) paymentSettings.bank.ifsc = val.ifsc_code || val.ifsc;
+  if (val.branch) paymentSettings.bank.branch = val.branch;
+  if (val.account_type) paymentSettings.bank.accountType = val.account_type;
+  // If qr_image_url is empty string or excessively large (>50KB vehicle photo), reset to null so live dynamic QR code renders
+  if (val.qr_image_url !== undefined) {
+    const rawUrl = typeof val.qr_image_url === 'string' ? val.qr_image_url.trim() : '';
+    paymentSettings.upi.qrImageUrl = rawUrl && rawUrl.length < 50000 ? rawUrl : null;
+  }
+  if (val.payment_instructions) {
+    paymentSettings.instructions = [
+      val.payment_instructions,
+      "Enter your booking number in the payment note / remarks field.",
+      "Take a clear screenshot of the successful payment (amount + UTR/transaction ID visible).",
+      "Upload the screenshot in the form below along with the transaction ID.",
+    ];
+  }
+  saveCachedPaymentSettings(val);
+  if (isBrowser()) {
+    window.dispatchEvent(new CustomEvent("paymentSettingsUpdated", { detail: paymentSettings }));
+  }
+}
+
+export async function fetchLivePaymentSettings() {
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    const { data } = await supabase
+      .from('website_settings')
+      .select('value')
+      .eq('key', 'payment_settings')
+      .maybeSingle();
+
+    if (data?.value) {
+      applyDbPaymentSettingsToMemory(data.value);
+      return paymentSettings;
+    }
+  } catch (e) {
+    console.error('Error fetching live payment settings:', e);
+  }
+  return paymentSettings;
+}
 
 export const paymentBannerBlock = {
   eyebrow: "Payments",

@@ -46,6 +46,7 @@ export type FleetFareConfig = {
   airportBaseKm: number; // 30 km
   airportExtraKmRate: number; // ₹/km
   airportExtraHourRate: number; // ₹/hr
+  extraKmRate?: number; // General Extra / KM rate shown in booking modal (e.g. 14 for Sedan)
   updatedAt?: string;
 };
 
@@ -152,6 +153,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBaseKm: 30,
     airportExtraKmRate: 12,
     airportExtraHourRate: 180,
+    extraKmRate: 12,
   },
   {
     id: "ffc-sedan",
@@ -182,6 +184,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBaseKm: 30,
     airportExtraKmRate: 14,
     airportExtraHourRate: 200,
+    extraKmRate: 14,
   },
   {
     id: "ffc-small-suv",
@@ -212,6 +215,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBaseKm: 30,
     airportExtraKmRate: 18,
     airportExtraHourRate: 200,
+    extraKmRate: 18,
   },
   {
     id: "ffc-big-suv",
@@ -242,6 +246,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBaseKm: 30,
     airportExtraKmRate: 21,
     airportExtraHourRate: 250,
+    extraKmRate: 21,
   },
   {
     id: "ffc-tempo",
@@ -272,6 +277,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBaseKm: 30,
     airportExtraKmRate: 24,
     airportExtraHourRate: 300,
+    extraKmRate: 24,
   },
   {
     id: "ffc-urbania",
@@ -302,6 +308,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBaseKm: 30,
     airportExtraKmRate: 28,
     airportExtraHourRate: 350,
+    extraKmRate: 28,
   },
   {
     id: "ffc-bus",
@@ -332,6 +339,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBaseKm: 30,
     airportExtraKmRate: 38,
     airportExtraHourRate: 500,
+    extraKmRate: 38,
   },
   {
     id: "ffc-premium",
@@ -362,6 +370,7 @@ export const DEFAULT_FLEET_FARE_SETTINGS: FleetFareConfig[] = [
     airportBaseKm: 30,
     airportExtraKmRate: 45,
     airportExtraHourRate: 400,
+    extraKmRate: 45,
   },
 ];
 
@@ -489,7 +498,9 @@ export function getFleetFareSettings(): FleetFareConfig[] {
       if (!found) return { ...def };
 
       const oneWay = typeof found.oneWayRatePerKm === 'number' && found.oneWayRatePerKm > 0 ? found.oneWayRatePerKm : def.oneWayRatePerKm;
-      const extraKm = typeof found.localExtraKmRate === 'number' && found.localExtraKmRate > 0 ? found.localExtraKmRate : oneWay;
+      const extraKm = typeof found.extraKmRate === 'number' && found.extraKmRate > 0
+        ? found.extraKmRate
+        : (typeof found.localExtraKmRate === 'number' && found.localExtraKmRate > 0 ? found.localExtraKmRate : oneWay);
 
       return {
         ...def,
@@ -510,6 +521,7 @@ export function getFleetFareSettings(): FleetFareConfig[] {
         airportBaseKm: typeof found.airportBaseKm === 'number' ? found.airportBaseKm : def.airportBaseKm,
         airportExtraKmRate: typeof found.airportExtraKmRate === 'number' ? found.airportExtraKmRate : extraKm,
         airportExtraHourRate: typeof found.airportExtraHourRate === 'number' ? found.airportExtraHourRate : def.airportExtraHourRate,
+        extraKmRate: extraKm,
         isActive: found.isActive !== undefined ? Boolean(found.isActive) : def.isActive,
       };
     });
@@ -520,6 +532,29 @@ export function getFleetFareSettings(): FleetFareConfig[] {
     memorySettings = DEFAULT_FLEET_FARE_SETTINGS.map((d) => ({ ...d }));
     return memorySettings;
   }
+}
+
+/**
+ * Fetch fleet fare settings from Supabase website_settings and synchronize to local state.
+ */
+export async function fetchFleetFareSettings(): Promise<FleetFareConfig[]> {
+  if (!isBrowser()) return memorySettings;
+  try {
+    const { supabase } = await import("@/lib/supabase");
+    const { data, error } = await supabase
+      .from("website_settings")
+      .select("value")
+      .eq("key", "fleet_fare_settings")
+      .single();
+
+    if (!error && data?.value && Array.isArray(data.value) && data.value.length > 0) {
+      window.localStorage.setItem(STORAGE_KEY_FLEET_PRICING, JSON.stringify(data.value));
+      return getFleetFareSettings();
+    }
+  } catch (e) {
+    console.warn("Could not fetch remote fleet fare settings from Supabase:", e);
+  }
+  return getFleetFareSettings();
 }
 
 /**
@@ -571,6 +606,21 @@ export function saveFleetFareSettings(settings: FleetFareConfig[]): void {
         if (hasChanges) {
           saveFleetVehicles(updatedVehicles);
         }
+      })
+      .catch(() => {});
+
+    // Also persist to Supabase website_settings `fleet_fare_settings`
+    import("@/lib/supabase")
+      .then(({ supabase }) => {
+        supabase
+          .from("website_settings")
+          .upsert({
+            key: "fleet_fare_settings",
+            value: stamped,
+            updated_at: new Date().toISOString(),
+          })
+          .then(() => {})
+          .catch((e) => console.warn("Could not sync fleet fare settings to Supabase:", e));
       })
       .catch(() => {});
   } catch (err) {

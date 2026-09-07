@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { waLink, company } from "@/content/site";
+import { waLink, company, redirectToWhatsApp } from "@/content/site";
 import { syncEnquiryToSupabase } from "@/lib/booking-sync";
 import { toast } from "sonner";
 import type { HotelRecord } from "@/content/hotels";
@@ -123,9 +123,13 @@ export function HotelEnquiryModal({ open, onOpenChange, hotel, stay = {} }: Prop
         travelDate: checkIn || undefined,
         message,
       });
+
+      // Redirect to WhatsApp (8884015512)
+      redirectToWhatsApp(waMessage);
+
       setRefId(ref);
       setSubmitted(true);
-      toast.success("Enquiry submitted! We'll contact you shortly.");
+      toast.success("Enquiry submitted! Redirecting to WhatsApp...");
     } catch {
       toast.error("Something went wrong. Please try again or use WhatsApp.");
     } finally {

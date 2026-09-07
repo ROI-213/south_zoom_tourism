@@ -20,10 +20,10 @@ type ContactSettings = {
 };
 
 const defaults: ContactSettings = {
-  company_name: 'South Zoom Tourism', phone: '+91 6366357757', whatsapp: '916366357757',
+  company_name: 'South Zoom Tourism', phone: '+91 6366357757', whatsapp: '918884015512',
   email: 'bookings@southzoomtourism.com', address: 'South Zoom Tourism, #8, Srinivasa Building, Anchepalya Main Road, TG Halli, Bengaluru – 560073, Karnataka.',
   google_maps_url: '', business_hours: 'Mon – Sun · 24×7 Service', support_hours: '24×7 Support',
-  facebook_url: '', instagram_url: '', youtube_url: '',
+  facebook_url: 'https://www.facebook.com/share/1Na54BKBY9/', instagram_url: 'https://www.instagram.com/southzoomtourism?stkn=MXJ3ODh0eG43dDFhNQ==', youtube_url: '',
 };
 
 function ContactSettingsPage() {
@@ -66,7 +66,7 @@ function ContactSettingsPage() {
           <div className="space-y-1"><Label>Company Name</Label><Input value={form.company_name} onChange={e => setForm(f => ({...f, company_name: e.target.value}))}/></div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1"><Label className="flex items-center gap-1.5"><Phone size={13}/>Phone Number</Label><Input value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))}/></div>
-            <div className="space-y-1"><Label className="flex items-center gap-1.5"><MessageCircle size={13}/>WhatsApp (number only)</Label><Input value={form.whatsapp} placeholder="916366357757" onChange={e => setForm(f => ({...f, whatsapp: e.target.value}))}/></div>
+            <div className="space-y-1"><Label className="flex items-center gap-1.5"><MessageCircle size={13}/>WhatsApp (number only)</Label><Input value={form.whatsapp} placeholder="918884015512" onChange={e => setForm(f => ({...f, whatsapp: e.target.value}))}/></div>
           </div>
           <div className="space-y-1"><Label className="flex items-center gap-1.5"><Mail size={13}/>Email</Label><Input value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))}/></div>
           <div className="space-y-1"><Label className="flex items-center gap-1.5"><MapPin size={13}/>Address</Label><Textarea rows={2} value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))}/></div>

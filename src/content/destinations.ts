@@ -31,6 +31,7 @@ import destHampi from "@/assets/destinations/dest_hampi_1786683714278.jpg";
 import destGokarna from "@/assets/destinations/dest_gokarna_1786683734925.jpg";
 import { hotels } from "@/content/site";
 import { getPublishedPackages } from "@/content/tour-packages";
+import { supabase } from "@/lib/supabase";
 
 export type DestinationTripType = {
   id: string;
@@ -40,10 +41,41 @@ export type DestinationTripType = {
   visible: boolean;
 };
 
+export const STORAGE_KEY_DESTINATIONS = "szt_destinations_cache_v1";
+
+const isBrowser = () => typeof window !== "undefined";
+
+function loadCachedDestinations(): DestinationRecord[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_DESTINATIONS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn("Failed to load cached destinations:", e);
+  }
+  return [];
+}
+
+function saveCachedDestinations(dests: DestinationRecord[]): void {
+  if (!isBrowser()) return;
+  try {
+    localStorage.setItem(STORAGE_KEY_DESTINATIONS, JSON.stringify(dests));
+  } catch (e) {
+    console.warn("Failed to save destinations cache:", e);
+  }
+}
+
 // Dynamic cache for admin-managed destinations
-export let dynamicDestinationRecords: DestinationRecord[] = [];
+export let dynamicDestinationRecords: DestinationRecord[] = loadCachedDestinations();
 export const setDynamicDestinations = (dests: DestinationRecord[]) => {
   dynamicDestinationRecords = dests;
+  saveCachedDestinations(dests);
+  if (isBrowser()) {
+    window.dispatchEvent(new CustomEvent("destinationsUpdated", { detail: dests }));
+  }
 };
 
 export type DestinationRecord = {
@@ -407,21 +439,69 @@ export const destinationsPerPage = 9;
 /* Derived helpers                                                      */
 /* ------------------------------------------------------------------ */
 
-export function getPublishedDestinations(): DestinationRecord[] {
-  if (dynamicDestinationRecords.length) {
-    return dynamicDestinationRecords.filter((d) => d.published).slice().sort((a, b) => a.order - b.order);
+export function getAllDestinations(): DestinationRecord[] {
+  if (dynamicDestinationRecords && dynamicDestinationRecords.length > 0) {
+    return dynamicDestinationRecords;
   }
-  return destinationRecords
-    .filter((d) => d.published)
+  return destinationRecords;
+}
+
+export function getPublishedDestinations(): DestinationRecord[] {
+  return getAllDestinations()
+    .filter((d) => d.published !== false)
     .slice()
     .sort((a, b) => a.order - b.order);
 }
 
 export function getDestinationBySlug(slug: string): DestinationRecord | undefined {
-  if (dynamicDestinationRecords.length) {
-    return dynamicDestinationRecords.find((d) => d.slug === slug && d.published);
+  const all = getAllDestinations();
+  const needle = (slug || "").toLowerCase().trim();
+  return all.find((d) => (d.slug.toLowerCase() === needle || d.id === slug) && d.published !== false);
+}
+
+export async function fetchDestinations(): Promise<DestinationRecord[]> {
+  try {
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('*')
+      .order('state')
+      .order('name');
+
+    if (!error && data && data.length > 0) {
+      const mapped = data.map((row: any, idx: number) => mapDbDestinationToRecord(row, idx));
+      setDynamicDestinations(mapped);
+      return mapped;
+    }
+  } catch (e) {
+    console.error("Error fetching destinations from Supabase:", e);
   }
-  return destinationRecords.find((d) => d.slug === slug && d.published);
+
+  return getPublishedDestinations();
+}
+
+export async function fetchDestinationBySlug(slug: string): Promise<DestinationRecord | undefined> {
+  const local = getDestinationBySlug(slug);
+  if (local) return local;
+
+  try {
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('*')
+      .or(`slug.eq."${slug}",id.eq."${slug}"`)
+      .maybeSingle();
+
+    if (!error && data) {
+      const mapped = mapDbDestinationToRecord(data);
+      const current = getAllDestinations();
+      const updated = [...current.filter((d) => d.slug !== slug && d.id !== data.id), mapped];
+      setDynamicDestinations(updated);
+      return mapped;
+    }
+  } catch (e) {
+    console.error(`Error fetching destination ${slug}:`, e);
+  }
+
+  return undefined;
 }
 
 /** Map Supabase DB row to DestinationRecord */
@@ -511,9 +591,11 @@ export const defaultDestinationFilters: DestinationFilterState = {
 export function filterDestinations(
   filters: DestinationFilterState,
   sort: DestinationSortValue,
+  listOverride?: DestinationRecord[],
 ): DestinationRecord[] {
   const q = filters.query.trim().toLowerCase();
-  const list = getPublishedDestinations().filter((d) => {
+  const source = listOverride && listOverride.length > 0 ? listOverride : getPublishedDestinations();
+  const list = source.filter((d) => {
     if (
       q &&
       ![d.name, d.state, d.region, d.shortDescription, ...d.highlights]

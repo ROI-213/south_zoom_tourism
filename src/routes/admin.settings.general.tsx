@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Save, Settings } from 'lucide-react';
+import { AdminImageUpload } from '@/components/admin/admin-image-upload';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,8 +60,13 @@ function GeneralSettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-1"><Label>Website Name</Label><Input value={form.website_name} onChange={e => setForm(f => ({...f, website_name: e.target.value}))}/></div>
           <div className="space-y-1"><Label>Tagline</Label><Input value={form.tagline} onChange={e => setForm(f => ({...f, tagline: e.target.value}))}/></div>
-          <div className="space-y-1"><Label>Logo URL</Label><Input value={form.logo_url} placeholder="https://..." onChange={e => setForm(f => ({...f, logo_url: e.target.value}))}/></div>
-          {form.logo_url && <img src={form.logo_url} alt="Logo preview" className="h-12 object-contain" onError={e => { (e.target as HTMLImageElement).style.display='none'; }}/>}
+          <AdminImageUpload
+            label="Website Logo"
+            value={form.logo_url || ''}
+            onChange={(url) => setForm(f => ({ ...f, logo_url: url }))}
+            placeholder="https://... or upload website logo"
+            aspectRatioHint="Recommended: PNG or SVG with transparent background"
+          />
         </CardContent>
       </Card>
 

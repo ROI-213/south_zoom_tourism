@@ -27,6 +27,7 @@ import tourCoorg from "@/assets/tour-coorg.png";
 import destGoa from "@/assets/destinations/dest-goa.jpg";
 import destHampi from "@/assets/destinations/dest_hampi_1786683714278.jpg";
 import { resolvePackageImage } from "@/lib/image-map";
+import { supabase } from "@/lib/supabase";
 
 export type PackageCategory = {
   id: string;
@@ -36,10 +37,41 @@ export type PackageCategory = {
   visible: boolean;
 };
 
+export const STORAGE_KEY_TOUR_PACKAGES = "szt_tour_packages_cache_v1";
+
+const isBrowser = () => typeof window !== "undefined";
+
+function loadCachedPackages(): TourPackageRecord[] {
+  if (!isBrowser()) return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_TOUR_PACKAGES);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn("Failed to load cached tour packages:", e);
+  }
+  return [];
+}
+
+function saveCachedPackages(packages: TourPackageRecord[]): void {
+  if (!isBrowser()) return;
+  try {
+    localStorage.setItem(STORAGE_KEY_TOUR_PACKAGES, JSON.stringify(packages));
+  } catch (e) {
+    console.warn("Failed to save tour packages cache:", e);
+  }
+}
+
 // Dynamic cache for admin-managed packages
-export let dynamicPackageRecords: TourPackageRecord[] = [];
+export let dynamicPackageRecords: TourPackageRecord[] = loadCachedPackages();
 export const setDynamicPackages = (packages: TourPackageRecord[]) => {
   dynamicPackageRecords = packages;
+  saveCachedPackages(packages);
+  if (isBrowser()) {
+    window.dispatchEvent(new CustomEvent("tourPackagesUpdated", { detail: packages }));
+  }
 };
 
 export type PriceBasis = "per-person" | "per-group" | "starting";
@@ -439,11 +471,66 @@ export type PackageSortValue = (typeof packageSortOptions)[number]["value"];
 
 export const packagesPerPage = 6;
 
-export function getPublishedPackages(): TourPackageRecord[] {
-  if (dynamicPackageRecords.length) {
-    return dynamicPackageRecords.filter((p) => p.published);
+export function getAllPackages(): TourPackageRecord[] {
+  if (dynamicPackageRecords && dynamicPackageRecords.length > 0) {
+    return dynamicPackageRecords;
   }
-  return tourPackageRecords.filter((p) => p.published);
+  return tourPackageRecords;
+}
+
+export function getPublishedPackages(): TourPackageRecord[] {
+  const all = getAllPackages();
+  return all.filter((p) => p.published !== false);
+}
+
+export function getPackageBySlug(slug: string): TourPackageRecord | undefined {
+  const all = getAllPackages();
+  return all.find((p) => p.slug === slug || p.id === slug);
+}
+
+export async function fetchTourPackages(): Promise<TourPackageRecord[]> {
+  try {
+    const { data, error } = await supabase
+      .from('tour_packages')
+      .select('*, destinations(name, state)')
+      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (!error && data && data.length > 0) {
+      const mapped = data.map((row: any, idx: number) => mapDbPackageToRecord(row, idx));
+      setDynamicPackages(mapped);
+      return mapped;
+    }
+  } catch (e) {
+    console.error("Error fetching tour packages from Supabase:", e);
+  }
+
+  return getAllPackages();
+}
+
+export async function fetchPackageBySlug(slug: string): Promise<TourPackageRecord | undefined> {
+  const local = getPackageBySlug(slug);
+  if (local) return local;
+
+  try {
+    const { data, error } = await supabase
+      .from('tour_packages')
+      .select('*, destinations(name, state)')
+      .or(`slug.eq."${slug}",id.eq."${slug}"`)
+      .maybeSingle();
+
+    if (!error && data) {
+      const mapped = mapDbPackageToRecord(data);
+      const current = getAllPackages();
+      const updated = [...current.filter((p) => p.slug !== slug && p.id !== data.id), mapped];
+      setDynamicPackages(updated);
+      return mapped;
+    }
+  } catch (e) {
+    console.error(`Error fetching package ${slug}:`, e);
+  }
+
+  return undefined;
 }
 
 export function getPackageCategoryLabel(slug: string): string {
@@ -497,8 +584,8 @@ export function mapDbPackageToRecord(row: any, index: number = 0): TourPackageRe
     id: row.id ?? `tp-${index}`,
     slug: row.slug ?? "",
     title: row.title ?? "",
-    state: row.state ?? "",
-    destination: row.destination ?? row.category ?? "",
+    state: row.state ?? row.destinations?.state ?? "",
+    destination: row.destination ?? row.destinations?.name ?? row.category ?? "",
     categorySlugs: Array.isArray(row.category_slugs)
       ? row.category_slugs
       : row.category

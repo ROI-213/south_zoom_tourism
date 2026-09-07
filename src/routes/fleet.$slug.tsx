@@ -240,29 +240,6 @@ function VehicleDetailPage() {
                 />
               </div>
 
-              {/* Additional gallery images from DB (if any) shown below as thumbnails */}
-              {gallery.length > 1 && (
-                <div
-                  className={`mt-3 grid gap-2 ${
-                    gallery.length <= 2
-                      ? "grid-cols-2 max-w-sm"
-                      : gallery.length === 3
-                      ? "grid-cols-3 max-w-md"
-                      : "grid-cols-4"
-                  }`}
-                >
-                  {gallery.slice(0, 4).map((img) => (
-                    <div key={img.id} className="overflow-hidden rounded-lg border border-border">
-                      <img
-                        src={img.url}
-                        alt={img.alt}
-                        className="aspect-[4/3] w-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
               <header className="mt-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge>{getVehicleCategoryLabel(vehicle.categorySlug)}</Badge>

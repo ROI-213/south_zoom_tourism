@@ -78,11 +78,13 @@ const galleryFor = (
   slug: string,
   images: { url: string; alt: string; kind: GalleryKind }[],
 ): VehicleGalleryImage[] =>
-  images.map((image, index) => ({
-    id: `${slug}-img-${index + 1}`,
-    order: index + 1,
-    ...image,
-  }));
+  images
+    .filter((image) => image.url && image.url !== heroFleet && image.url !== heroTours)
+    .map((image, index) => ({
+      id: `${slug}-img-${index + 1}`,
+      order: index + 1,
+      ...image,
+    }));
 
 const featuresFor = (slug: string, entries: [string, string][]): VehicleFeature[] =>
   entries.map(([label, icon], index) => ({
@@ -247,12 +249,7 @@ export const vehicleDetails: VehicleDetail[] = [
   makeDetail(
     "maruti-swift",
     "A nimble hatchback for city runs, short airport hops and solo or couple travel where parking and fuel economy matter more than boot space.",
-    [
-      { url: heroFleet, alt: "Maruti Swift hatchback parked on a quiet city street", kind: "exterior" },
-      { url: heroTours, alt: "Front cabin of the Maruti Swift with the dashboard and controls", kind: "interior" },
-      { url: heroFleet, alt: "Rear bench seating of the vehicle", kind: "seating" },
-      { url: heroFleet, alt: "Open boot of the Maruti Swift holding two cabin bags", kind: "luggage" },
-    ],
+    [],
     standardFeatures,
     [
       { label: "Best for", value: "City runs and short transfers" },
@@ -262,12 +259,7 @@ export const vehicleDetails: VehicleDetail[] = [
   makeDetail(
     "maruti-dzire",
     "Our most-booked sedan. Comfortable for four adults with a boot that swallows two large suitcases, and equally at home on airport transfers and day-long outstation trips.",
-    [
-      { url: heroFleet, alt: "White Maruti Dzire sedan ready for an airport transfer", kind: "exterior" },
-      { url: heroTours, alt: "Maruti Dzire interior showing the front seats and steering", kind: "interior" },
-      { url: heroFleet, alt: "Rear passenger seating inside the Maruti Dzire", kind: "seating" },
-      { url: heroFleet, alt: "Boot of the Maruti Dzire loaded with two suitcases", kind: "luggage" },
-    ],
+    [],
     standardFeatures,
     [
       { label: "Best for", value: "Airport transfers and outstation" },
@@ -277,12 +269,7 @@ export const vehicleDetails: VehicleDetail[] = [
   makeDetail(
     "toyota-etios",
     "A diesel sedan built for highway distance, with a bigger boot and a settled ride that makes six-hour drives feel shorter.",
-    [
-      { url: heroFleet, alt: "Toyota Etios sedan on a highway shoulder", kind: "exterior" },
-      { url: heroTours, alt: "Toyota Etios cabin viewed from the passenger side", kind: "interior" },
-      { url: heroFleet, alt: "Vehicle seating and interior", kind: "seating" },
-      { url: heroFleet, alt: "Vehicle luggage space", kind: "luggage" },
-    ],
+    [],
     standardFeatures,
     [
       { label: "Best for", value: "Long highway journeys" },
@@ -292,12 +279,7 @@ export const vehicleDetails: VehicleDetail[] = [
   makeDetail(
     "maruti-ertiga",
     "A three-row MPV for families and small groups — six seats, a roof carrier on request and efficient running costs that keep longer itineraries affordable.",
-    [
-      { url: heroTours, alt: "Maruti Ertiga MPV parked near a hill station viewpoint", kind: "exterior" },
-      { url: heroFleet, alt: "Maruti Ertiga cabin with the second-row seats", kind: "interior" },
-      { url: heroFleet, alt: "Third-row seating inside the vehicle", kind: "seating" },
-      { url: heroFleet, alt: "Luggage loaded behind the Ertiga third row", kind: "luggage" },
-    ],
+    [],
     standardFeatures,
     [
       { label: "Rows", value: "3" },
@@ -311,8 +293,6 @@ export const vehicleDetails: VehicleDetail[] = [
     [
       { url: fleetBigSuv, alt: "White Toyota Innova Crysta big SUV with KA yellow board & SZT sticker", kind: "exterior" },
       { url: interiorInnovaSeats, alt: "Executive plush leatherette captain seats in the Innova Crysta", kind: "seating" },
-      { url: interiorInnovaSeats, alt: "Innova Crysta executive cabin with ambient roof lighting", kind: "interior" },
-      { url: heroFleet, alt: "Rear luggage area of the Innova Crysta", kind: "luggage" },
     ],
     standardFeatures,
     [
@@ -329,7 +309,6 @@ export const vehicleDetails: VehicleDetail[] = [
       { url: serviceCorporate, alt: "Executive MPV used for corporate airport and employee transport", kind: "exterior" },
       { url: interiorInnovaSeats, alt: "Hycross cabin with ambient lighting and ottoman seats", kind: "interior" },
       { url: interiorInnovaSeats, alt: "Reclining captain seats inside the vehicle", kind: "seating" },
-      { url: heroFleet, alt: "Boot space of the Innova Hycross with executive luggage", kind: "luggage" },
     ],
     [...standardFeatures, ["Ottoman captain seats", "Armchair"], ["Ambient cabin lighting", "Lightbulb"]],
     [
@@ -416,7 +395,6 @@ export const vehicleDetails: VehicleDetail[] = [
       { url: fleetBus, alt: "Forty-five seater air-conditioned coach with KA yellow board & SZT sticker", kind: "exterior" },
       { url: interiorBusSeats, alt: "2×2 Reclining coach seat rows inside the luxury bus", kind: "seating" },
       { url: interiorBusSeats, alt: "Interior of the forty-five seater coach looking down the aisle", kind: "interior" },
-      { url: heroTours, alt: "Side luggage hold of the coach being loaded", kind: "luggage" },
     ],
     largeVehicleFeatures,
     [
@@ -545,7 +523,9 @@ export function getVisibleFeatures(detail: VehicleDetail): VehicleFeature[] {
 }
 
 export function getGallery(detail: VehicleDetail): VehicleGalleryImage[] {
-  return [...detail.gallery].sort((a, b) => a.order - b.order);
+  return [...detail.gallery]
+    .filter((img) => img.url && img.url !== heroFleet && img.url !== heroTours)
+    .sort((a, b) => a.order - b.order);
 }
 
 export function getPricingGroups(detail: VehicleDetail): { group: PriceGroup; lines: VehiclePriceLine[] }[] {

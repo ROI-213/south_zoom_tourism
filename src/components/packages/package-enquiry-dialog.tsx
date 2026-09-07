@@ -15,8 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { company, redirectToWhatsApp } from "@/content/site";
+import { syncEnquiryToSupabase } from "@/lib/booking-sync";
 import { getPublishedPackages } from "@/content/tour-packages";
-import { company } from "@/content/site";
 
 const schema = z.object({
   name: z.string().trim().min(2, "Please enter your name."),
@@ -78,12 +79,21 @@ export function PackageEnquiryDialog({
     if (travellers && travellers > 0) setValue("travellers", travellers);
   }, [open, packageSlug, travelDate, travellers, setValue]);
 
-  const onSubmit = handleSubmit((values) => {
-    // No backend connected yet: the enquiry is handed to the team over WhatsApp
-    // so nothing is lost. The payload already matches the future
-    // `package_enquiries` table (package_id, page_url, source).
+  const onSubmit = handleSubmit(async (values) => {
     const pkg = options.find((p) => p.slug === values.packageSlug);
     const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+    const ref = `SZT-PKG-${Date.now().toString(36).toUpperCase()}`;
+
+    // Store in Supabase Admin CRM
+    await syncEnquiryToSupabase({
+      reference: ref,
+      name: values.name,
+      phone: values.phone,
+      email: values.email || undefined,
+      serviceType: "Tour Package",
+      travelDate: values.travelDate || undefined,
+      message: `Package: ${pkg?.title ?? values.packageSlug} | Travellers: ${values.travellers}${values.message ? `\nDetails: ${values.message}` : ""}`,
+    });
 
     const lines = [
       `New package enquiry — ${pkg?.title ?? "Customised tour"}`,
@@ -97,16 +107,13 @@ export function PackageEnquiryDialog({
       `Package ref: ${pkg?.id ?? values.packageSlug}`,
       pageUrl ? `Page: ${pageUrl}` : null,
       `Source: ${source}`,
-    ].filter(Boolean);
+    ].filter(Boolean) as string[];
 
-    window.open(
-      `https://wa.me/${company.whatsappRaw}?text=${encodeURIComponent(lines.join("\n"))}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    // Redirect to WhatsApp (8884015512)
+    redirectToWhatsApp(lines.join("\n"));
 
-    toast.success("Enquiry ready to send", {
-      description: `We've prepared your ${pkg?.title ?? "tour"} enquiry on WhatsApp. You can also call ${company.phone}.`,
+    toast.success("Enquiry submitted!", {
+      description: `We've redirected you to WhatsApp. You can also call ${company.phone}.`,
     });
     reset({ ...form.getValues(), name: "", phone: "", email: "", message: "" });
     onOpenChange(false);

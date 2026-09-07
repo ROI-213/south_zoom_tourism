@@ -25,6 +25,8 @@ import { company, telLink, waLink } from "@/content/site";
 import {
   addDaysISO,
   getFeaturedHotels,
+  getPublishedHotels,
+  getCategoryLabel,
   getFeaturedRooms,
   getHotelPriceFrom,
   getHotelRooms,
@@ -40,12 +42,9 @@ import {
   isValidISODate,
   searchHotels,
   todayISO,
-  mapDbHotelToHotelRecord,
-  mapDbRoomToRoomRecord,
-  setDynamicHotelsAndRooms,
   type HotelSearchParams,
 } from "@/content/hotels";
-import { fetchLiveHotels } from "@/lib/hotel-service";
+import { syncLiveHotelsCache } from "@/lib/hotel-service";
 
 type HotelsSearch = {
   destination?: string;
@@ -124,13 +123,8 @@ function HotelsPage() {
   useEffect(() => {
     async function loadDynamicHotels() {
       try {
-        const live = await fetchLiveHotels();
-        if (live && live.length > 0) {
-          const mappedHotels = live.map((h, i) => mapDbHotelToHotelRecord(h, i));
-          const mappedRooms = live.flatMap((h) =>
-            (h.hotel_rooms || []).map((r, ri) => mapDbRoomToRoomRecord(r, ri))
-          );
-          setDynamicHotelsAndRooms(mappedHotels, mappedRooms);
+        const synced = await syncLiveHotelsCache();
+        if (synced) {
           setDataVersion((v) => v + 1);
         }
       } catch (err) {
@@ -138,6 +132,8 @@ function HotelsPage() {
       }
     }
     loadDynamicHotels();
+    window.addEventListener("hotelsUpdated", loadDynamicHotels);
+    return () => window.removeEventListener("hotelsUpdated", loadDynamicHotels);
   }, []);
 
   const categories = useMemo(() => getVisibleCategories(), []);
@@ -147,11 +143,15 @@ function HotelsPage() {
   const featuredRooms = useMemo(() => getFeaturedRooms(6), [dataVersion]);
 
   const activeCategory = search.category;
-  const featuredHotels = useMemo(() => {
-    const list = getFeaturedHotels();
-    if (!activeCategory) return list;
-    const inCategory = list.filter((h) => h.categorySlug === activeCategory);
-    return inCategory.length > 0 ? inCategory : list;
+  const displayHotels = useMemo(() => {
+    const list = getPublishedHotels();
+    // Sort: featured hotels first, then by order
+    const sorted = [...list].sort(
+      (a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || a.order - b.order
+    );
+    if (!activeCategory || activeCategory === "all") return sorted;
+    const inCategory = sorted.filter((h) => h.categorySlug === activeCategory);
+    return inCategory.length > 0 ? inCategory : sorted;
   }, [activeCategory, dataVersion]);
 
   const today = todayISO();
@@ -240,20 +240,31 @@ function HotelsPage() {
 
         {hasQuery ? <HotelResults results={results} params={params} loading={loading} /> : null}
 
-        {/* Featured hotels ----------------------------------------- */}
+        {/* All Hotels & Resorts ------------------------------------ */}
         <section className="bg-muted/40 py-12 sm:py-16">
           <div className="mx-auto max-w-7xl px-4">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Featured hotels</h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Partner properties our coordinators book most often this season.
-            </p>
-            {featuredHotels.length === 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                  {activeCategory && activeCategory !== "all"
+                    ? `${getCategoryLabel(activeCategory)} Hotels & Resorts`
+                    : "Hotels & Resorts"}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                  Verified partner properties across South India with direct booking and best rate guarantee.
+                </p>
+              </div>
+              <p className="text-sm font-semibold text-muted-foreground">
+                Showing {displayHotels.length} {displayHotels.length === 1 ? "property" : "properties"}
+              </p>
+            </div>
+            {displayHotels.length === 0 ? (
               <p className="mt-6 rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                No featured hotels right now — search above or talk to the stay desk.
+                No hotels found in this category — search above or talk to the stay desk.
               </p>
             ) : (
-              <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {featuredHotels.map((h) => (
+              <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {displayHotels.map((h) => (
                   <li key={h.id}>
                     <HotelCard
                       hotel={h}

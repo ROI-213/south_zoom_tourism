@@ -38,14 +38,16 @@ export function AboutSection() {
               {[...aboutSection.stats, ...aboutSection.stats].map((stat, idx) => (
                 <div
                   key={`${stat.id}-${idx}`}
-                  className="w-[160px] sm:w-[200px] shrink-0 rounded-xl border border-border/80 bg-card p-3 sm:p-4 shadow-sm text-center"
+                  className="w-[175px] sm:w-[215px] shrink-0 rounded-xl border border-border/80 bg-card p-3 sm:p-4 shadow-sm text-center"
                 >
                   <CountUp
                     value={stat.value}
                     suffix={stat.suffix}
                     className="block text-2xl sm:text-3xl font-extrabold tracking-tight text-primary"
                   />
-                  <span className="mt-1 block text-xs sm:text-sm font-medium text-muted-foreground truncate">{stat.label}</span>
+                  <span className="mt-1 block text-xs sm:text-sm font-medium text-muted-foreground whitespace-normal leading-tight">
+                    {stat.label}
+                  </span>
                 </div>
               ))}
             </div>

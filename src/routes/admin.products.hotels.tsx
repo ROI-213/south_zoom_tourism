@@ -69,6 +69,7 @@ import {
   Filter,
   RefreshCw,
 } from 'lucide-react';
+import { AdminImageUpload } from '@/components/admin/admin-image-upload';
 
 export const Route = createFileRoute('/admin/products/hotels')({
   component: HotelsPage,
@@ -226,13 +227,32 @@ function HotelsPage() {
         await updateHotel(editHotelId, hotelForm);
         toast.success(`Hotel "${hotelForm.name}" updated successfully!`);
       } else {
-        await createHotel(hotelForm);
+        const created = await createHotel(hotelForm);
+        // Automatically create a starter room so the hotel has price & room inventory right away
+        if (created?.id) {
+          try {
+            await createRoom({
+              hotel_id: created.id,
+              room_type: 'Standard Deluxe Room',
+              price_per_night: 2500,
+              capacity_adults: 2,
+              capacity_children: 1,
+              amenities: ['Wi-Fi', 'AC', 'Hot Water', 'Room Service'],
+              image_url: hotelForm.main_image || undefined,
+            });
+          } catch (rErr) {
+            console.warn('Could not auto-create initial room:', rErr);
+          }
+        }
         toast.success(`Hotel "${hotelForm.name}" added successfully!`);
       }
       setHotelDialog(false);
       setHotelForm(emptyHotelForm);
       setEditHotelId(null);
       await loadData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('hotelsUpdated'));
+      }
     } catch (err: any) {
       toast.error('Failed to save hotel: ' + err.message);
     } finally {
@@ -249,6 +269,9 @@ function HotelsPage() {
       toast.success('Hotel and associated rooms removed successfully.');
       setDeleteHotelId(null);
       await loadData();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('hotelsUpdated'));
+      }
     } catch (err: any) {
       toast.error('Failed to delete hotel: ' + err.message);
     } finally {
@@ -266,6 +289,9 @@ function HotelsPage() {
       setHotels((prev) =>
         prev.map((item) => (item.id === h.id ? { ...item, featured: next } : item))
       );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('hotelsUpdated'));
+      }
     } catch (err: any) {
       toast.error('Failed to update featured status: ' + err.message);
     }
@@ -281,6 +307,9 @@ function HotelsPage() {
       setHotels((prev) =>
         prev.map((item) => (item.id === h.id ? { ...item, active: next } : item))
       );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('hotelsUpdated'));
+      }
     } catch (err: any) {
       toast.error('Failed to update active status: ' + err.message);
     }
@@ -873,26 +902,14 @@ function HotelsPage() {
               </Select>
             </div>
 
-            {/* Main Image URL */}
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label className="text-xs font-semibold">Main Photo URL</Label>
-              <div className="flex gap-2 items-center">
-                <Input
-                  placeholder="https://images.unsplash.com/..."
-                  value={hotelForm.main_image}
-                  onChange={(e) => setHotelForm((f) => ({ ...f, main_image: e.target.value }))}
-                />
-                {hotelForm.main_image && (
-                  <img
-                    src={hotelForm.main_image}
-                    alt="Preview"
-                    className="w-10 h-10 rounded-lg object-cover border shrink-0"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = DEFAULT_IMAGE;
-                    }}
-                  />
-                )}
-              </div>
+            {/* Main Image Upload & URL */}
+            <div className="sm:col-span-2">
+              <AdminImageUpload
+                label="Hotel Main Photo"
+                value={hotelForm.main_image || ''}
+                onChange={(url) => setHotelForm((f) => ({ ...f, main_image: url }))}
+                placeholder="https://images.unsplash.com/... or upload hotel photo"
+              />
             </div>
 
             {/* Description */}
@@ -1043,13 +1060,13 @@ function HotelsPage() {
               />
             </div>
 
-            {/* Room Image URL */}
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label className="text-xs font-semibold">Room Image URL</Label>
-              <Input
-                placeholder="https://images.unsplash.com/..."
-                value={roomForm.image_url}
-                onChange={(e) => setRoomForm((f) => ({ ...f, image_url: e.target.value }))}
+            {/* Room Image Upload & URL */}
+            <div className="sm:col-span-2">
+              <AdminImageUpload
+                label="Room Photo"
+                value={roomForm.image_url || ''}
+                onChange={(url) => setRoomForm((f) => ({ ...f, image_url: url }))}
+                placeholder="https://images.unsplash.com/... or upload room photo"
               />
             </div>
 

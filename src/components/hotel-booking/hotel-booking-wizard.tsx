@@ -23,6 +23,7 @@ import {
   hotelAllowsPayAtHotel,
   hotelBookingSettings,
   hotelBookingSteps,
+  hotelBookingWhatsApp,
   hotelNeedsPartnerApproval,
   inr,
   makeHotelBookingNumber,
@@ -38,6 +39,8 @@ import {
   type HotelBookingRecord,
   type PaymentSplit,
 } from "@/content/hotel-booking";
+import { redirectToWhatsApp } from "@/content/site";
+import { syncHotelBookingToSupabase, syncEnquiryToSupabase } from "@/lib/booking-sync";
 import {
   getPublishedHotels,
   hotelsSearchDefaults,
@@ -326,6 +329,44 @@ export function HotelBookingWizard({ seed }: { seed: Partial<WizardState> }) {
     } catch {
       /* ignore */
     }
+
+    // 1. Sync to Supabase Bookings & Enquiries for Admin visibility
+    await syncHotelBookingToSupabase({
+      bookingNumber: record.bookingNumber,
+      hotelName: record.hotelSnapshot.name,
+      hotelCity: record.hotelSnapshot.city,
+      roomName: record.roomSnapshot.name,
+      customerName: record.primaryGuest.name,
+      phone: record.primaryGuest.phone,
+      email: record.primaryGuest.email,
+      checkIn: record.stay.checkIn,
+      checkOut: record.stay.checkOut,
+      rooms: record.stay.rooms,
+      adults: record.stay.adults,
+      children: record.stay.children,
+      totalAmount: record.priceSnapshot.grandTotal,
+      advanceAmount: record.priceSnapshot.advanceDue,
+      notes: `Meal Plan: ${record.roomSnapshot.ratePlanName}\nNotes: ${record.preferences.notes || "None"}`,
+    });
+
+    await syncEnquiryToSupabase({
+      reference: record.bookingNumber,
+      name: record.primaryGuest.name,
+      phone: record.primaryGuest.phone,
+      email: record.primaryGuest.email,
+      serviceType: "Hotel & Room Booking",
+      travelDate: record.stay.checkIn,
+      message: `Hotel: ${record.hotelSnapshot.name} (${record.hotelSnapshot.city})\nRoom: ${record.roomSnapshot.name} (${record.stay.rooms} Room(s))\nDates: ${record.stay.checkIn} to ${record.stay.checkOut} (${record.stay.nights} nights)\nGuests: ${record.stay.adults} Adults, ${record.stay.children} Children\nTotal: ₹${record.priceSnapshot.grandTotal.toLocaleString("en-IN")}\nNotes: ${record.preferences.notes || ""}`,
+    });
+
+    // 2. Auto-redirect to WhatsApp (+91 8884015512)
+    const waText = hotelBookingWhatsApp(record);
+    redirectToWhatsApp(waText);
+
+    toast.success("Hotel booking submitted! Redirecting to WhatsApp...", {
+      description: `Booking #${record.bookingNumber}`,
+    });
+
     await navigate({ to: "/book/hotel/confirmation", search: { ref: bookingNumber } });
   }
 

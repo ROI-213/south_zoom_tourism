@@ -1,5 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { hotels as fallbackHotels } from "@/content/site";
+import {
+  setDynamicHotelsAndRooms,
+  mapDbHotelToHotelRecord,
+  mapDbRoomToRoomRecord,
+} from "@/content/hotels";
 
 export interface DbDestination {
   id: string;
@@ -101,6 +106,22 @@ export async function fetchLiveHotels(): Promise<DbHotel[]> {
     console.error("Error fetching live hotels, using fallback:", err);
     return [];
   }
+}
+
+/**
+ * Fetches live hotels from Supabase and syncs them into the in-memory & localStorage hotel cache.
+ */
+export async function syncLiveHotelsCache() {
+  const live = await fetchLiveHotels();
+  if (live && live.length > 0) {
+    const mappedHotels = live.map((h, i) => mapDbHotelToHotelRecord(h, i));
+    const mappedRooms = live.flatMap((h) =>
+      (h.hotel_rooms || []).map((r, ri) => mapDbRoomToRoomRecord(r, ri))
+    );
+    setDynamicHotelsAndRooms(mappedHotels, mappedRooms);
+    return { hotels: mappedHotels, rooms: mappedRooms };
+  }
+  return null;
 }
 
 /**

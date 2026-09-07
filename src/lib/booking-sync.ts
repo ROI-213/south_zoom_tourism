@@ -255,33 +255,63 @@ export async function syncHotelBookingToSupabase(data: HotelBookingSyncData) {
 }
 
 /**
- * Safely saves any custom tour or contact inquiry to Supabase `enquiries` table.
+ * Safely saves any enquiry (contact, destination, tour package, hotel, custom tour) to Supabase `enquiries` table for Admin CRM.
  */
-export async function syncEnquiryToSupabase(data: EnquirySyncData) {
+export async function syncEnquiryToSupabase(data: EnquirySyncData): Promise<{ success: boolean; data?: any; error?: any }> {
   try {
+    if (!data.name || !data.phone) {
+      console.warn('syncEnquiryToSupabase: name and phone are required');
+      return { success: false, error: new Error('Name and phone are required') };
+    }
+
     await getOrCreateCustomerId({
       name: data.name,
       phone: data.phone,
       email: data.email,
     });
 
+    let validDate: string | null = null;
+    let extraDateInfo = '';
+    if (data.travelDate && typeof data.travelDate === 'string') {
+      const trimmed = data.travelDate.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        validDate = trimmed;
+      } else if (trimmed) {
+        extraDateInfo = `Travel Date: ${trimmed}`;
+      }
+    }
+
+    const messageParts = [
+      data.reference ? `Ref: ${data.reference}` : '',
+      extraDateInfo,
+      data.message || '',
+    ].filter(Boolean);
+
     const payload = {
-      name: data.name,
-      phone: data.phone,
-      email: data.email || null,
-      service_type: data.serviceType || 'Custom Enquiry',
-      travel_date: data.travelDate || null,
-      message: `${data.reference ? `Ref: ${data.reference} — ` : ''}${data.message || ''}`.trim(),
+      name: data.name.trim(),
+      phone: data.phone.trim(),
+      email: data.email?.trim() || null,
+      service_type: data.serviceType || 'General Enquiry',
+      travel_date: validDate,
+      message: messageParts.join(' — ').trim() || 'Website enquiry',
       status: 'New',
     };
 
-    const { error } = await supabase.from('enquiries').insert(payload);
+    const { data: inserted, error } = await supabase
+      .from('enquiries')
+      .insert(payload)
+      .select()
+      .maybeSingle();
+
     if (error) {
       console.error('Error syncing enquiry to Supabase:', error.message);
-    } else {
-      console.log(`✅ Synced Enquiry for ${data.name} to Supabase!`);
+      return { success: false, error };
     }
+
+    console.log(`✅ Synced Enquiry for ${data.name} to Supabase Admin CRM!`, inserted);
+    return { success: true, data: inserted };
   } catch (err) {
     console.error('Failed to sync enquiry:', err);
+    return { success: false, error: err };
   }
 }

@@ -26,6 +26,7 @@ import { DestinationEnquiryForm } from "@/components/destinations/destination-en
 import { NearbyDestinations } from "@/components/destinations/nearby-destinations";
 import {
   getDestinationBySlug,
+  fetchDestinationBySlug,
   getDestinationHotels,
   getDestinationPackages,
   getTripTypeLabel,
@@ -48,8 +49,9 @@ function getRecommendedVehicles(destination: DestinationRecord): FleetVehicle[] 
 }
 
 export const Route = createFileRoute("/destinations/$slug")({
-  loader: ({ params }) => {
-    const destination = getDestinationBySlug(params.slug);
+  loader: async ({ params }) => {
+    let destination = getDestinationBySlug(params.slug);
+    if (!destination) destination = await fetchDestinationBySlug(params.slug);
     if (!destination) throw notFound();
     const guide = getDestinationGuide(destination);
     return {

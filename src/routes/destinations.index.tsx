@@ -25,10 +25,11 @@ import {
   getTripTypeLabel,
   setDynamicDestinations,
   mapDbDestinationToRecord,
+  fetchDestinations,
   type DestinationFilterState,
   type DestinationSortValue,
+  type DestinationRecord,
 } from "@/content/destinations";
-import supabase from "@/lib/supabase";
 
 type DestinationSearch = {
   q?: string;
@@ -115,21 +116,25 @@ export const Route = createFileRoute("/destinations/")({
 import { DestinationSelector } from "@/components/destinations/destination-selector";
 
 function DestinationsPage() {
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [destinationsList, setDestinationsList] = useState<DestinationRecord[]>(() => getPublishedDestinations());
 
   useEffect(() => {
-    (async () => {
-      try {
-        const { data, error } = await supabase.from('destinations').select('*').order('name');
-        if (!error && data && data.length > 0) {
-          const mapped = (data as any[]).map(mapDbDestinationToRecord);
-          setDynamicDestinations(mapped);
-          setDataLoaded(true);
-        }
-      } catch (err) {
-        console.error('Error fetching destinations:', err);
+    fetchDestinations().then((dests) => {
+      if (dests && dests.length > 0) {
+        setDestinationsList(dests);
       }
-    })();
+    });
+
+    const handler = (e: any) => {
+      if (e.detail && Array.isArray(e.detail) && e.detail.length > 0) {
+        setDestinationsList(e.detail.filter((d: DestinationRecord) => d.published !== false));
+      } else {
+        setDestinationsList(getPublishedDestinations());
+      }
+    };
+
+    window.addEventListener("destinationsUpdated", handler);
+    return () => window.removeEventListener("destinationsUpdated", handler);
   }, []);
 
   const search = Route.useSearch();
@@ -171,7 +176,10 @@ function DestinationsPage() {
       replace: true,
     });
 
-  const results = useMemo(() => filterDestinations(filters, sort), [filters, sort]);
+  const results = useMemo(
+    () => filterDestinations(filters, sort, destinationsList),
+    [filters, sort, destinationsList]
+  );
   const visible = results.slice(0, shown);
 
   const chips: Chip[] = [

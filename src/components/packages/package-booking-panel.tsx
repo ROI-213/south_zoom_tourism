@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { company, waLink } from "@/content/site";
+import { company, waLink, redirectToWhatsApp } from "@/content/site";
+import { syncEnquiryToSupabase, syncPackageBookingToSupabase } from "@/lib/booking-sync";
 import { upsertRegistryEntry } from "@/content/customer-data";
 import type { TourPackageRecord } from "@/content/tour-packages";
 import {
@@ -217,25 +218,71 @@ export function PackageBookingPanel({
   const onSubmit = async (values: BookingValues) => {
     if (blocked) return;
     const ref = makePackageReference(pkg.slug);
-    // Booking request record: every selected option is preserved with the enquiry.
-    const record = {
+
+    const notesSummary = [
+      `Package: ${pkg.title}`,
+      `Hotel: ${hotel?.hotel || "Standard"} (${hotel?.roomType || ""})`,
+      `Vehicle: ${vehicle?.category || "Standard"}`,
+      luggageCarrier ? "Luggage carrier (+₹250)" : null,
+      petTravelling ? "Pet travelling (+₹900)" : null,
+      spokenLang ? `Language: ${spokenLang} (+₹200)` : null,
+      values.request ? `Request: ${values.request}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    // 1. Sync to Supabase Bookings & Enquiries
+    await syncPackageBookingToSupabase({
+      bookingNumber: ref,
+      packageTitle: pkg.title,
+      customerName: values.name,
+      phone: values.phone,
+      email: values.email || null,
+      travelDate: values.travelDate,
+      adults: values.adults,
+      children: values.children,
+      totalAmount: finalTotal,
+      advanceAmount: advanceAmount,
+      pickupLocation: values.pickup,
+      hotelCategory: hotel?.category || "Standard",
+      vehicleCategory: vehicle?.category || "Standard",
+      paymentMode: "Pay Later",
+      notes: notesSummary,
+    });
+
+    await syncEnquiryToSupabase({
       reference: ref,
-      package_id: pkg.id,
-      package_slug: pkg.slug,
-      hotel_option_id: hotel?.id ?? null,
-      vehicle_option_id: vehicle?.id ?? null,
-      departure_id: departure?.id ?? null,
-      estimate_total: estimate.available ? estimate.total : null,
-      estimate_confirmed: false,
-      page_url: typeof window !== "undefined" ? window.location.href : `/tour-packages/${pkg.slug}`,
-      source: "package-detail",
-      ...values,
-    };
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    if (import.meta.env.DEV) console.info("Package booking request", record.reference);
+      name: values.name,
+      phone: values.phone,
+      email: values.email || undefined,
+      serviceType: "Tour Package",
+      travelDate: values.travelDate,
+      message: `Package: ${pkg.title} (${pkg.nights}N/${pkg.days}D)\nTravellers: ${values.adults} Adults, ${values.children} Children, ${values.rooms} Rooms\nPickup: ${values.pickup}\n${notesSummary}`,
+    });
+
+    // 2. Auto-redirect to WhatsApp (+91 8884015512)
+    const waText = [
+      `*New Tour Package Booking Enquiry*`,
+      `Reference: *${ref}*`,
+      `Package: *${pkg.title}* (${pkg.nights}N/${pkg.days}D)`,
+      `Travellers: ${values.adults} adult(s)${values.children ? `, ${values.children} child(ren)` : ""}, ${values.rooms} room(s)`,
+      `Travel Date: ${values.travelDate}`,
+      `Pickup: ${values.pickup}`,
+      hotel ? `Hotel: ${hotel.hotel} (${hotel.category})` : null,
+      vehicle ? `Vehicle: ${vehicle.category}` : null,
+      finalTotal > 0 ? `Estimated Total: ₹${finalTotal.toLocaleString("en-IN")}` : "Pricing: On Request",
+      `Customer: ${values.name} (${values.phone})`,
+      values.email ? `Email: ${values.email}` : null,
+      values.request ? `Special Request: ${values.request}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    redirectToWhatsApp(waText);
+
     setReference(ref);
     form.reset({ ...form.getValues(), name: "", phone: "", email: "", request: "" });
-    toast.success("Booking request received", {
+    toast.success("Booking request received! Redirecting to WhatsApp...", {
       description: `Reference ${ref}. Our team confirms availability and the final price before any payment.`,
     });
   };
