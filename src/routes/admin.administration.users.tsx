@@ -9,7 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Search, Shield, User, Loader2, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Shield, User, Loader2, Edit2, Trash2, KeyRound } from 'lucide-react';
+import { ChangePasswordDialog } from '@/components/admin/change-password-dialog';
 
 export const Route = createFileRoute('/admin/administration/users')({
   component: AdminUsersPage,
@@ -41,6 +42,7 @@ function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>(defaultUsers);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', role: 'Super Admin', is_active: true });
   const [saving, setSaving] = useState(false);
@@ -92,15 +94,24 @@ function AdminUsersPage() {
           <h1 className="text-xl font-bold">Admin Users & Access Control</h1>
           <p className="text-sm text-gray-500">Manage administrator accounts, roles and system permissions</p>
         </div>
-        <Button
-          onClick={() => {
-            setForm({ name: '', email: '', role: 'Super Admin', is_active: true });
-            setDialogOpen(true);
-          }}
-          className="bg-orange-500 hover:bg-orange-600 gap-2"
-        >
-          <Plus size={16} /> Add Admin User
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setPasswordModalOpen(true)}
+            className="gap-2 border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+          >
+            <KeyRound size={16} /> Change Password
+          </Button>
+          <Button
+            onClick={() => {
+              setForm({ name: '', email: '', role: 'Super Admin', is_active: true });
+              setDialogOpen(true);
+            }}
+            className="bg-orange-500 hover:bg-orange-600 gap-2"
+          >
+            <Plus size={16} /> Add Admin User
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -239,6 +250,8 @@ function AdminUsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ChangePasswordDialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen} />
     </div>
   );
 }

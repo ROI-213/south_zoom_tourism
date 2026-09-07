@@ -4,10 +4,12 @@ import {
   LayoutDashboard, CalendarDays, MessageSquare, Users, Car, UserCheck,
   MapPin, CreditCard, FileText, Package, Hotel, Globe, Wrench, Settings,
   Image, Star, HelpCircle, Navigation, AlignLeft, BarChart3, TrendingUp,
-  ChevronDown, ChevronRight, Menu, X, LogOut, Bell, User, Shield, Activity
+  ChevronDown, ChevronRight, Menu, X, LogOut, Bell, User, Shield, Activity,
+  KeyRound, Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ChangePasswordDialog } from '@/components/admin/change-password-dialog';
 
 export const Route = createFileRoute('/admin')({
   component: AdminLayout,
@@ -69,6 +71,7 @@ const navGroups: NavGroup[] = [
       { label: 'Contact Info', path: '/admin/settings/contact', icon: MessageSquare },
       { label: 'Payment & QR', path: '/admin/settings/payment', icon: CreditCard },
       { label: 'Booking Rules', path: '/admin/settings/booking', icon: FileText },
+      { label: 'Admin Password', path: '/admin/settings/security', icon: Lock },
     ],
   },
   {
@@ -76,6 +79,7 @@ const navGroups: NavGroup[] = [
     icon: Shield,
     items: [
       { label: 'Admin Users', path: '/admin/administration/users', icon: Users },
+      { label: 'Change Password', path: '/admin/settings/security', icon: KeyRound },
       { label: 'Activity Logs', path: '/admin/administration/logs', icon: Activity },
     ],
   },
@@ -134,6 +138,7 @@ function NavGroupSection({ group, defaultOpen = true, onNavClick }: { group: Nav
 function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const router = useRouterState();
   const currentPath = router.location.pathname;
 
@@ -254,6 +259,14 @@ function AdminLayout() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPasswordModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 transition-colors shadow-xs cursor-pointer"
+              title="Change Administrator Password"
+            >
+              <KeyRound size={13} />
+              <span className="hidden sm:inline">Change Password</span>
+            </button>
             <button className="p-1.5 rounded-lg hover:bg-gray-100 relative">
               <Bell size={18} className="text-gray-600" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
@@ -272,6 +285,12 @@ function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Global Change Password Dialog */}
+      <ChangePasswordDialog
+        open={passwordModalOpen}
+        onOpenChange={setPasswordModalOpen}
+      />
     </div>
   );
 }

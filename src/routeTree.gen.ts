@@ -69,6 +69,7 @@ import { Route as AdminSettingsBookingRouteImport } from './routes/admin.setting
 import { Route as AdminSettingsContactRouteImport } from './routes/admin.settings.contact'
 import { Route as AdminSettingsGeneralRouteImport } from './routes/admin.settings.general'
 import { Route as AdminSettingsPaymentRouteImport } from './routes/admin.settings.payment'
+import { Route as AdminSettingsSecurityRouteImport } from './routes/admin.settings.security'
 import { Route as BookHotelIndexRouteImport } from './routes/book.hotel.index'
 import { Route as BookHotelConfirmationRouteImport } from './routes/book.hotel.confirmation'
 import { Route as BookTourPackageIndexRouteImport } from './routes/book.tour-package.index'
@@ -396,6 +397,11 @@ const AdminSettingsPaymentRoute = AdminSettingsPaymentRouteImport.update({
   path: '/settings/payment',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSettingsSecurityRoute = AdminSettingsSecurityRouteImport.update({
+  id: '/settings/security',
+  path: '/settings/security',
+  getParentRoute: () => AdminRoute,
+} as any)
 const BookHotelIndexRoute = BookHotelIndexRouteImport.update({
   id: '/book/hotel/',
   path: '/book/hotel/',
@@ -572,6 +578,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings/contact': typeof AdminSettingsContactRoute
   '/admin/settings/general': typeof AdminSettingsGeneralRoute
   '/admin/settings/payment': typeof AdminSettingsPaymentRoute
+  '/admin/settings/security': typeof AdminSettingsSecurityRoute
   '/book/hotel/confirmation': typeof BookHotelConfirmationRoute
   '/book/tour-package/confirmation': typeof BookTourPackageConfirmationRoute
   '/customer/dashboard/cancellations': typeof CustomerDashboardCancellationsRoute
@@ -652,6 +659,7 @@ export interface FileRoutesByTo {
   '/admin/settings/contact': typeof AdminSettingsContactRoute
   '/admin/settings/general': typeof AdminSettingsGeneralRoute
   '/admin/settings/payment': typeof AdminSettingsPaymentRoute
+  '/admin/settings/security': typeof AdminSettingsSecurityRoute
   '/book/hotel/confirmation': typeof BookHotelConfirmationRoute
   '/book/tour-package/confirmation': typeof BookTourPackageConfirmationRoute
   '/customer/dashboard/cancellations': typeof CustomerDashboardCancellationsRoute
@@ -735,6 +743,7 @@ export interface FileRoutesById {
   '/admin/settings/contact': typeof AdminSettingsContactRoute
   '/admin/settings/general': typeof AdminSettingsGeneralRoute
   '/admin/settings/payment': typeof AdminSettingsPaymentRoute
+  '/admin/settings/security': typeof AdminSettingsSecurityRoute
   '/book/hotel/confirmation': typeof BookHotelConfirmationRoute
   '/book/tour-package/confirmation': typeof BookTourPackageConfirmationRoute
   '/customer/dashboard/cancellations': typeof CustomerDashboardCancellationsRoute
@@ -819,6 +828,7 @@ export interface FileRouteTypes {
     | '/admin/settings/contact'
     | '/admin/settings/general'
     | '/admin/settings/payment'
+    | '/admin/settings/security'
     | '/book/hotel/confirmation'
     | '/book/tour-package/confirmation'
     | '/customer/dashboard/cancellations'
@@ -899,6 +909,7 @@ export interface FileRouteTypes {
     | '/admin/settings/contact'
     | '/admin/settings/general'
     | '/admin/settings/payment'
+    | '/admin/settings/security'
     | '/book/hotel/confirmation'
     | '/book/tour-package/confirmation'
     | '/customer/dashboard/cancellations'
@@ -981,6 +992,7 @@ export interface FileRouteTypes {
     | '/admin/settings/contact'
     | '/admin/settings/general'
     | '/admin/settings/payment'
+    | '/admin/settings/security'
     | '/book/hotel/confirmation'
     | '/book/tour-package/confirmation'
     | '/customer/dashboard/cancellations'
@@ -1476,6 +1488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsPaymentRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/settings/security': {
+      id: '/admin/settings/security'
+      path: '/settings/security'
+      fullPath: '/admin/settings/security'
+      preLoaderRoute: typeof AdminSettingsSecurityRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/book/hotel/': {
       id: '/book/hotel/'
       path: '/book/hotel'
@@ -1666,6 +1685,7 @@ interface AdminRouteChildren {
   AdminSettingsContactRoute: typeof AdminSettingsContactRoute
   AdminSettingsGeneralRoute: typeof AdminSettingsGeneralRoute
   AdminSettingsPaymentRoute: typeof AdminSettingsPaymentRoute
+  AdminSettingsSecurityRoute: typeof AdminSettingsSecurityRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -1699,6 +1719,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsContactRoute: AdminSettingsContactRoute,
   AdminSettingsGeneralRoute: AdminSettingsGeneralRoute,
   AdminSettingsPaymentRoute: AdminSettingsPaymentRoute,
+  AdminSettingsSecurityRoute: AdminSettingsSecurityRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
