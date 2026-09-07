@@ -260,7 +260,7 @@ export function PackageBookingPanel({
       message: `Package: ${pkg.title} (${pkg.nights}N/${pkg.days}D)\nTravellers: ${values.adults} Adults, ${values.children} Children, ${values.rooms} Rooms\nPickup: ${values.pickup}\n${notesSummary}`,
     });
 
-    // 2. Auto-redirect to WhatsApp (+91 8884015512)
+    // 2. Auto-redirect to WhatsApp (+91 6366357757)
     const waText = [
       `*New Tour Package Booking Enquiry*`,
       `Reference: *${ref}*`,

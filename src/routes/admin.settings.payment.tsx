@@ -38,7 +38,7 @@ const defaults: PaymentSettings = {
   branch: 'Electronic City, Bengaluru',
   account_type: 'Current Account',
   qr_image_url: '',
-  payment_instructions: 'Pay 30% booking advance via UPI or Direct Bank Transfer, and share receipt on WhatsApp (+91 8884015512) with your Booking Reference.',
+  payment_instructions: 'Pay 30% booking advance via UPI or Direct Bank Transfer, and share receipt on WhatsApp (+91 6366357757) with your Booking Reference.',
   advance_percentage: 30,
 };
 

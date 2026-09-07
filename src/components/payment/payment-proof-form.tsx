@@ -260,7 +260,7 @@ export function PaymentProofForm({
       reference,
     });
 
-    // 3. Auto-redirect to WhatsApp (+91 8884015512)
+    // 3. Auto-redirect to WhatsApp (+91 6366357757)
     const waText = [
       `*Payment Proof Submitted — ${record.reference}*`,
       `Booking Number: *${record.bookingNumber}*`,

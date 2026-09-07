@@ -328,7 +328,7 @@ export function TourPackageBookingModal({
         total: String(pricing.finalTotal),
         balance: String(pricing.balanceToDriver),
         name: name || "Guest",
-        phone: phone || "8884015512",
+        phone: phone || "6366357757",
       },
     });
 

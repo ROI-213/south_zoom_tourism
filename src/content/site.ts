@@ -68,8 +68,8 @@ export const company = {
   msmeUrn: "UDYAM-KR-03-0750906",
   phone: "+91 6366357757",
   phoneRaw: "+916366357757",
-  whatsapp: "+91 8884015512",
-  whatsappRaw: "918884015512",
+  whatsapp: "+91 6366357757",
+  whatsappRaw: "916366357757",
   email: "bookings@southzoomtourism.com",
   officeTimings: "Mon – Sun · 24×7 Service",
   address: "South Zoom Tourism, #8, Srinivasa Building, Anchepalya Main Road, TG Halli, Bengaluru – 560073, Karnataka.",
@@ -82,8 +82,8 @@ export const company = {
   ],
 };
 
-export const ENQUIRY_WHATSAPP_NUMBER = "8884015512";
-export const ENQUIRY_WHATSAPP_RAW = "918884015512";
+export const ENQUIRY_WHATSAPP_NUMBER = "6366357757";
+export const ENQUIRY_WHATSAPP_RAW = "916366357757";
 
 export function waLink(message: string, number: string = company.whatsappRaw) {
   const digits = number.replace(/\D/g, "");

@@ -242,7 +242,7 @@ export function CustomTourWizard() {
       reference: ref,
     });
 
-    // Redirect to WhatsApp (8884015512)
+    // Redirect to WhatsApp (6366357757)
     redirectToWhatsApp(summaryMessage(ref));
 
     setSubmitting(false);

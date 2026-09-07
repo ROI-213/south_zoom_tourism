@@ -114,7 +114,7 @@ export function EnquiryDialog({
       `Source: ${source}`,
     ].filter(Boolean) as string[];
 
-    // Redirect to WhatsApp (8884015512)
+    // Redirect to WhatsApp (6366357757)
     redirectToWhatsApp(lines.join("\n"));
 
     toast.success("Enquiry submitted!", {

@@ -124,7 +124,7 @@ export function HotelEnquiryModal({ open, onOpenChange, hotel, stay = {} }: Prop
         message,
       });
 
-      // Redirect to WhatsApp (8884015512)
+      // Redirect to WhatsApp (6366357757)
       redirectToWhatsApp(waMessage);
 
       setRefId(ref);

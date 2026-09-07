@@ -498,7 +498,7 @@ export function TourBookingWizard({
       message: `Package: ${record.packageTitle}\nDate: ${record.departureDate}\nGuests: ${record.passengers.adults} Adults, ${record.passengers.children} Children\nHotel: ${record.hotelOption.category} | Vehicle: ${record.vehicleOption.category}\nEst Total: ₹${record.estimatedTotal.toLocaleString("en-IN")}\nNotes: ${record.requirements.notes || ""}`,
     });
 
-    // 2. Auto-redirect to WhatsApp (+91 8884015512)
+    // 2. Auto-redirect to WhatsApp (+91 6366357757)
     const waText = buildWhatsAppSummary(record);
     redirectToWhatsApp(waText);
 

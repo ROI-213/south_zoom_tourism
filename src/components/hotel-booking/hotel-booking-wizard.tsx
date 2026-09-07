@@ -359,7 +359,7 @@ export function HotelBookingWizard({ seed }: { seed: Partial<WizardState> }) {
       message: `Hotel: ${record.hotelSnapshot.name} (${record.hotelSnapshot.city})\nRoom: ${record.roomSnapshot.name} (${record.stay.rooms} Room(s))\nDates: ${record.stay.checkIn} to ${record.stay.checkOut} (${record.stay.nights} nights)\nGuests: ${record.stay.adults} Adults, ${record.stay.children} Children\nTotal: ₹${record.priceSnapshot.grandTotal.toLocaleString("en-IN")}\nNotes: ${record.preferences.notes || ""}`,
     });
 
-    // 2. Auto-redirect to WhatsApp (+91 8884015512)
+    // 2. Auto-redirect to WhatsApp (+91 6366357757)
     const waText = hotelBookingWhatsApp(record);
     redirectToWhatsApp(waText);
 

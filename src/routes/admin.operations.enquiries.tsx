@@ -172,7 +172,7 @@ function EnquiriesPage() {
                   {filtered.map(e => {
                     const phoneClean = e.phone.replace(/\D/g, '');
                     const waPhone = phoneClean.startsWith('91') ? phoneClean : `91${phoneClean}`;
-                    const quoteMsg = `Hello ${e.name},\nThank you for reaching out to *South Zoom Tourism* regarding your travel enquiry for ${e.service_type || 'Cab / Tour Services'}.\nWe are pleased to assist you with the best rates and premium vehicles.\n\nCould you please confirm your pickup location and preferred timings?\n\nHelpline: +91 8884015512\nhttps://southzoomtourism.com`;
+                    const quoteMsg = `Hello ${e.name},\nThank you for reaching out to *South Zoom Tourism* regarding your travel enquiry for ${e.service_type || 'Cab / Tour Services'}.\nWe are pleased to assist you with the best rates and premium vehicles.\n\nCould you please confirm your pickup location and preferred timings?\n\nHelpline: +91 6366357757\nhttps://southzoomtourism.com`;
 
                     return (
                       <tr key={e.id} className="hover:bg-gray-50">

@@ -149,7 +149,7 @@ export function ContactForm({
       pageUrl ? `Page: ${pageUrl}` : null,
     ].filter(Boolean) as string[];
 
-    // Redirect to WhatsApp number (8884015512)
+    // Redirect to WhatsApp number (6366357757)
     redirectToWhatsApp(lines.join("\n"));
 
     setReference(ref);
