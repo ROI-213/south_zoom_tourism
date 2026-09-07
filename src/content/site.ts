@@ -78,7 +78,7 @@ export const company = {
   socials: [
     { label: "Facebook", href: "https://www.facebook.com/share/1Na54BKBY9/" },
     { label: "Instagram", href: "https://www.instagram.com/southzoomtourism?stkn=MXJ3ODh0eG43dDFhNQ==" },
-    { label: "YouTube", href: "https://youtube.com" },
+    { label: "YouTube", href: "https://youtube.com/@southzoomtourism" },
   ],
 };
 

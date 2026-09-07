@@ -23,7 +23,7 @@ const defaults: ContactSettings = {
   company_name: 'South Zoom Tourism', phone: '+91 6366357757', whatsapp: '918884015512',
   email: 'bookings@southzoomtourism.com', address: 'South Zoom Tourism, #8, Srinivasa Building, Anchepalya Main Road, TG Halli, Bengaluru – 560073, Karnataka.',
   google_maps_url: '', business_hours: 'Mon – Sun · 24×7 Service', support_hours: '24×7 Support',
-  facebook_url: 'https://www.facebook.com/share/1Na54BKBY9/', instagram_url: 'https://www.instagram.com/southzoomtourism?stkn=MXJ3ODh0eG43dDFhNQ==', youtube_url: '',
+  facebook_url: 'https://www.facebook.com/share/1Na54BKBY9/', instagram_url: 'https://www.instagram.com/southzoomtourism?stkn=MXJ3ODh0eG43dDFhNQ==', youtube_url: 'https://youtube.com/@southzoomtourism',
 };
 
 function ContactSettingsPage() {
