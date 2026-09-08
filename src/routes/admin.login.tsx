@@ -96,7 +96,7 @@ function AdminLogin() {
                 <Input 
                   id="password" 
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter password (default: admin123)"
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -111,7 +111,6 @@ function AdminLogin() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              <p className="text-[11px] text-gray-400">Initial master password is <code className="text-orange-600 font-mono">admin123</code></p>
             </div>
 
             <Button
@@ -147,13 +146,7 @@ function AdminLogin() {
 
           <div className="space-y-3 py-2 text-xs text-gray-700 leading-relaxed">
             <p>
-              The initial default master password for your admin account is:
-            </p>
-            <div className="bg-gray-100 p-2.5 rounded-lg text-center font-mono font-bold text-sm text-gray-900 select-all border">
-              admin123
-            </div>
-            <p>
-              If your password was changed and you forgot it, please contact the emergency administrator helpline:
+              If you forgot your password, please contact the emergency administrator helpline:
             </p>
             <div className="bg-orange-50 border border-orange-200 p-3 rounded-lg flex items-center gap-3">
               <Phone className="text-orange-600 shrink-0" size={16} />

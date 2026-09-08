@@ -47,9 +47,9 @@ export function BookingPoliciesCard({
                 className="mt-0.5 accent-primary"
               />
               <div>
-                <span className="font-bold text-foreground">All Exclusive</span>
+                <span className="font-bold text-foreground">All Exclusive.</span>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Base fare only. Tolls, state taxes, driver allowance and fuel charged separately.
+                  state tax, Nice road toll, Express toll, parking.
                 </p>
               </div>
             </label>

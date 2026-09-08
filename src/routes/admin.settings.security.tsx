@@ -113,7 +113,7 @@ function AdminSecurityPage() {
           </div>
           <p className="text-xs opacity-90 leading-relaxed">
             {isDefault
-              ? 'Your admin portal is currently using the initial default password (admin123). We strongly recommend setting a custom, secure password below.'
+              ? 'Your admin portal is currently using the initial default password. We strongly recommend setting a custom, secure password below.'
               : `Your password was last updated on ${
                   lastUpdated ? new Date(lastUpdated).toLocaleString('en-IN') : 'recently'
                 }. All admin logins are protected.`}
@@ -143,7 +143,7 @@ function AdminSecurityPage() {
               <div className="relative max-w-md">
                 <Input
                   type={showCurrent ? 'text' : 'password'}
-                  placeholder="Enter current password (default: admin123)"
+                  placeholder="Enter current password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="pr-10 text-sm"
@@ -159,7 +159,7 @@ function AdminSecurityPage() {
                 </button>
               </div>
               <p className="text-[11px] text-gray-400">
-                If you have never changed the password before, enter <code className="text-orange-600 font-mono">admin123</code>.
+                If you have never changed the password before, enter your initial default password.
               </p>
             </div>
 

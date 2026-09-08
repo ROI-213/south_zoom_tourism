@@ -1191,7 +1191,7 @@ export function AutoFareCalculatorModal({
                         ? `Local Rental Package (${fareResult.packageName}):`
                         : fareResult.tripType === "airport"
                         ? `Airport Transfer Package (${fareResult.packageName}):`
-                        : `Base Fare (${fareResult.billableDistanceKm} km × ₹${fareResult.ratePerKm}/km):`}
+                        : `Base Fare:`}
                     </span>
                     <span className="font-bold text-foreground shrink-0 text-right">
                       ₹{fareResult.baseFare.toLocaleString("en-IN")}
@@ -1225,9 +1225,6 @@ export function AutoFareCalculatorModal({
                     <span className="text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-1.5 text-xs">
                       <Info className="h-3.5 w-3.5 shrink-0" />
                       Extra / km charge
-                      <span className="text-[10px] font-normal text-muted-foreground ml-1">
-                        (beyond included km)
-                      </span>
                     </span>
                     <span className="font-extrabold text-amber-700 dark:text-amber-400 shrink-0 text-right text-sm">
                       ₹{fareResult.tripType === "round-trip"

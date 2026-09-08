@@ -218,13 +218,19 @@ export const inr = (value: number) =>
 /** UPI deep-link / QR payload built from settings (never hardcoded). */
 export function buildUpiPayload(amount?: number, note?: string): string {
   const params = new URLSearchParams({
-    pa: paymentSettings.upi.upiId,
-    pn: paymentSettings.upi.payeeName,
+    pa: paymentSettings.upi.upiId.trim(),
+    pn: paymentSettings.upi.payeeName.trim(),
     cu: "INR",
   });
-  if (amount && amount > 0) params.set("am", String(amount));
-  if (note) params.set("tn", note.slice(0, 50));
-  return `upi://pay?${params.toString()}`;
+  if (amount && amount > 0) {
+    params.set("am", Number(amount).toFixed(2));
+  }
+  if (note) {
+    const safeNote = note.replace(/[^a-zA-Z0-9 ]/g, "").trim().slice(0, 50);
+    if (safeNote) params.set("tn", safeNote);
+  }
+  // PhonePe and other UPI apps require %20 for spaces, not +. URLSearchParams uses +.
+  return `upi://pay?${params.toString().replace(/\+/g, "%20")}`;
 }
 
 export const formatPaidOn = (iso: string) => {

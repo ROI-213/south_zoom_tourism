@@ -86,7 +86,7 @@ export async function verifyAdminLogin(email: string, enteredPassword: string): 
 
   return {
     success: false,
-    error: 'Incorrect email or password. Default is admin123 unless updated.',
+    error: 'Incorrect email or password.',
   };
 }
 

@@ -578,7 +578,7 @@ export function VehicleBookingForm({
                 returnDate: values.returnDate || null,
                 passengers: values.passengers,
                 tripType: values.tripType,
-                notes: `${advancePercent}% Advance Payment: ₹${advanceAmount.toLocaleString("en-IN")}. Balance: ₹${balanceToDriver.toLocaleString("en-IN")}. Special: ${values.request || ""}`,
+                notes: values.request || "",
               });
 
               toast.success(`Opening ${advancePercent}% Advance QR Payment...`, {

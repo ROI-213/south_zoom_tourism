@@ -104,7 +104,7 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
             <div className="relative">
               <Input
                 type={showCurrent ? 'text' : 'password'}
-                placeholder="Enter current password (default: admin123)"
+                placeholder="Enter current password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 className="pr-10 text-sm"
@@ -119,7 +119,6 @@ export function ChangePasswordDialog({ open, onOpenChange, onSuccess }: ChangePa
                 {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <p className="text-[11px] text-gray-400">Default initial password is <code className="text-orange-600 font-mono">admin123</code></p>
           </div>
 
           <div className="space-y-1.5">
