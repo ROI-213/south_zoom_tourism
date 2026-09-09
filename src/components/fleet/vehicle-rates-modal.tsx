@@ -126,7 +126,7 @@ Please share the detailed quotation.`;
                 <span className="text-xs font-medium text-muted-foreground block">LOCAL RENTAL</span>
                 <p className="text-xl font-bold text-primary mt-1">₹{localBase.toLocaleString()}</p>
                 <p className="text-[11px] text-muted-foreground">Ex per km: ₹{rateConfig.local.extraKmRate}/km · Ex per hour: ₹{rateConfig.local.extraHourRate}/hr</p>
-                <p className="text-[11px] text-muted-foreground">Driver allowance: ₹{rateConfig.local.driverAllowance}/day</p>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400">Driver allowance: Included</p>
               </div>
 
               <div className="p-3.5 rounded-lg bg-background border border-border">

@@ -180,7 +180,7 @@ export function RateCardSection() {
                   </div>
                   <div className="flex items-center justify-between p-4">
                     <span className="text-muted-foreground font-medium">Driver allowance</span>
-                    <span className="font-bold text-foreground">₹{config.local.driverAllowance}/-</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Included</span>
                   </div>
                   <div className="flex items-center justify-between p-4">
                     <span className="text-muted-foreground font-medium">Toll</span>
@@ -316,7 +316,7 @@ export function RateCardSection() {
 
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Driver Allowance</span>
-                    <span className="font-semibold">₹{fareBreakdown.driverAllowance}</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">Included</span>
                   </div>
                 </div>
 
@@ -380,7 +380,7 @@ export function RateCardSection() {
                   </li>
                   <li className="flex justify-between pt-3">
                     <span className="text-muted-foreground font-medium">Driver Allowance</span>
-                    <span className="font-bold text-foreground">₹{config.outstationOneWay.driverAllowance}/-</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Included</span>
                   </li>
                   <li className="flex justify-between pt-3">
                     <span className="text-muted-foreground font-medium">Hill Charges</span>
@@ -437,7 +437,7 @@ export function RateCardSection() {
                   </li>
                   <li className="flex justify-between pt-3">
                     <span className="text-muted-foreground font-medium">Driver Allowance</span>
-                    <span className="font-bold text-foreground">{config.outstationRoundTrip.driverAllowance || "Per Day"}</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Included</span>
                   </li>
                   <li className="flex justify-between pt-3">
                     <span className="text-muted-foreground font-medium">Hill Charges</span>

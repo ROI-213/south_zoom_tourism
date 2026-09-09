@@ -1202,10 +1202,10 @@ export function AutoFareCalculatorModal({
                   {fareResult.driverAllowance > 0 && (
                     <div className="flex items-center justify-between py-2 gap-2">
                       <span className="text-muted-foreground font-medium">
-                        Driver Allowance {fareResult.tripType === "round-trip" ? `(${fareResult.dayCount} days × ₹${fareResult.fleet.roundTripDriverAllowancePerDay})` : ""}:
+                        Driver Allowance:
                       </span>
-                      <span className="font-bold text-foreground shrink-0 text-right">
-                        ₹{fareResult.driverAllowance.toLocaleString("en-IN")}
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 shrink-0 text-right">
+                        Included
                       </span>
                     </div>
                   )}
