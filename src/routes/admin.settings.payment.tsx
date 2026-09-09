@@ -30,7 +30,7 @@ type PaymentSettings = {
 };
 
 const defaults: PaymentSettings = {
-  upi_id: 'southzoom@upi',
+  upi_id: '8884015512@sbi',
   account_holder: 'South Zoom Tourism Pvt Ltd',
   bank_name: 'HDFC Bank',
   account_number: '50200088991234',

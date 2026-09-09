@@ -45,7 +45,7 @@ export type UpiSetting = {
   qrAlt: string;
 };
 
-export const STORAGE_KEY_PAYMENT_SETTINGS = "szt_payment_settings_cache_v1";
+export const STORAGE_KEY_PAYMENT_SETTINGS = "szt_payment_settings_cache_v2";
 
 const isBrowser = () => typeof window !== "undefined";
 
@@ -78,9 +78,9 @@ const defaultPaymentSettings = {
   intro:
     "Scan the QR or transfer to the account below, then upload your payment screenshot so our accounts team can verify it against your booking.",
   upi: {
-    upiId: "southzoom@upi",
-    payeeName: "South Zoom Tourism Pvt Ltd",
-    qrImageUrl: null as string | null,
+    upiId: "8884015512@sbi",
+    payeeName: "South Zoom Tourism",
+    qrImageUrl: "/upi-qr.png" as string | null,
     qrAlt: "UPI QR code for South Zoom Tourism payments",
   } satisfies UpiSetting,
   bank: {
