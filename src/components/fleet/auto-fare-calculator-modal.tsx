@@ -414,7 +414,7 @@ export function AutoFareCalculatorModal({
       returnDate: tripType === "round-trip" ? returnDate : null,
       passengers: currentVehicle.seats,
       tripType: tripTypeLabel,
-      notes: `${fareResult.advancePercentage || 15}% Advance Payment (₹${advanceAmount.toLocaleString("en-IN")}) initiated. Total Quoted Fare: ₹${fareResult.totalEstimatedFare.toLocaleString("en-IN")}, Balance to driver: ₹${balanceToDriver.toLocaleString("en-IN")}${addonsNote}`,
+      notes: "",
     });
 
     saveLatestTravelSearch({
@@ -486,7 +486,7 @@ export function AutoFareCalculatorModal({
       returnDate: tripType === "round-trip" ? returnDate : null,
       passengers: currentVehicle.seats,
       tripType: tripTypeLabel,
-      notes: `Quoted Estimated Fare: ₹${fareResult.totalEstimatedFare.toLocaleString("en-IN")} (${fareResult.packageName || `${fareResult.billableDistanceKm} km @ ₹${fareResult.ratePerKm}/km`}). ${fareResult.advancePercentage || 15}% Advance: ₹${advanceAmount.toLocaleString("en-IN")}, Balance to driver: ₹${balanceToDriver.toLocaleString("en-IN")}${addonsNote}`,
+      notes: "",
     });
 
     saveLatestTravelSearch({

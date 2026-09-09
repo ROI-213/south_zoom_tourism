@@ -237,14 +237,7 @@ export async function downloadTripTicketPdf(data: TripTicketData) {
 
   y = fareBoxY + 26;
 
-  if (data.notes) {
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    const noteLines = doc.splitTextToSize(`Note: ${data.notes}`, CONTENT_W);
-    doc.text(noteLines, MARGIN + 2, y);
-    y += noteLines.length * 4 + 2;
-  }
+
 
   // ─── Divider ──────────────────────────────────────────────────────────────────
   doc.setDrawColor(20, 80, 160);
