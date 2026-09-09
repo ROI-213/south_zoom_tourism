@@ -1342,6 +1342,9 @@ export function AutoFareCalculatorModal({
                             <p className="text-[11px] font-semibold text-foreground">
                               Base fare, driver allowance, normal toll & 5% GST included.
                             </p>
+                            <p className="text-[11px] font-semibold text-foreground">
+                              Booking based on calender counted.
+                            </p>
                             <p className="text-[10px] text-muted-foreground">
                               NICE Road entry/exit & expressway charges not included. Please pay directly.
                             </p>
